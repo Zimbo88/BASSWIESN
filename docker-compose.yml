@@ -1,0 +1,64 @@
+services:
+  basswiesn:
+    build: .
+    env_file:
+      - .env
+    # Production defaults to the image's non-root 10001:10001.  A local
+    # developer can override these two values when the host cannot chgrp the
+    # bind-mounted data directory (for example in rootless Docker).
+    user: "${BASSWIESN_RUNTIME_USER:-basswiesn}"
+    ports:
+      - "1328:1328"
+      - "1329:1329"
+      - "1516:1516"
+      - "1860:1860"
+    volumes:
+      - ./data:/app/data
+      - ./data/secrets/setup-rebuild:/app/secrets/setup-rebuild:ro
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:1328/api/readiness', timeout=3)); raise SystemExit(0 if payload.get('ready') else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # Preview only. Existing data volumes must be owned by the image UID/GID
+  # (10001:10001) before enabling this profile. Authentication and
+  # authorization are not implemented yet, so this is not a Hardened-LAN
+  # production profile.
+  basswiesn-hardened-preview:
+    profiles: ["hardened-lan-preview"]
+    build: .
+    env_file:
+      - .env
+    user: "${BASSWIESN_RUNTIME_USER:-basswiesn}"
+    ports:
+      - "1328:1328"
+      - "1516:1516"
+    volumes:
+      - ./data:/app/data
+      - ./data/secrets/setup-rebuild:/app/secrets/setup-rebuild:ro
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:1328/api/readiness', timeout=3)); raise SystemExit(0 if payload.get('ready') else 1)"]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped

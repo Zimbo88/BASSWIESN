@@ -1,0 +1,96 @@
+* { box-sizing: border-box; }
+:root {
+  --bg: #0f1216;
+  --panel: #1a2028;
+  --panel-2: #232b35;
+  --line: #3b4653;
+  --text: #f4f7fb;
+  --muted: #a9b3bf;
+  --accent: #62b0ff;
+  --ok: #6bd4a1;
+  --bad: #ff7373;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+button, input, select { font: inherit; }
+button {
+  min-height: 54px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+}
+.remote-shell {
+  width: min(520px, 100%);
+  margin: 0 auto;
+  min-height: 100vh;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: max(14px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+}
+.remote-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 6px;
+}
+.remote-header span, .now-panel, #remote-output { color: var(--muted); }
+.remote-header h1 { margin: 2px 0 0; font-size: 26px; letter-spacing: 0; }
+.remote-header a {
+  color: var(--accent);
+  text-decoration: none;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.now-panel, .volume-panel, .station-panel, #remote-output {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 14px;
+}
+#remote-now { color: var(--text); line-height: 1.45; overflow-wrap: anywhere; }
+#remote-battery { margin-top: 8px; color: var(--ok); }
+.volume-panel {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr) 54px 58px;
+  align-items: center;
+  gap: 10px;
+}
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+.transport-grid, .preset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.preset-grid button { min-height: 62px; }
+.station-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+}
+select {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #121820;
+  color: var(--text);
+  padding: 0 12px;
+}
+#remote-output {
+  min-height: 76px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 430px) {
+  .volume-panel { grid-template-columns: 48px minmax(0, 1fr) 48px; }
+  #remote-volume-label { grid-column: 1 / -1; text-align: center; }
+}

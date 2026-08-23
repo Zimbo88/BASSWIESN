@@ -1,0 +1,72 @@
+.venv/
+**/__pycache__/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.pyright/
+*.pyc
+*.pyo
+
+# Local environment and runtime data
+.env
+.env.local
+data/*.db
+data/*.db-*
+data/.db-init.lock
+data/
+data/logs/
+data/backups/
+data/media/
+*.log
+.local-backups/
+test-artifacts/
+
+# Build and package artifacts
+build/
+dist/
+*.egg-info/
+*.7z
+*.tar.xz
+*.tar.gz
+*.zip
+
+# Frontend dependencies and editor files
+node_modules/
+.DS_Store
+*.swp
+*.swo
+*.tmp
+*~
+.~lock*
+
+# Research, firmware and private source dumps
+*.odt
+Airplay-*_Update_*.zip
+BASSWIESN.tar.xz
+FÜR chatgpt.tar.xz
+basswiesn_rpi5_docker_test_*.tar.gz
+*SoundTouch-main*/
+Stockholm_*/
+*cloudtouch-main*/
+zimbo88_soundtouch_master_toolkit_v3/
+chat_odt_extract/
+zip_extract/
+binwalk/
+research/
+research-dumps/
+firmware-dumps/
+private-archives/
+docs/PRIVATE_RPI_INSTALL.md
+docs/*_extracted.txt
+docs/FORTSETZUNGS_PROMPT.md
+docs/session_log.md
+docs/codex_resume.md
+tools/package_private_rpi.sh
+
+# Keep public project material
+!.env.example
+!tests/
+!docs/
+!tools/
+!install.sh
+!docker-compose.yml

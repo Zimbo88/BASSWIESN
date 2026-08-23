@@ -1,0 +1,1527 @@
+[
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 10,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_BACKUP_RETENTION_COUNT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 3650,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_CERT_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "selfsigned",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_CERT_MODE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 100,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_CONFIG_BACKUP_RETENTION_COUNT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "f'http://{lan_host}:1860' if lan_host else ''",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_DEBUG_BASE_URL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 4,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_DEVICE_INTERACTION_MAX_CONCURRENCY",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 50,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_DIAGNOSTIC_MAX_SIZE_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_DISABLE_SETUP_CONFIRMATIONS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_ENABLE_HTTPS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 30,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_EVENT_RETENTION_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_EXPERIMENTAL_ANNOUNCEMENTS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Experimental/LAB",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_EXPERIMENTAL_DLNA",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Experimental/LAB",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 1329,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_HTTPS_PORT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 14,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_INTERACTION_RETENTION_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": true,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_IP_SCAN_FALLBACK",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_LAB_MODE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_LAN_HOST",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_LAN_HOST_CANDIDATES",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_LOCAL_BASE_URL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 24,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_DEFAULT_INTERVAL_HOURS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_ENABLED_BY_DEFAULT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 168,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_MAX_INTERVAL_HOURS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 6,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_MIN_INTERVAL_HOURS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 600,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_RETURN_TIMEOUT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_SCHEDULER_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 300,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MAINTENANCE_REBOOT_SCHEDULER_INTERVAL_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MARGE_AUTH_TOKEN_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 5,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MASTERLOG_BACKUP_COUNT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": true,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MASTERLOG_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 50,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MASTERLOG_MAX_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MEDIA_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Experimental/LAB",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 500,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MEDIA_MAX_FILE_SIZE_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Experimental/LAB",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_MEDIA_ROOTS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Experimental/LAB",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_OFFLINE_ALLOWED_STREAM_HOSTS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "off | auto | strict",
+    "default": "auto",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_OFFLINE_MODE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "enum"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": true,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PLAYBACK_KEEPALIVE_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 300,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PLAYBACK_KEEPALIVE_INTERVAL_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 1800,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PLAYBACK_KEEPALIVE_LOG_EVERY_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 360,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PLAYBACK_STATE_STALE_AFTER_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 3600,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PORTABLE_SAFE_LOW_RISK_INTERVAL_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PROTECTED_DEVICE_IDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_PROTECTED_DEVICE_IPS",
+    "notes": "Alias/Quelle fuer geschuetzte Geraete; fail-closed relevant",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_RELEASE_MANIFEST_REQUIRED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 14,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_REQUEST_LOG_RETENTION_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 30,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_RETENTION_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_RUNTIME_USER",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SETUP_WRITE_RADIO_IPS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": true,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSDP_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 300,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSDP_INTERVAL_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 4,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSDP_TIMEOUT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": false,
+    "name": "BASSWIESN_SSH_ALLOWED_DEVICE_IDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "strict",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_HOST_KEY_POLICY",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_KNOWN_HOSTS_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_PASSWORD_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 22,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_PORT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_PRIVATE_KEY_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 2,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_RETRY_COUNT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 8,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_TIMEOUT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SSH_USERNAME",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_STANDBY_CLOCK_RECOVERY_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 300,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_STATIONARY_LOW_RISK_INTERVAL_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 50,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_STATION_UPLOAD_MAX_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 500,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_STATION_UPLOAD_QUOTA_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 50,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_SUPPORT_BUNDLE_MAX_MB",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 30,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELEMETRY_RETENTION_DAYS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Persistence/Diagnostics",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_ALLOWED_DEVICE_IDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_PASSWORD_FILE",
+    "notes": "Secret-Datei; Inhalt nie in UI/Reports ausgeben",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 23,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_PORT",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 180,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_REBOOT_WAIT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 8,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_TIMEOUT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TELNET_USERNAME",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "LAB/Recovery",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TEST_MODE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TLS_CERT_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_TLS_KEY_FILE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "hoch",
+    "service": "WebGUI/HTTPS",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": true,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_ALLOW_LOCAL_ARCHIVE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "manual | stable | beta",
+    "default": "manual",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_CHANNEL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "enum"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_CHECK_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_MANIFEST_URL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_REPO_URL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "__version__",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_VERSION",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_WEBHOOKS_ENABLED",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_WEBHOOK_ALLOWED_HOSTS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 5,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_WEBHOOK_MAX_RETRIES",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "Ganzzahl; _env_int verwendet Mindestwert 1",
+    "default": 5,
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_WEBHOOK_TIMEOUT_SECONDS",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "int"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "f'http://{lan_host}:1328' if lan_host else ''",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "BASSWIESN_WEB_BASE_URL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": false,
+    "name": "LANG",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      "basswiesn/app/routers/media.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": false,
+    "name": "LC_ALL",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      "basswiesn/app/routers/media.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": false,
+    "name": "LC_MESSAGES",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "niedrig",
+    "service": "Global Runtime",
+    "sources": [
+      "basswiesn/app/routers/media.py"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "Kommagetrennte Werte",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
+    "name": "PROTECTED_DEVICE_IPS",
+    "notes": "Alias/Quelle fuer geschuetzte Geraete; fail-closed relevant",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/Device Runtime",
+    "sources": [
+      ".env.example",
+      "basswiesn/app/config.py"
+    ],
+    "type": "csv"
+  }
+]
