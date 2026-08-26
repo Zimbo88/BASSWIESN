@@ -237,3 +237,87 @@ async def resolve_stream_url(url: str, timeout: float = 2.5) -> StreamAnalysis:
         raise
     except Exception:
         return analyze_stream_url(original)
+
+
+async def probe_stream_reachability(url: str, timeout: float = 3.0) -> dict:
+    """Perform one explicit, SSRF-safe stream probe with bounded redirects."""
+
+    original = str(url or "").strip()
+    if not original:
+        return {"status": "BROKEN", "reachable": False, "reason": "stream URL missing"}
+    try:
+        validation = _validate_stream_target(original)
+    except ProtectedStreamTarget as exc:
+        return {"status": "BROKEN", "reachable": False, "reason": str(exc), "protected": True}
+    if validation is None:
+        return {"status": "BROKEN", "reachable": False, "reason": "stream URL is invalid or unresolved"}
+    try:
+        async with httpx.AsyncClient(
+            timeout=timeout, follow_redirects=False, trust_env=False
+        ) as client:
+            current_url = original
+            for hop in range(MAX_STREAM_REDIRECTS + 1):
+                validation = _validate_stream_target(current_url)
+                if validation is None:
+                    return {"status": "BROKEN", "reachable": False, "reason": "redirect target is invalid or unresolved"}
+                pinned_url, pinned_headers, extensions = pinned_http_target(
+                    current_url, validation
+                )
+                # A radio stream is intentionally endless and many stations
+                # ignore Range. ``client.get`` would therefore wait for the
+                # complete body and make the Preset Checker hang. Read at most
+                # one 4 KiB preview and close the connection immediately.
+                async with client.stream(
+                    "GET",
+                    pinned_url,
+                    headers={
+                        **pinned_headers,
+                        "User-Agent": "basswiesn-preset-checker/2.5",
+                        "Range": "bytes=0-4095",
+                    },
+                    extensions=extensions,
+                ) as response:
+                    if response.status_code in REDIRECT_STATUS_CODES:
+                        location = str(response.headers.get("location") or "").strip()
+                        if not location:
+                            return {"status": "BROKEN", "reachable": False, "reason": "redirect has no Location", "http_status": response.status_code}
+                        current_url = urljoin(current_url, location)
+                        continue
+                    preview = b""
+                    async for chunk in response.aiter_bytes():
+                        preview += chunk[: 4096 - len(preview)]
+                        if len(preview) >= 4096 or chunk:
+                            break
+                    analysis = analyze_stream_url(
+                        original,
+                        response.headers.get("content-type", ""),
+                        preview.decode("utf-8", errors="replace"),
+                        current_url,
+                    )
+                    reachable = response.status_code < 400
+                    response_status = response.status_code
+                status = (
+                    "BROKEN"
+                    if not reachable or analysis.is_hls
+                    else "WARNING"
+                    if not analysis.is_direct_audio or analysis.compatibility_score < 70
+                    else "VALID"
+                )
+                return {
+                    "status": status,
+                    "reachable": reachable,
+                    "reason": analysis.compatibility_warning or ("HTTP response accepted" if reachable else "HTTP request failed"),
+                    "http_status": response_status,
+                    "resolved_url": current_url,
+                    "mime": analysis.stream_mime,
+                    "codec": analysis.stream_codec,
+                    "compatibility_score": analysis.compatibility_score,
+                    "redirects": hop,
+                }
+            return {"status": "BROKEN", "reachable": False, "reason": "too many redirects"}
+    except ProtectedStreamTarget as exc:
+        return {"status": "BROKEN", "reachable": False, "reason": str(exc), "protected": True}
+    except httpx.TimeoutException:
+        return {"status": "BROKEN", "reachable": False, "reason": "stream probe timed out"}
+    except (httpx.HTTPError, OSError) as exc:
+        return {"status": "BROKEN", "reachable": False, "reason": str(exc) or type(exc).__name__}

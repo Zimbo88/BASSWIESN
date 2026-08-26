@@ -20,6 +20,14 @@ def _orion_payload(location: str) -> dict:
     return decode_orion_data(data) if data else {}
 
 
+def test_cloud_orion_rejects_malformed_descriptor_as_client_error():
+    with TestClient(create_cloud_app()) as client:
+        response = client.get(f"{ORION_STATION_PATH}?data=p2JhZA")
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "invalid Orion station descriptor"
+
+
 def test_device_presets_cloud_route_returns_marge_xml_and_etag():
     db = app_db.SessionLocal()
     station = Station(name="Test Radio", stream_url="http://example.test/live.mp3", image_url="http://example.test/logo.png")
@@ -135,10 +143,26 @@ def test_preset_checker_matches_absolute_orion_location_with_encoded_data(monkey
             pass
 
         async def get_xml(self, path):
-            assert path == "/presets"
-            return radio_xml
+            if path == "/presets":
+                return radio_xml
+            if path == "/sources":
+                return '<sources><source source="LOCAL_INTERNET_RADIO" status="READY" /></sources>'
+            if path == "/serviceAvailability":
+                return '<services><service service="LOCAL_INTERNET_RADIO" status="READY" /></services>'
+            raise AssertionError(path)
+
+    async def reachable_stream(_url, timeout=3.0):
+        return {
+            "status": "VALID",
+            "reachable": True,
+            "reason": "test stream reachable",
+            "http_status": 206,
+            "codec": "mp3",
+            "compatibility_score": 100,
+        }
 
     monkeypatch.setattr(stations_presets, "SoundTouchClient", Client)
+    monkeypatch.setattr(stations_presets, "probe_stream_reachability", reachable_stream)
     db = app_db.SessionLocal()
     station = Station(name="Radio Eins", stream_url="http://example.test/live.mp3")
     db.add_all([Device(device_id="PRESETCHECK", ip_address="192.0.2.10"), station])
@@ -153,9 +177,11 @@ def test_preset_checker_matches_absolute_orion_location_with_encoded_data(monkey
 
     assert response.status_code == 200
     slot = response.json()["slots"][0]
-    assert slot["state"] == "green"
+    assert slot["verdict"] == "VALID"
+    assert slot["state"] == "valid"
     assert slot["location_match"] is True
     assert slot["radio"]["source_account"] == ""
+    assert response.json()["slots"][1]["verdict"] == "VALID"
 
 
 def test_passive_preset_status_uses_only_persisted_snapshot(monkeypatch):
@@ -777,6 +803,15 @@ def test_set_preset_keeps_compatible_xml_and_does_not_read_sources(monkeypatch):
     db = app_db.SessionLocal()
     station = Station(name="Preset Compat", stream_url="http://example.test/preset.mp3", provider="TUNEIN")
     db.add_all([Device(device_id="PRESETCOMPAT", ip_address="192.0.2.92"), station, Setting(key="lan_host", value="192.168.50.77")])
+    db.flush()
+    db.add(Preset(
+        device_id="PRESETCOMPAT",
+        button=2,
+        source="TUNEIN",
+        source_account="stale-account-from-previous-preset",
+        location="old:location",
+        content_item_xml='<ContentItem source="TUNEIN" sourceAccount="stale-account-from-previous-preset" location="old:location"><itemName>Old</itemName></ContentItem>',
+    ))
     db.commit()
     station_id = station.id
     db.close()
@@ -789,8 +824,10 @@ def test_set_preset_keeps_compatible_xml_and_does_not_read_sources(monkeypatch):
     preset = db.query(Preset).filter(Preset.device_id == "PRESETCOMPAT", Preset.button == 2).one()
     db.close()
     assert preset.source == "LOCAL_INTERNET_RADIO"
+    assert preset.source_account == ""
     content = ET.fromstring(preset.content_item_xml)
     assert content.attrib["source"] == "LOCAL_INTERNET_RADIO"
+    assert content.attrib["sourceAccount"] == ""
     assert content.attrib["location"].startswith("http://192.168.50.77:1516/core02/")
     assert not content.attrib["location"].startswith("/core02")
     assert calls == [("/storePreset", calls[0][1])]

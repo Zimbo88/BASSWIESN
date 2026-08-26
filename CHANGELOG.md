@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.5.0 - 2026-08-26
+
+### Stability and recovery
+
+- Added bounded SSDP rediscovery after connectivity failures. A stored IP is
+  changed only after device-ID read-back confirms the new endpoint; a verified
+  migration resets stale circuit-breaker state.
+- Kept the validated dual-stack Radio Browser fix: a reachable IPv4 address is
+  preferred when dual-stack DNS exposes an unusable IPv6 route, without
+  weakening private/protected-target checks.
+- Replaced the unbounded repeated BMX audio-stream response with one confirmed
+  stream candidate and fail-closed malformed Orion descriptor handling.
+
+### Presets and playback
+
+- Preset Checker now classifies each slot as `VALID`, `WARNING`, `BROKEN` or
+  `UNKNOWN` using radio, account, provider, stream and local-mapping evidence.
+- A verified preset write clears stale `sourceAccount` data and leaves a
+  persistent human-readable result in Easy Mode.
+- Hardware evidence distinguishes unavailable streams from radio/provider
+  state that can be recovered by a controlled reboot; no fake success is
+  reported.
+
+### Easy Mode and Multiroom
+
+- Easy Mode is the default for new installations and exposes only Setup,
+  Radios, Remote Control, Presets, Multiroom, Alarm & Timer and Device Settings.
+- Safe start volume is optional; when disabled, playback sends no preliminary
+  volume command.
+- Added optional per-radio Multiroom start volumes, verified before zone
+  creation. Firmware normalization after `/setZone` is reported without a
+  hidden correction.
+- Single-member removal now polls both master and member topology with a bounded
+  deadline and fails closed if distributed read-back does not confirm removal.
+- Protected devices are excluded from all network-active UI selectors.
+
+### Packaging and documentation
+
+- Added copy-paste release installation, Docker, update, backup and
+  troubleshooting instructions.
+- Public `SHA256SUMS` verifies exactly the downloadable versioned archive.
+
 ## 2.0.0 - 2026-08-23
 
 ### Safety and honest contracts

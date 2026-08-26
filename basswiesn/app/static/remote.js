@@ -3,6 +3,9 @@ const deviceId = shell.dataset.deviceId;
 const output = document.getElementById("remote-output");
 const volume = document.getElementById("remote-volume");
 const volumeLabel = document.getElementById("remote-volume-label");
+const safeStartEnabled = document.getElementById("remote-safe-start-enabled");
+const safeStartField = document.getElementById("remote-safe-start-field");
+const safeStartVolume = document.getElementById("remote-safe-start-volume");
 let stations = [];
 
 function writeResult(value) {
@@ -30,7 +33,9 @@ function setVolumeLabel() {
 }
 
 async function sendKey(key) {
-  writeResult(await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, { key, safe_volume: Number(volume.value) }));
+  const payload = { key };
+  if (safeStartEnabled.checked) payload.safe_volume = Number(safeStartVolume.value);
+  writeResult(await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, payload));
 }
 
 async function setVolume(value) {
@@ -43,7 +48,10 @@ async function refresh() {
   const [devices, stationRows, settings, health] = await Promise.all([getJson("/api/devices"), getJson("/api/stations"), getJson("/api/system/settings"), getJson("/api/health")]);
   const version = typeof health.version === "string" && health.version ? (health.version.startsWith("v") ? health.version : `v${health.version}`) : "Version nicht verfügbar";
   document.getElementById("remote-version").textContent = `basswiesn remote · ${version}`;
-  volume.value = settings.safe_startup_volume ?? 30;
+  const stored = localStorage.getItem(`basswiesn_remote_safe_start_${deviceId}`);
+  safeStartEnabled.checked = stored === "true";
+  safeStartField.hidden = !safeStartEnabled.checked;
+  safeStartVolume.value = Math.min(5, Number(settings.safe_startup_volume ?? 1));
   setVolumeLabel();
   stations = stationRows;
   const device = devices.find((item) => item.device_id === deviceId) || {};
@@ -82,8 +90,14 @@ document.getElementById("remote-presets").addEventListener("click", (event) => {
 document.getElementById("remote-play-station").addEventListener("click", async () => {
   const stationId = document.getElementById("remote-station").value;
   if (!stationId) return;
-  await setVolume(volume.value || 5);
-  writeResult(await postJson(`/api/devices/${encodeURIComponent(deviceId)}/stations/${encodeURIComponent(stationId)}/play`, { dry_run: false }));
+  const payload = { dry_run: false };
+  if (safeStartEnabled.checked) payload.safe_volume = Number(safeStartVolume.value);
+  writeResult(await postJson(`/api/devices/${encodeURIComponent(deviceId)}/stations/${encodeURIComponent(stationId)}/play`, payload));
+});
+
+safeStartEnabled.addEventListener("change", () => {
+  safeStartField.hidden = !safeStartEnabled.checked;
+  localStorage.setItem(`basswiesn_remote_safe_start_${deviceId}`, safeStartEnabled.checked ? "true" : "false");
 });
 
 setVolumeLabel();

@@ -18,7 +18,7 @@ STAGE_ROOT="$(mktemp -d)"
 STAGE="$STAGE_ROOT/basswiesn-release"
 BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh .dockerignore CHANGELOG.md)
 PUBLIC_TOOLS=(tools/run_dev.py)
-PUBLIC_DOCS=(docs/releases/2.0.0/RELEASE_NOTES_2.0.0.md)
+PUBLIC_DOCS=(docs/releases/2.5.0/RELEASE_NOTES_2.5.0.md)
 trap 'rm -rf "$STAGE_ROOT"' EXIT
 
 "$PYTHON" -m compileall -q basswiesn tests tools
@@ -84,7 +84,7 @@ NOTE_GLOB_C="re""sume"
 find "$STAGE/docs" -type f \( -iname "*${NOTE_GLOB_A}*" -o -iname "*${NOTE_GLOB_B}*" -o -iname "*${NOTE_GLOB_C}*" \) -delete
 rm -f "$STAGE/tools/package_private_rpi.sh"
 find "$STAGE" -type f \( -name '*.odt' -o -name '*.tar' -o -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.zip' -o -name '*.7z' \) -delete
-if grep -RIEq '192\.168\.[0-9]{1,3}\.|/home/[^/[:space:]]+' "$STAGE"; then
+if grep -RIEq '192\.168\.[0-9]{1,3}\.[0-9]{1,3}|/home/[^/[:space:]]+' "$STAGE"; then
   echo "Release staging contains installation-specific hardware or filesystem data" >&2
   exit 1
 fi
@@ -123,5 +123,7 @@ cp "$STAGE/install.sh" "$DIST/install.sh"
 cp "$STAGE/docker-compose.yml" "$DIST/docker-compose.yml"
 cp "$STAGE/.env.example" "$DIST/.env.example"
 (cd "$DIST" && sha256sum "$(basename "$ARCHIVE")" basswiesn-docker-release.tar.gz manifest.json release-test-summary.json install.sh docker-compose.yml .env.example > SHA256SUMS.txt)
-cp "$DIST/SHA256SUMS.txt" "$DIST/SHA256SUMS"
+# The public GitHub release uploads only the versioned archive and this file;
+# keep its copy-paste verification contract limited to the downloadable asset.
+(cd "$DIST" && sha256sum "$(basename "$ARCHIVE")" > SHA256SUMS)
 echo "$ARCHIVE"

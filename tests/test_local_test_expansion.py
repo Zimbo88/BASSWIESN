@@ -154,8 +154,8 @@ def test_ssdp_accepts_soundtouch_upnp_descriptor_port_8091(monkeypatch):
 
 def test_ssdp_normalizes_real_soundtouch_upnp_uuid_and_keeps_identity_per_candidate(monkeypatch):
     db = app_db.SessionLocal()
-    first_id = "001122334455"
-    second_id = "112233445566"
+    first_id = "A1B2C3D4E5F6"
+    second_id = "B1C2D3E4F5A6"
     candidates = [
         SSDPCandidate(
             location=f"http://192.0.2.61:8091/XD/BO5EBO5E-F00D-F00D-FEED-{first_id}.xml",

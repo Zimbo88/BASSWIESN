@@ -1,4 +1,4 @@
-"""Orthogonal provider, playback and subsystem health reducers for 2.0.0."""
+"""Orthogonal provider, playback and subsystem health reducers for 2.5.0."""
 
 from __future__ import annotations
 

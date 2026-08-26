@@ -58,19 +58,19 @@ def test_dry_run_coordinator_persists_all_checkpoints_without_transport():
     coordinator = SetupCoordinator(session_factory=Session)
     db = Session()
     db.add(Device(
-        device_id="334455667788",
+        device_id="D1E2F3A4B5C6",
         name="BadRadio",
         ip_address="192.168.50.176",
         model="SoundTouch Portable",
         firmware="27.0.6.46330.5043500 epdbuild.test",
-        info_xml='<info deviceID="334455667788"><type>SoundTouch Portable</type><moduleType>scm</moduleType><variant>taigan</variant></info>',
+        info_xml='<info deviceID="D1E2F3A4B5C6"><type>SoundTouch Portable</type><moduleType>scm</moduleType><variant>taigan</variant></info>',
         identity_verified=True,
     ))
     db.commit()
     target = ServerTarget("192.0.2.77", 1328, 1516, 1860)
     started = coordinator.start(
         db,
-        device_ids=["334455667788"],
+        device_ids=["D1E2F3A4B5C6"],
         target=target,
         dry_run=True,
     )
@@ -90,23 +90,23 @@ def test_volume_safety_failure_is_persisted_as_audio_lock():
     coordinator = SetupCoordinator(session_factory=Session)
     db = Session()
     db.add(Device(
-        device_id="334455667788",
+        device_id="D1E2F3A4B5C6",
         name="BadRadio",
         ip_address="192.168.50.176",
         model="SoundTouch Portable",
         firmware="27.0.6.46330.5043500 epdbuild.test",
-        info_xml='<info deviceID="334455667788"><type>SoundTouch Portable</type><moduleType>scm</moduleType><variant>taigan</variant></info>',
+        info_xml='<info deviceID="D1E2F3A4B5C6"><type>SoundTouch Portable</type><moduleType>scm</moduleType><variant>taigan</variant></info>',
         identity_verified=True,
     ))
     db.commit()
     target = ServerTarget("192.0.2.77", 1328, 1516, 1860)
     started = coordinator.start(
         db,
-        device_ids=["334455667788"],
+        device_ids=["D1E2F3A4B5C6"],
         target=target,
         dry_run=True,
     )
-    row = coordinator.repository.state(db, started["job_id"], "334455667788")
+    row = coordinator.repository.state(db, started["job_id"], "D1E2F3A4B5C6")
     row.state = SetupState.PRESETS_READABLE.value
     row.evidence_json = "{}"
     db.commit()

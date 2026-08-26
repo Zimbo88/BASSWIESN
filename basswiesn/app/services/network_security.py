@@ -188,8 +188,25 @@ def pinned_http_target(
     if not hostname or hostname.lower() != validation.hostname.lower():
         raise ValueError("validated hostname does not match request URL")
     try:
-        address = ipaddress.ip_address(validation.addresses[0])
-    except ValueError as exc:
+        # Prefer IPv4 when a hostname resolves to both IPv4 and IPv6.
+        #
+        # Some BASSWIESN hosts (especially Raspberry Pi installations)
+        # have IPv6 addresses available through DNS but no working IPv6
+        # route to the Internet. Pinning blindly to addresses[0] can
+        # therefore make a perfectly reachable HTTPS service fail.
+        #
+        # All addresses in validation.addresses have already passed the
+        # outbound security policy, so selecting a validated IPv4 address
+        # here preserves the DNS-rebinding/SSRF protection.
+        parsed_addresses = [
+            ipaddress.ip_address(item)
+            for item in validation.addresses
+        ]
+        address = next(
+            (item for item in parsed_addresses if item.version == 4),
+            parsed_addresses[0],
+        )
+    except (ValueError, IndexError) as exc:
         raise ValueError("validated target address is malformed") from exc
     address_text = f"[{address.compressed}]" if address.version == 6 else address.compressed
     pinned_netloc = (

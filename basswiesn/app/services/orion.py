@@ -1,4 +1,5 @@
 import base64
+import binascii
 import hashlib
 import json
 from dataclasses import dataclass
@@ -12,7 +13,6 @@ from basswiesn.app.services.stream_compat import analyze_stream_url
 
 
 ORION_STATION_PATH = "/core02/svc-bmx-adapter-orion/prod/orion/station"
-INFINITE_STREAMLIST_SIZE = 1000
 
 
 class OrionLocationError(ValueError):
@@ -52,10 +52,18 @@ def encode_orion_data(descriptor: StationDescriptor) -> str:
 
 
 def decode_orion_data(data: str) -> dict[str, str]:
-    decoded_data = unquote(data)
-    padded = decoded_data + "=" * (-len(decoded_data) % 4)
-    raw = base64.urlsafe_b64decode(padded)
-    return json.loads(raw.decode("utf-8"))
+    if not isinstance(data, str) or not data or len(data) > 32_768:
+        raise OrionLocationError("invalid Orion station descriptor")
+    try:
+        decoded_data = unquote(data)
+        padded = decoded_data + "=" * (-len(decoded_data) % 4)
+        raw = base64.urlsafe_b64decode(padded)
+        value = json.loads(raw.decode("utf-8"))
+    except (binascii.Error, UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise OrionLocationError("invalid Orion station descriptor") from exc
+    if not isinstance(value, dict):
+        raise OrionLocationError("invalid Orion station descriptor")
+    return value
 
 
 def _host_from_request_header(value: str) -> str:
@@ -124,11 +132,10 @@ def playback_response(
         "streamUrl": stream_url,
         "hasPlaylist": has_playlist,
         "isRealtime": True,
-        "maxTimeout": 60,
-        "bufferingTimeout": 20,
-        "connectingTimeout": 10,
-        "contentType": descriptor.stream_mime or analysis.stream_mime,
-        "codec": descriptor.stream_format or analysis.stream_codec,
+        "autoSelect": True,
+        "connectingTimeout": 20,
+        "bufferingTimeout": 30,
+        "startAtLivePoint": True,
         "_links": {},
     }
     provider_base = (base_url or get_settings().local_base_url).rstrip("/")
@@ -143,7 +150,10 @@ def playback_response(
             "hasPlaylist": has_playlist,
             "isRealtime": True,
             "maxTimeout": 60,
-            "streams": [dict(stream) for _ in range(INFINITE_STREAMLIST_SIZE)],
+            # The protobuf field is repeated because a provider may offer
+            # genuine alternatives.  Repeating one URL hundreds of times is
+            # neither a fallback nor part of the confirmed contract.
+            "streams": [stream],
         },
         "_links": {
             "bmx_nowplaying": {

@@ -21,21 +21,27 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-BASSWIESN `2.0.0` is the current release. Its release gate covers software,
+BASSWIESN `2.5.0` is the current release. Its release gate covers software,
 real Chromium workflows, clean installation and supported real-hardware
-read-back. Experimental functions are kept out of the normal user path or
-marked LAB. The project does not claim a 7-hour or 24-hour stability result;
-those duration tests were not performed for this release.
+read-back. Easy Mode is the default UI, while experimental functions are kept
+out of the normal user path or marked LAB. Long-playback evidence and
+continuous HTTP reachability are reported separately rather than turned into
+an unsupported blanket uptime claim.
 
-## Supported device profiles
+## Supported hardware
 
 Read-only discovery and diagnostics can describe additional SoundTouch models.
 Critical setup writes fail closed and are currently profile-bound to the exact
-researched firmware build `27.0.6.46330.5043500` for:
+researched firmware build for:
 
 - SoundTouch 20 SCM and SM2/Series III variants
 - SoundTouch 30 SCM and SM2/Series III variants
 - SoundTouch Portable SCM
+
+## Supported firmware
+
+Critical writes are validated for exact build `27.0.6.46330.5043500` on the
+profiles above.
 
 Variant, platform/module type and complete firmware build must all match. A
 radio-reported Product ID must also match; when firmware does not expose it,
@@ -72,6 +78,51 @@ profile. Unknown combinations remain read-only.
   timeline;
 - responsive desktop and mobile Web UI.
 
+## Easy Mode
+
+New installations open in Easy Mode. It presents seven clear areas:
+
+1. Setup
+2. Radios
+3. Remote Control
+4. Presets
+5. Multiroom
+6. Alarm & Timer
+7. Device Settings
+
+Advanced diagnostics and LAB functions remain available through an explicit
+mode switch. Changing the interface mode does not disable backend features.
+
+## Advanced Mode and LAB Mode
+
+Standard Mode exposes stable diagnostics and administrative controls. LAB Mode
+adds clearly marked experimental and manual recovery tools. LAB is not enabled
+by default and never bypasses protected-device or write-profile gates.
+
+## Screenshots
+
+Release screenshots show the real Chromium-tested desktop and mobile Easy Mode
+flows. They are published without household device identities, private
+addresses or hardware backups.
+
+## Quick Install
+
+Download and verify the versioned release asset:
+
+```bash
+mkdir -p "$HOME/basswiesn-2.5.0"
+cd "$HOME/basswiesn-2.5.0"
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.0/basswiesn-docker-release-2.5.0.tar.gz
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.0/SHA256SUMS
+sha256sum -c SHA256SUMS
+tar -xzf basswiesn-docker-release-2.5.0.tar.gz
+cd basswiesn-release
+./install.sh
+```
+
+The installer requires Docker Engine and Docker Compose v2. It creates a local
+`.env` only when one does not already exist and never changes host Wi-Fi.
+
 ## Installation
 
 Requirements:
@@ -98,6 +149,13 @@ Other local ports are `1516` for the SoundTouch compatibility service and
 Never use `docker compose down -v` as an upgrade step.
 
 See [SETUP_READ_HERE.md](SETUP_READ_HERE.md) for the complete workflow.
+
+## First setup and adding a radio
+
+Connect each SoundTouch radio to the home LAN yourself, then open **Setup**.
+Discovery starts only when you press the visible scan button. Select one or
+more radios, review identity/profile, server target and backup status, open the
+preview, start the job and wait for per-radio read-back.
 
 ## Factory-fresh onboarding
 
@@ -129,6 +187,20 @@ local success. Local radio presets and BASSWIESN Multiroom presets are modeled
 separately. A physical preset-button check remains a manual validation step
 when automation cannot press the hardware button.
 
+Use **Online Station Search** to add a station, choose the radio and slot in
+**Preset Builder**, and wait for radio read-back. **Copy Presets** previews and
+verifies every target rather than treating a local database write as success.
+
+### Search Internet radio stations
+
+Use Online Station Search, review compatibility information, add the station,
+then select it in Preset Builder.
+
+### Create and copy presets
+
+Choose a radio and slot, save, and wait for verified read-back. Copy Presets
+shows source/target radios and verifies every copied slot.
+
 ## Playback and recovery
 
 Radio `/now_playing`, source and play state are authoritative. Provider,
@@ -151,6 +223,24 @@ BASSWIESN models master, members, source, clock, output latency and volume as
 separate contracts. With **Preserve existing volumes**, BASSWIESN reads volumes
 before and after zone creation but sends no artificial `SetVolume`. Any change
 made by radio firmware is reported rather than silently corrected.
+
+Optional per-radio start volumes are written and read back before zone
+creation. SoundTouch firmware can still resume the last source, clear mute or
+normalize volume while forming a zone; BASSWIESN reports that observed change.
+Removing one member requires read-back from both the master and removed radio.
+
+## Remote control, alarms and device settings
+
+Remote Control exposes real radio keys and an optional safe-start-volume
+checkbox. When it is off, BASSWIESN does not change volume before playback.
+Alarm & Timer and Device Settings remain fully available in Easy Mode.
+
+## Backup and restore
+
+Setup captures reachable identity, routing, presets and supported device-state
+evidence with SHA-256 hashes before critical writes. Restore previews its exact
+scope and verifies the resulting radio state. A routing-only rollback is never
+called a full device restore.
 
 ## Metadata and artwork
 
@@ -178,7 +268,7 @@ contain a manifest plus SHA-256 checksums. The write ledger records the action,
 device, requested state, backup reference, result, read-back and origin without
 storing secrets.
 
-## Safety
+## Security and safety
 
 - Configure completely protected radios by both IP and stable device ID.
 - Protection is evaluated before network transport, including DNS-resolved and
@@ -220,6 +310,52 @@ make test-release    # complete software suite
 
 Visible user workflows are exercised with Chromium/Playwright. Hardware tests
 remain separate and require explicit target authorization.
+
+## Docker commands
+
+Run these commands from the unpacked `basswiesn-release` directory:
+
+```bash
+docker compose up -d          # start
+docker compose down           # stop; preserves the bind-mounted data directory
+docker compose restart        # restart
+docker compose ps             # status
+docker compose logs -f        # follow logs
+```
+
+## Updating
+
+To update, download and verify the new release in a separate directory, copy
+the existing `.env` and `data/` only after making a backup, then run
+`./install.sh`. Never use `docker compose down -v` as an update step.
+
+To uninstall, run `docker compose down` and archive the local `.env` and
+`data/` before deleting the release directory. BASSWIESN does not provide a
+destructive one-command uninstall.
+
+## Backup commands
+
+Stop BASSWIESN for a consistent filesystem backup, then archive configuration
+and runtime data:
+
+```bash
+docker compose down
+tar -czf "basswiesn-backup-$(date +%Y%m%d).tar.gz" .env data
+docker compose up -d
+```
+
+## Troubleshooting
+
+- Radio appears offline: use the visible recheck action. BASSWIESN can perform
+  bounded rediscovery and accepts a new IP only after device-ID verification.
+- Preset does not play: run Preset Checker and inspect radio read-back,
+  provider and stream evidence. `BROKEN` is not repaired without preview.
+- Multiroom volume changed: SoundTouch firmware may normalize it during zone
+  formation; inspect the displayed before/after values.
+- Setup does not allow a write: verify the exact firmware/product/variant
+  profile. Unknown combinations deliberately remain read-only.
+- For support, export a redacted diagnostic bundle; never publish `.env`, the
+  runtime database or hardware backups.
 
 ## Contributing
 

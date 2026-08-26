@@ -1,4 +1,4 @@
-# BASSWIESN 2.0 Feature Status
+# BASSWIESN 2.5 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
@@ -8,6 +8,8 @@ test exists.
 
 ### Web interface
 
+- Easy Mode is the default for new installations and exposes only Setup,
+  Radios, Remote Control, Presets, Multiroom, Alarm & Timer and Device Settings
 - responsive dashboard and device views
 - guided Setup 2.0 with visible preview and job progress
 - presets, stations, playback remote and Multiroom controls
@@ -22,6 +24,8 @@ test exists.
 - protected IP and advertised device-ID filtering before unicast follow-up
 - `/info` identity read-back for devices found by the current action only
 - stable device ID with safe DHCP-address rebinding
+- bounded rediscovery after transport failure, with verified IP migration and
+  circuit-breaker recovery instead of extended stale-address backoff
 - exact model, firmware, product, variant and platform evidence
 - failed current identity read-back makes setup ineligible even when historic
   data remains stored
@@ -83,6 +87,8 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - divergence marker, reconciliation and rollback states
 - station logo/source icon data where supported by the normal preset contract
 - distinct BASSWIESN Multiroom presets
+- per-slot checker states `VALID`, `WARNING`, `BROKEN` and `UNKNOWN`, based on
+  radio read-back, source/account, provider, stream and local mapping evidence
 
 ### Metadata and artwork
 
@@ -101,6 +107,8 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - clock, output latency and volume treated as separate contracts
 - preserve-volume option sends no BASSWIESN `SetVolume`
 - volumes recorded before and after so firmware changes remain visible
+- optional per-radio start volumes, verified before zone creation
+- bounded Master and member read-back when removing a single live member
 - BASSWIESN Multiroom preset reconstruction
 
 ### Diagnostics and persistence

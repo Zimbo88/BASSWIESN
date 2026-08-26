@@ -387,12 +387,13 @@ def _exercise_mobile_help_drawer(page: Page, artifact: Path) -> None:
 
 
 def _enable_lab_mode(page: Page) -> None:
-    _open_view(page, "system-settings")
-    toggle = page.locator("#lab-mode")
-    if not toggle.is_checked():
-        toggle.check()
-        page.locator('#system-settings-form button[type="submit"]').click()
-        expect(page.locator("body")).to_have_class(re.compile("lab-mode"))
+    page.locator("#ui-mode-switch").select_option("lab")
+    expect(page.locator("body")).to_have_class(re.compile("lab-mode"))
+
+
+def _enable_standard_mode(page: Page) -> None:
+    page.locator("#ui-mode-switch").select_option("standard")
+    expect(page.locator("body")).to_have_class(re.compile("standard-mode"))
 
 
 @pytest.fixture
@@ -432,6 +433,7 @@ def test_desktop_human_navigation_health_lab_and_evidence(human_ui_server):
             page.on("request", lambda request: image_requests.append(request.url) if request.resource_type == "image" else None)
             page.goto(human_ui_server.url, wait_until="networkidle")
             _ack_first_run(page)
+            _enable_standard_mode(page)
             for view in normal_views:
                 _open_view(page, view)
                 page.screenshot(path=str(artifact_root / f"{width}x{height}-{view}.png"), full_page=True)
@@ -479,6 +481,7 @@ def test_mobile_human_setup_navigation_modals_scroll_and_rollback(human_ui_serve
             page = browser.new_page(viewport={"width": width, "height": height}, is_mobile=True, has_touch=True)
             page.goto(human_ui_server.url, wait_until="networkidle")
             _ack_first_run(page)
+            _enable_standard_mode(page)
             for view in mobile_views:
                 _open_view(page, view)
                 page.screenshot(path=str(artifact_root / f"{width}x{height}-{view}.png"), full_page=True)
@@ -526,5 +529,49 @@ def test_mobile_human_setup_navigation_modals_scroll_and_rollback(human_ui_serve
             page.evaluate("window.scrollTo(0, 0)")
             page.wait_for_timeout(100)
             page.screenshot(path=str(artifact_root / f"{width}x{height}-setup-complete-rollback.png"), full_page=True)
+            page.close()
+        browser.close()
+
+
+def test_easy_mode_human_flow_is_reduced_and_usable_on_desktop_and_mobile(human_ui_server):
+    artifact_root = Path("test-artifacts/2.5.0/easy-mode")
+    artifact_root.mkdir(parents=True, exist_ok=True)
+    easy_views = {"setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"}
+
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
+        for width, height in ((1440, 900), (390, 844), (430, 932)):
+            page = browser.new_page(
+                viewport={"width": width, "height": height},
+                is_mobile=width <= 430,
+                has_touch=width <= 430,
+            )
+            page.goto(human_ui_server.url, wait_until="networkidle")
+            _ack_first_run(page)
+            page.locator("#ui-mode-switch").select_option("easy")
+            expect(page.locator("body")).to_have_class(re.compile("easy-mode"))
+
+            visible_views = set(page.locator(".topnav > .nav-button:visible").evaluate_all(
+                "nodes => nodes.map(node => node.dataset.view)"
+            ))
+            assert visible_views == easy_views
+            assert not page.locator(".advanced-nav:visible").count()
+
+            for view in ("setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"):
+                _open_view(page, view)
+            _open_view(page, "devices")
+            expect(page.locator("[data-remove-device]:visible").first).to_be_visible()
+            assert page.locator(".device-status-badges:visible").count() == 0
+            assert page.locator(".policy-line:visible").count() == 0
+            _open_view(page, "controls")
+            expect(page.locator("#key-safe-volume-enabled")).not_to_be_checked()
+            _open_view(page, "presets")
+            expect(page.locator("#preset-form")).to_be_visible()
+            expect(page.locator("#online-search-form")).to_be_visible()
+            _open_view(page, "multiroom")
+            expect(page.locator("#multiroom-form")).to_be_visible()
+            expect(page.locator("#multiroom-methods")).not_to_be_visible()
+            _assert_no_body_overflow(page)
+            page.screenshot(path=str(artifact_root / f"{width}x{height}-easy-flow.png"), full_page=True)
             page.close()
         browser.close()

@@ -14,8 +14,10 @@ from defusedxml import ElementTree as SafeET
 from sqlalchemy.orm import Session
 
 from basswiesn.app.config import get_settings
-from basswiesn.app.models import Device, DiscoveryEvent
+from basswiesn.app.core.masterlog import write_masterlog
+from basswiesn.app.models import Device, DiscoveryEvent, RuntimeState, utc_now
 from basswiesn.app.services.events import create_event
+from basswiesn.app.services.device_state import runtime_state_key
 from basswiesn.app.services.network_security import (
     pinned_http_target,
     validate_local_soundtouch_url,
@@ -256,6 +258,14 @@ def upsert_discovered_device(db: Session, discovered: DiscoveryDevice) -> Device
     device.model = discovered.model or device.model
     device.last_seen = datetime.now(UTC)
     device.reachable = True
+    if discovered.identity_verified:
+        # A descriptor whose advertised and parsed identities agree is a
+        # stronger reachability signal than a stale circuit-breaker entry.
+        # Reset only connectivity state; playback/source state remains radio
+        # read-back territory.
+        device.failure_count = 0
+        device.last_failed_at = None
+        device.offline_reason = ""
     device.discovery_method = discovered.method
     device.discovery_confidence = discovered.confidence
     device.discovery_last_seen = datetime.now(UTC)
@@ -269,6 +279,219 @@ def upsert_discovered_device(db: Session, discovered: DiscoveryDevice) -> Device
     else:
         create_event(db, "device_discovered", device_id=device.device_id, payload={"ip": discovered.ip_address, "method": discovered.method})
     return device
+
+
+def _reset_rediscovered_runtime_state(
+    db: Session,
+    device: Device,
+    *,
+    old_ip: str,
+    observed_at: datetime,
+) -> None:
+    row = (
+        db.query(RuntimeState)
+        .filter(RuntimeState.key == runtime_state_key(device.device_id))
+        .one_or_none()
+    )
+    if row is None:
+        row = RuntimeState(key=runtime_state_key(device.device_id), value="{}")
+        db.add(row)
+    try:
+        stored = json.loads(row.value or "{}")
+    except (TypeError, ValueError, json.JSONDecodeError):
+        stored = {}
+    keepalive = stored.get("playback_keepalive")
+    if not isinstance(keepalive, dict):
+        keepalive = {}
+    keepalive.update(
+        {
+            "consecutive_failures": 0,
+            "failure_count": 0,
+            "paused": False,
+            "next_retry_at": "",
+            "backoff_seconds": 0,
+            "circuit_state": "closed",
+            "skip_reason": "",
+            "last_error": "",
+            "last_rediscovery_at": observed_at.isoformat(),
+            "rediscovery_status": "ip_changed" if old_ip and old_ip != device.ip_address else "endpoint_verified",
+            "rediscovered_from_ip": old_ip,
+            "rediscovered_to_ip": device.ip_address,
+        }
+    )
+    stored["playback_keepalive"] = keepalive
+    row.value = json.dumps(stored, ensure_ascii=False)
+    row.updated_at = utc_now()
+
+
+async def rediscover_device_by_id(
+    db: Session,
+    device_id: str,
+    *,
+    interface: str = "",
+    timeout_seconds: int | None = None,
+    candidates: list[SSDPCandidate] | None = None,
+) -> dict:
+    """Rediscover one stored radio without probing discovery bystanders.
+
+    SSDP M-SEARCH is multicast. Responses are inspected locally and only a
+    candidate that already advertises the requested authoritative device ID
+    may receive a descriptor request. This distinction is essential for
+    protected radios and for quiet recovery from DHCP address changes.
+    """
+
+    target_id = str(device_id or "").strip().upper()
+    if not target_id:
+        return {"status": "invalid_identity", "verified": False}
+    if is_explicit_discovery_target_protected(None, target_id):
+        write_masterlog(
+            "device_rediscovery_blocked",
+            device_id=target_id,
+            reason="protected device identity",
+            unicast_attempted=False,
+        )
+        return {"status": "protected", "verified": False, "unicast_attempted": False}
+    stored_device = db.query(Device).filter(Device.device_id == target_id).one_or_none()
+    if stored_device is None:
+        return {"status": "unknown_device", "verified": False}
+
+    settings = get_settings()
+    timeout = timeout_seconds or settings.ssdp_timeout_seconds
+    if not settings.ssdp_enabled and candidates is None:
+        return {"status": "disabled", "verified": False}
+    raw_candidates = (
+        candidates
+        if candidates is not None
+        else await asyncio.to_thread(_send_msearch, timeout, interface)
+    )
+    matches: dict[str, SSDPCandidate] = {}
+    for candidate in raw_candidates:
+        advertised_id = _device_id_from_ssdp(candidate)
+        if advertised_id != target_id:
+            continue
+        candidate_host = urlparse(candidate.location).hostname or candidate.remote_ip
+        if (
+            is_protected_ip(candidate_host)
+            or is_protected_ip(candidate.remote_ip)
+            or is_explicit_discovery_target_protected(candidate.remote_ip, advertised_id)
+        ):
+            record_discovery_event(
+                db,
+                {
+                    **candidate.to_dict(),
+                    "device_id": target_id,
+                    "method": "ssdp_rediscovery",
+                    "result": "blocked",
+                    "confidence": 0,
+                    "raw": {"reason": "protected device access blocked"},
+                },
+            )
+            db.commit()
+            return {"status": "protected", "verified": False, "unicast_attempted": False}
+        validation = validate_local_soundtouch_url(
+            candidate.location,
+            allowed_ports=SOUNDTOUCH_DESCRIPTOR_PORTS,
+        )
+        if validation.ok:
+            matches[candidate.location] = candidate
+
+    if not matches:
+        write_masterlog(
+            "device_rediscovery_not_found",
+            device_id=target_id,
+            advertised_candidates=len(raw_candidates),
+            matching_candidates=0,
+            unicast_attempted=False,
+        )
+        return {
+            "status": "not_found",
+            "verified": False,
+            "advertised_candidates": len(raw_candidates),
+            "unicast_attempted": False,
+        }
+
+    errors: list[dict] = []
+    for candidate in matches.values():
+        ok, fields, reason = await _fetch_descriptor(candidate, timeout_seconds=timeout)
+        if not ok:
+            errors.append({"reason": reason, "details": fields})
+            continue
+        descriptor_id = _device_id_from_descriptor(fields, candidate)
+        if descriptor_id != target_id:
+            errors.append({"reason": "descriptor identity mismatch"})
+            continue
+        ip_address = _ip_from_location(candidate.location, candidate.remote_ip)
+        if is_explicit_discovery_target_protected(ip_address, descriptor_id):
+            errors.append({"reason": "protected device access blocked after descriptor validation"})
+            continue
+        old_ip = str(stored_device.ip_address or "")
+        observed_at = datetime.now(UTC)
+        discovered = DiscoveryDevice(
+            device_id=target_id,
+            ip_address=ip_address,
+            name=str(fields.get("friendlyName") or stored_device.name or ""),
+            model=str(fields.get("modelName") or fields.get("modelDescription") or stored_device.model or "SoundTouch"),
+            location=candidate.location,
+            method="ssdp_rediscovery",
+            confidence=100,
+            descriptor_validated=True,
+            identity_verified=True,
+            interface=candidate.interface,
+            raw={"ssdp": candidate.to_dict(), "descriptor": fields},
+        )
+        device = upsert_discovered_device(db, discovered)
+        _reset_rediscovered_runtime_state(
+            db,
+            device,
+            old_ip=old_ip,
+            observed_at=observed_at,
+        )
+        record_discovery_event(db, {**discovered.to_dict(), "result": "verified"})
+        create_event(
+            db,
+            "device_rediscovered",
+            device_id=target_id,
+            payload={
+                "old_ip": old_ip,
+                "new_ip": ip_address,
+                "ip_changed": bool(old_ip and old_ip != ip_address),
+                "method": "ssdp_identity_match",
+            },
+        )
+        db.commit()
+        write_masterlog(
+            "device_rediscovered",
+            device_id=target_id,
+            old_ip=old_ip,
+            radio_ip=ip_address,
+            ip_changed=bool(old_ip and old_ip != ip_address),
+            identity_verified=True,
+            circuit_breaker_state="closed",
+            unicast_attempted=True,
+        )
+        return {
+            "status": "ip_changed" if old_ip and old_ip != ip_address else "endpoint_verified",
+            "verified": True,
+            "device_id": target_id,
+            "old_ip": old_ip,
+            "new_ip": ip_address,
+            "ip_changed": bool(old_ip and old_ip != ip_address),
+            "unicast_attempted": True,
+        }
+
+    write_masterlog(
+        "device_rediscovery_failed",
+        device_id=target_id,
+        matching_candidates=len(matches),
+        error_count=len(errors),
+        unicast_attempted=True,
+    )
+    return {
+        "status": "verification_failed",
+        "verified": False,
+        "errors": errors,
+        "unicast_attempted": True,
+    }
 
 
 async def discover_ssdp(db: Session, *, interface: str = "", timeout_seconds: int | None = None, candidates: list[SSDPCandidate] | None = None) -> dict:

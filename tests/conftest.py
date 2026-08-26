@@ -5,9 +5,26 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Public tests use synthetic protected targets and must not depend on a
-# developer's private .env file.
-os.environ.setdefault("PROTECTED_DEVICE_IPS", "192.168.50.25")
-os.environ.setdefault("PROTECTED_DEVICE_IDS", "CCDDEEFF0011")
+# developer's private .env file. Existing protections are retained so a test
+# run can never weaken the operator's hardware safety policy.
+os.environ["PROTECTED_DEVICE_IPS"] = ",".join(
+    value
+    for value in (
+        os.environ.get("PROTECTED_DEVICE_IPS", ""),
+        os.environ.get("BASSWIESN_PROTECTED_DEVICE_IPS", ""),
+        "192.168.50.25",
+    )
+    if value
+)
+os.environ["PROTECTED_DEVICE_IDS"] = ",".join(
+    value
+    for value in (
+        os.environ.get("PROTECTED_DEVICE_IDS", ""),
+        os.environ.get("BASSWIESN_PROTECTED_DEVICE_IDS", ""),
+        "CCDDEEFF0011",
+    )
+    if value
+)
 
 from basswiesn.app import db as app_db
 from basswiesn.app.config import get_settings

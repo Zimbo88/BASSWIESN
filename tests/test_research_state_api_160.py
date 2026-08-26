@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
+from basswiesn.app import db as app_db
 from basswiesn.app.db import get_db
 from basswiesn.app.db.migrations import ensure_schema_baseline
 from basswiesn.app.models import Device, MetadataState, RequestLog, ReportingState, Setting, Station
@@ -38,13 +39,14 @@ pytestmark = pytest.mark.unit
 
 
 @pytest.fixture
-def state_app(tmp_path):
+def state_app(tmp_path, monkeypatch):
     engine = create_engine(
         f"sqlite:///{tmp_path / 'research-state.db'}",
         connect_args={"check_same_thread": False},
     )
     ensure_schema_baseline(engine)
     factory = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+    monkeypatch.setattr(app_db, "SessionLocal", factory)
 
     def override_db():
         db = factory()

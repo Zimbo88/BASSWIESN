@@ -791,7 +791,7 @@ async def _unsupported_provider_contract(
             "status": 501,
             "detail": (
                 f"{provider_id} {contract} is not backed by a confirmed product "
-                "contract and is disabled in BASSWIESN 2.0.0."
+                "contract and is disabled in BASSWIESN 2.5.0."
             ),
             "provider": provider_id,
             "contract": contract,
@@ -912,7 +912,15 @@ def _persist_orion_station_contract(
 @router.get("/core02/svc-bmx-adapter-orion/prod/orion/station")
 async def orion_station(request: Request, db: Session = Depends(get_db)) -> JSONResponse:
     data = request.query_params.get("data", "")
-    decoded = decode_orion_data(data)
+    try:
+        decoded = decode_orion_data(data)
+    except OrionLocationError as exc:
+        write_masterlog(
+            "orion_station_descriptor_rejected",
+            reason=str(exc),
+            encoded_length=len(data),
+        )
+        raise HTTPException(status_code=400, detail="invalid Orion station descriptor") from exc
     descriptor = StationDescriptor(
         name=decoded.get("name", "Custom Station"),
         stream_url=decoded.get("streamUrl", ""),
@@ -970,7 +978,13 @@ async def orion_station(request: Request, db: Session = Depends(get_db)) -> JSON
             error=type(exc).__name__,
         )
     log_request(db, direction="in", service="orion", method=request.method, path=request.url.path, host=request.headers.get("host", ""), status_code=200)
-    write_masterlog("streamlist_infinite_served", station_id=descriptor.tunein_id, station_name=descriptor.name, stream_url=redact_url(analysis.stream_url_resolved or analysis.stream_url_original))
+    write_masterlog(
+        "orion_audio_contract_served",
+        station_id=descriptor.tunein_id,
+        station_name=descriptor.name,
+        stream_url=redact_url(analysis.stream_url_resolved or analysis.stream_url_original),
+        stream_candidates=len(response.get("audio", {}).get("streams", [])),
+    )
     return JSONResponse(response)
 
 

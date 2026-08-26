@@ -170,6 +170,43 @@ async def _read_volume(device: Device) -> int | None:
         return None
 
 
+def _requested_start_volumes(payload: dict, devices: list[Device]) -> dict[str, int]:
+    if not payload.get("set_start_volumes"):
+        return {}
+    raw = payload.get("start_volumes")
+    if not isinstance(raw, dict):
+        raise HTTPException(status_code=400, detail="start_volumes must be an object keyed by device id")
+    expected_ids = {device.device_id for device in devices}
+    supplied_ids = {str(key) for key in raw}
+    if supplied_ids != expected_ids:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "start_volumes must contain exactly the selected radios", "expected": sorted(expected_ids), "received": sorted(supplied_ids)},
+        )
+    result: dict[str, int] = {}
+    for device_id, value in raw.items():
+        try:
+            volume = int(value)
+        except (TypeError, ValueError) as exc:
+            raise HTTPException(status_code=400, detail=f"start volume for {device_id} must be an integer") from exc
+        if volume < 0 or volume > 100:
+            raise HTTPException(status_code=400, detail=f"start volume for {device_id} must be 0..100")
+        result[str(device_id)] = volume
+    return result
+
+
+async def _write_volume_verified(device: Device, volume: int, *, purpose: str) -> int:
+    client = _client_for(device, purpose=purpose)
+    await client.post_xml("/volume", f"<volume>{volume}</volume>")
+    observed = await _read_volume(device)
+    if observed != volume:
+        raise HTTPException(
+            status_code=502,
+            detail={"error": "multiroom start volume readback mismatch", "device_id": device.device_id, "requested": volume, "observed": observed},
+        )
+    return observed
+
+
 def _optional_xml(value) -> tuple[ET.Element | None, str | None]:
     if isinstance(value, BaseException):
         return None, value.__class__.__name__
@@ -392,13 +429,17 @@ async def multiroom_preview(payload: dict, db: Session = Depends(get_db)) -> dic
     member_ids = payload.get("member_device_ids", [])
     members = _members_or_404(db, member_ids, master)
     devices = [master, *members]
+    preserve_volumes = bool(payload.get("preserve_volumes") or payload.get("no_volume_change"))
+    start_volumes = _requested_start_volumes(payload, devices)
+    if preserve_volumes and start_volumes:
+        raise HTTPException(status_code=400, detail="preserve_volumes and set_start_volumes are mutually exclusive")
     protected = [device.device_id for device in devices if is_protected_device(device)]
     current = []
     if payload.get("read_volumes"):
         for device in devices:
             protected_device = is_protected_device(device)
             current.append({"device_id": device.device_id, "name": device.name, "ip_address": device.ip_address, "protected": protected_device, "volume": None if protected_device else await _read_volume(device), "read_skipped": "protected_device" if protected_device else None})
-    return {"dry_run": True, "master": master.device_id, "members": [m.device_id for m in members], "xml": zone_payload(master, members), "preserve_volumes": bool(payload.get("preserve_volumes") or payload.get("no_volume_change")), "latency_mode": payload.get("latency_mode") or "SYNC_TO_ZONE", "current_volumes": current, "protected_devices": protected, "blocked": bool(protected)}
+    return {"dry_run": True, "master": master.device_id, "members": [m.device_id for m in members], "xml": zone_payload(master, members), "preserve_volumes": preserve_volumes, "set_start_volumes": bool(start_volumes), "start_volumes": start_volumes, "latency_mode": payload.get("latency_mode") or "SYNC_TO_ZONE", "current_volumes": current, "protected_devices": protected, "blocked": bool(protected)}
 
 
 @router.post("/multiroom/set")
@@ -414,6 +455,10 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
     if volume < 0 or volume > 100:
         raise HTTPException(status_code=400, detail="volume must be 0..100")
     preserve_volumes = bool(payload.get("preserve_volumes") or payload.get("no_volume_change"))
+    devices = [master, *members]
+    start_volumes = _requested_start_volumes(payload, devices)
+    if preserve_volumes and start_volumes:
+        raise HTTPException(status_code=400, detail="preserve_volumes and set_start_volumes are mutually exclusive")
     api_core._require_memory_checked(master, payload)
     latency_mode = str(payload.get("latency_mode") or "SYNC_TO_ZONE")
     if latency_mode not in {"SYNC_TO_ZONE", "SYNC_TO_ROOM"}:
@@ -427,27 +472,32 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
             "xml": xml,
             "memory_check": api_core._memory_check_plan(master),
             "preserve_volumes": preserve_volumes,
+            "set_start_volumes": bool(start_volumes),
+            "start_volumes": start_volumes,
             "protected_devices": protected,
             "blocked": bool(protected),
         }
-    _require_unprotected_devices([master, *members], action="multiroom_set")
+    _require_unprotected_devices(devices, action="multiroom_set")
     operation_id = uuid4().hex
     write_masterlog("multiroom_action", action="set", master_device_id=master.device_id, member_count=len(members))
-    before_volumes = {device.device_id: await _read_volume(device) for device in [master, *members]} if preserve_volumes else {}
+    before_volumes = {device.device_id: await _read_volume(device) for device in devices}
     before_zones: dict[str, object] = {}
-    for device in [master, *members]:
+    for device in devices:
         try:
             before_zones[device.device_id] = _zone_summary(
                 await _client_for(device, purpose="multiroom_set_backup").get_xml("/getZone")
             )
         except Exception as exc:
             before_zones[device.device_id] = {"known": False, "error": exc.__class__.__name__}
-    for device in [master, *members]:
+    if start_volumes:
+        for device in devices:
+            await _write_volume_verified(device, start_volumes[device.device_id], purpose="multiroom_start_volume")
+    for device in devices:
         await _client_for(device, purpose="multiroom_set_latency").post_xml("/rebroadcastlatencymode", f'<rebroadcastlatencymode mode="{latency_mode}" />')
     response = await _client_for(master, purpose="multiroom_set_topology").post_xml("/setZone", xml)
     playback = None
-    if not preserve_volumes:
-        for device in [master, *members]:
+    if not preserve_volumes and not start_volumes:
+        for device in devices:
             await _client_for(device, purpose="multiroom_set_volume").post_xml("/volume", f"<volume>{volume}</volume>")
     if payload.get("station_id"):
         from basswiesn.app.routers.stations_presets import play_station_on_device
@@ -457,14 +507,16 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
     elif payload.get("preset_button"):
         key_payload = {"key": f"PRESET_{int(payload['preset_button'])}"}
         if not preserve_volumes:
-            key_payload["safe_volume"] = volume
+            key_payload["safe_volume"] = start_volumes.get(master.device_id, volume)
         playback = await api_core.send_key_command(master.device_id, key_payload, db)
         await asyncio.sleep(1.0)
-    # A source start can restore each radio's stored startup volume. Re-apply
-    # the requested group value immediately after playback begins.
-    if not preserve_volumes:
-        for device in [master, *members]:
-            await _client_for(device, purpose="multiroom_set_volume_readjust").post_xml("/volume", f"<volume>{volume}</volume>")
+    # A common group volume is an explicit post-zone target.  Individual
+    # start volumes are different: the contract promises to set and verify
+    # them *before* zone creation, then report any Bose-firmware changes.  Do
+    # not silently fight the firmware after /setZone.
+    if not preserve_volumes and not start_volumes:
+        for device in devices:
+            await _write_volume_verified(device, volume, purpose="multiroom_set_volume_readjust")
     else:
         await asyncio.sleep(1.5)
     verification = []
@@ -477,16 +529,27 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
         verification = []
         volume_warnings = []
         volume_observations = []
-        for device in [master, *members]:
+        for device in devices:
             client = _client_for(device, purpose="multiroom_set_readback")
             current = await client.get_xml("/getZone")
             current_volume = await client.get_xml("/volume")
             summary = _zone_summary(current)
             actual_volume = int(ET.fromstring(current_volume).findtext("actualvolume", "-1"))
             before_volume = before_volumes.get(device.device_id)
-            volume_changed = preserve_volumes and before_volume is not None and actual_volume != before_volume
+            requested_start_volume = start_volumes.get(device.device_id)
+            volume_changed = (
+                preserve_volumes
+                and before_volume is not None
+                and actual_volume != before_volume
+            ) or (
+                requested_start_volume is not None
+                and actual_volume != requested_start_volume
+            )
             if volume_changed:
-                volume_warnings.append({"device_id": device.device_id, "before": before_volume, "after": actual_volume})
+                warning = {"device_id": device.device_id, "before": before_volume, "after": actual_volume}
+                if requested_start_volume is not None:
+                    warning.update({"requested_start_volume": requested_start_volume, "origin": "firmware_after_zone"})
+                volume_warnings.append(warning)
             if preserve_volumes:
                 volume_observations.append(
                     {
@@ -496,9 +559,22 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
                         "changed": volume_changed if before_volume is not None else None,
                     }
                 )
+            elif requested_start_volume is not None:
+                volume_observations.append(
+                    {
+                        "device_id": device.device_id,
+                        "before": before_volume,
+                        "requested_start_volume": requested_start_volume,
+                        "after": actual_volume,
+                        "changed_after_zone": actual_volume != requested_start_volume,
+                    }
+                )
             zone_ok = summary["master_device_id"] == master.device_id
-            requested_volume_ok = True if preserve_volumes else actual_volume == volume
-            verification.append({"device_id": device.device_id, "name": device.name, "ok": zone_ok and requested_volume_ok, "zone_ok": zone_ok, "zone": summary, "volume": actual_volume, "volume_before": before_volume, "volume_preserved": (not volume_changed) if preserve_volumes and before_volume is not None else None})
+            expected_volume = start_volumes.get(device.device_id, volume)
+            # Individual values were already read back before /setZone.  A
+            # later firmware normalization is evidence, not a failed write.
+            requested_volume_ok = True if preserve_volumes or start_volumes else actual_volume == expected_volume
+            verification.append({"device_id": device.device_id, "name": device.name, "ok": zone_ok and requested_volume_ok, "zone_ok": zone_ok, "zone": summary, "volume": actual_volume, "expected_volume": None if preserve_volumes else expected_volume, "volume_before": before_volume, "volume_preserved": (not volume_changed) if preserve_volumes and before_volume is not None else None, "start_volume_verified_before_zone": requested_start_volume is not None, "firmware_volume_changed": bool(volume_changed) if requested_start_volume is not None else None})
         return all(item["ok"] for item in verification)
 
     for verify_attempt in range(1, 5):
@@ -519,6 +595,14 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
             volume_warnings=volume_warnings_seen,
             automatic_volume_action="NONE",
         )
+    elif start_volumes:
+        write_masterlog(
+            "multiroom_start_volume_observation",
+            master_device_id=master.device_id,
+            volume_observations=volume_observations,
+            volume_warnings=volume_warnings_seen,
+            automatic_volume_action="SET_BEFORE_ZONE_ONLY",
+        )
     if not all(item["ok"] for item in verification):
         record_action(
             db,
@@ -528,7 +612,7 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
             action="multiroom_set",
             trigger="webui",
             phase="READBACK_MISMATCH",
-            requested_state={"master": master.device_id, "members": [item.device_id for item in members], "preserve_volumes": preserve_volumes, "volume": None if preserve_volumes else volume, "latency_mode": latency_mode},
+            requested_state={"master": master.device_id, "members": [item.device_id for item in members], "preserve_volumes": preserve_volumes, "set_start_volumes": bool(start_volumes), "start_volumes": start_volumes, "volume": None if preserve_volumes or start_volumes else volume, "latency_mode": latency_mode},
             backup_ref=f"inline:multiroom:{operation_id}:before_state",
             before_state={"zones": before_zones, "volumes": before_volumes},
             result="zone_readback_not_verified",
@@ -545,7 +629,7 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
         action="multiroom_set",
         trigger="webui",
         phase="VERIFIED",
-        requested_state={"master": master.device_id, "members": [item.device_id for item in members], "preserve_volumes": preserve_volumes, "volume": None if preserve_volumes else volume, "latency_mode": latency_mode},
+        requested_state={"master": master.device_id, "members": [item.device_id for item in members], "preserve_volumes": preserve_volumes, "set_start_volumes": bool(start_volumes), "start_volumes": start_volumes, "volume": None if preserve_volumes or start_volumes else volume, "latency_mode": latency_mode},
         backup_ref=f"inline:multiroom:{operation_id}:before_state",
         before_state={"zones": before_zones, "volumes": before_volumes},
         result="zone_readback_verified",
@@ -554,7 +638,7 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
     )
     db.commit()
     write_masterlog("multiroom_action_complete", action="set", master_device_id=master.device_id, verified=True)
-    return {"dry_run": False, "target": master.ip_address, "master": master.name, "members": [m.name for m in members], "volume": None if preserve_volumes else volume, "preserve_volumes": preserve_volumes, "volume_warnings": volume_warnings_seen, "volume_observations": volume_observations, "volume_rollbacks": [], "automatic_volume_action": "NONE" if preserve_volumes else "SET_REQUESTED_VOLUME", "latency_mode": latency_mode, "playback": playback, "xml": xml, "response": response, "verification": verification}
+    return {"dry_run": False, "target": master.ip_address, "master": master.name, "members": [m.name for m in members], "volume": None if preserve_volumes or start_volumes else volume, "preserve_volumes": preserve_volumes, "set_start_volumes": bool(start_volumes), "start_volumes": start_volumes, "volume_warnings": volume_warnings_seen, "volume_observations": volume_observations, "volume_rollbacks": [], "automatic_volume_action": "NONE" if preserve_volumes else "SET_INDIVIDUAL_START_VOLUMES_BEFORE_ZONE" if start_volumes else "SET_REQUESTED_VOLUME", "latency_mode": latency_mode, "playback": playback, "xml": xml, "response": response, "verification": verification}
 
 
 @router.post("/multiroom/clear")
@@ -633,17 +717,13 @@ async def multiroom_clear_all(payload: dict, db: Session = Depends(get_db)) -> d
 @router.post("/multiroom/remove-device")
 async def multiroom_remove_device(payload: dict, db: Session = Depends(get_db)) -> dict:
     """Remove one radio from the live zone only; never delete local device records."""
-    from basswiesn.app.models import Setting
-    lab = db.query(Setting).filter(Setting.key == "lab_mode").one_or_none()
-    if lab is None or str(lab.value).lower() != "true":
-        raise HTTPException(status_code=403, detail={"error": "experimental_lab_only", "experimental": True})
     if str(payload.get("confirmation") or "") != "REMOVE MEMBER":
-        raise HTTPException(status_code=409, detail={"error": "confirmation_required", "confirmation": "REMOVE MEMBER", "experimental": True})
+        raise HTTPException(status_code=409, detail={"error": "confirmation_required", "confirmation": "REMOVE MEMBER"})
     target = api_core._device_or_404(db, str(payload.get("device_id") or ""))
     require_unprotected_device(target, action="multiroom_remove_device", requester="multiroom", method="POST", endpoint="/setZone")
     write_masterlog("multiroom_action", action="remove_device", device_id=target.device_id, radio_ip=target.ip_address)
     try:
-        target_zone = _zone_summary(await SoundTouchClient(target.ip_address).get_xml("/getZone"))
+        target_zone = _zone_summary(await _client_for(target, purpose="multiroom_remove_target_readback").get_xml("/getZone"))
     except Exception as exc:
         target_zone = {"active": False, "master_device_id": "", "members": [], "error": str(exc) or exc.__class__.__name__}
     master_id = target_zone["master_device_id"] if target_zone.get("active") else ""
@@ -658,7 +738,7 @@ async def multiroom_remove_device(payload: dict, db: Session = Depends(get_db)) 
             if is_protected_device(candidate):
                 continue
             try:
-                candidate_zone = _zone_summary(await SoundTouchClient(candidate.ip_address).get_xml("/getZone"))
+                candidate_zone = _zone_summary(await _client_for(candidate, purpose="multiroom_remove_discovery").get_xml("/getZone"))
             except Exception:
                 continue
             if candidate_zone["active"] and _zone_contains_device(candidate_zone, target):
@@ -671,7 +751,7 @@ async def multiroom_remove_device(payload: dict, db: Session = Depends(get_db)) 
 
     master = api_core._device_or_404(db, master_id)
     require_unprotected_device(master, action="multiroom_remove_device_master", requester="multiroom", method="POST", endpoint="/setZone")
-    master_zone = _zone_summary(await SoundTouchClient(master.ip_address).get_xml("/getZone"))
+    master_zone = _zone_summary(await _client_for(master, purpose="multiroom_remove_master_readback").get_xml("/getZone"))
     if master_zone["master_device_id"] == target.device_id:
         raise HTTPException(status_code=409, detail="Das Hauptradio kann nicht einzeln entfernt werden. Nutze 'Alle Gruppen auflösen' oder wähle zuerst ein anderes Hauptradio.")
     remaining_members = [
@@ -688,17 +768,57 @@ async def multiroom_remove_device(payload: dict, db: Session = Depends(get_db)) 
         if device is not None and device.device_id != master.device_id:
             remaining.append(device)
     xml = zone_payload(master, remaining)
-    response = await SoundTouchClient(master.ip_address).post_xml("/setZone", xml)
-    await asyncio.sleep(0.7)
-    try:
-        verify_target = _zone_summary(await SoundTouchClient(target.ip_address).get_xml("/getZone"))
-    except Exception as exc:
-        verify_target = {"active": False, "master_device_id": "", "members": [], "error": str(exc) or exc.__class__.__name__}
-    verify_master = _zone_summary(await SoundTouchClient(master.ip_address).get_xml("/getZone"))
+    operation_id = uuid4().hex
+    response = await _client_for(master, purpose="multiroom_remove_member").post_xml("/setZone", xml)
+    verify_target: dict = {}
+    verify_master: dict = {}
+    readback_attempts: list[dict] = []
+    removed = False
+    # /setZone acknowledgement precedes the distributed topology update on
+    # real 27.0.6 radios.  Poll briefly instead of treating the first cached
+    # /getZone response as final.
+    for attempt in range(1, 11):
+        await asyncio.sleep(0.35 if attempt == 1 else 0.5)
+        try:
+            verify_target = _zone_summary(await _client_for(target, purpose="multiroom_remove_target_verify").get_xml("/getZone"))
+        except Exception as exc:
+            verify_target = {"active": False, "master_device_id": "", "members": [], "error": str(exc) or exc.__class__.__name__}
+        try:
+            verify_master = _zone_summary(await _client_for(master, purpose="multiroom_remove_master_verify").get_xml("/getZone"))
+        except Exception as exc:
+            verify_master = {"active": True, "master_device_id": master.device_id, "members": [], "error": str(exc) or exc.__class__.__name__}
+        master_excludes_target = not _zone_contains_device(verify_master, target) and verify_master.get("master_device_id") != target.device_id
+        target_is_standalone = not verify_target.get("active")
+        removed = master_excludes_target and target_is_standalone
+        readback_attempts.append({
+            "attempt": attempt,
+            "master_excludes_target": master_excludes_target,
+            "target_is_standalone": target_is_standalone,
+        })
+        if removed:
+            break
     still_configured = db.query(Device).filter(Device.device_id == target.device_id).one_or_none() is not None
-    removed = not _zone_contains_device(verify_master, target) and verify_master.get("master_device_id") != target.device_id
+    record_action(
+        db,
+        job_id=operation_id,
+        device_id=master.device_id,
+        ip_address=master.ip_address,
+        action="multiroom_remove_member",
+        trigger="webui",
+        phase="VERIFIED" if removed else "READBACK_MISMATCH",
+        requested_state={"master": master.device_id, "removed_member": target.device_id, "remaining": [item.device_id for item in remaining]},
+        backup_ref=f"inline:multiroom:{operation_id}:before_state",
+        before_state={"master_zone": master_zone, "target_zone": target_zone},
+        result="member_removal_verified" if removed else "member_removal_not_verified",
+        readback={"master_zone": verify_master, "target_zone": verify_target, "attempts": readback_attempts},
+        verified=removed,
+    )
+    db.commit()
     write_masterlog("multiroom_action_complete", action="remove_device", device_id=target.device_id, master_device_id=master.device_id, removed=removed, device_still_configured=still_configured)
-    return {"removed": removed, "device_id": target.device_id, "name": target.name, "master": master.name, "remaining": [item.name for item in remaining], "device_still_configured": still_configured, "response": response, "verify_target": verify_target, "verify_master": verify_master}
+    result = {"removed": removed, "device_id": target.device_id, "name": target.name, "master": master.name, "remaining": [item.name for item in remaining], "device_still_configured": still_configured, "response": response, "verify_target": verify_target, "verify_master": verify_master, "readback_attempts": readback_attempts}
+    if not removed:
+        raise HTTPException(status_code=502, detail={"error": "Das Radio wurde nicht durch Master- und Member-Readback als entfernt bestätigt.", **result})
+    return result
 
 
 @router.get("/multiroom/recent-stations")

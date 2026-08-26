@@ -16,7 +16,7 @@ class _InfoClient:
     async def get_xml(self, path: str) -> str:
         assert path == "/info"
         return (
-            '<info deviceID="112233445566"><name>Kitchen</name>'
+            '<info deviceID="B1C2D3E4F5A6"><name>Kitchen</name>'
             f"<margeAccountUUID>{self.account_id}</margeAccountUUID></info>"
         )
 
@@ -31,7 +31,7 @@ def test_existing_local_account_still_reapplies_route_after_reboot(monkeypatch, 
     adapter = RadioSetupAdapter()
     route_calls: list[str] = []
     row = SimpleNamespace(
-        device_id="112233445566",
+        device_id="B1C2D3E4F5A6",
         ip_address="192.0.2.112",
         expected_model="SoundTouch 20",
     )

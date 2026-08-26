@@ -80,6 +80,10 @@ _OPTIONAL_HTTP_BACKUP_ENDPOINTS = {
     "/bass": "bass.xml",
     "/marge": "marge.xml",
     "/serviceAvailability": "serviceAvailability.xml",
+    "/language": "language.xml",
+    "/clockDisplay": "clockDisplay.xml",
+    "/systemtimeout": "systemtimeout.xml",
+    "/rebroadcastlatencymode": "rebroadcastlatencymode.xml",
 }
 _REDACTION_RE = re.compile(
     r"(?is)(password|passwd|secret|token|authorization|private[_ -]?key)"

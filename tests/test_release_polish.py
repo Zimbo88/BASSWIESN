@@ -415,10 +415,10 @@ def test_system_health_reports_https_disabled_by_default():
         health = client.get("/api/system/healthcheck").json()
 
     assert version.status_code == 200
-    assert version.json()["version"] == "2.0.0"
+    assert version.json()["version"] == "2.5.0"
     assert readiness.status_code == 200
     assert readiness.json()["ready"] is True
-    assert readiness.json()["version"] == "2.0.0"
+    assert readiness.json()["version"] == "2.5.0"
     check = next(item for item in health["checks"] if item["name"] == "https_status")
     assert check["status"] == "green"
     assert "optional HTTPS disabled" in check["message"]

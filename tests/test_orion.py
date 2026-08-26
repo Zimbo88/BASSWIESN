@@ -29,6 +29,11 @@ def test_orion_descriptor_roundtrip(monkeypatch):
     assert not location.startswith("/core02")
 
 
+def test_invalid_orion_descriptor_fails_closed_without_unicode_crash():
+    with pytest.raises(OrionLocationError, match="invalid Orion station descriptor"):
+        decode_orion_data("p2JhZA")
+
+
 def test_station_location_rejects_missing_safe_host(monkeypatch):
     monkeypatch.delenv("BASSWIESN_LAN_HOST", raising=False)
     monkeypatch.delenv("BASSWIESN_LOCAL_BASE_URL", raising=False)
@@ -72,8 +77,35 @@ def test_orion_direct_stream_is_not_marked_as_playlist():
 
     assert payload["audio"]["hasPlaylist"] is False
     assert payload["audio"]["streams"][0]["hasPlaylist"] is False
-    assert len(payload["audio"]["streams"]) >= 1000
+    assert len(payload["audio"]["streams"]) == 1
     assert {row["streamUrl"] for row in payload["audio"]["streams"]} == {"http://example.test/live.mp3"}
+
+
+def test_orion_stream_uses_only_confirmed_bmx_fields():
+    payload = playback_response(
+        StationDescriptor(
+            "Bayern 1",
+            "http://example.test/live.mp3",
+            stream_format="mp3",
+            stream_mime="audio/mpeg",
+        )
+    )
+
+    stream = payload["audio"]["streams"][0]
+    assert stream == {
+        "streamUrl": "http://example.test/live.mp3",
+        "hasPlaylist": False,
+        "isRealtime": True,
+        "autoSelect": True,
+        "connectingTimeout": 20,
+        "bufferingTimeout": 30,
+        "startAtLivePoint": True,
+        "_links": {},
+    }
+    assert payload["audio"]["maxTimeout"] == 60
+    assert "contentType" not in stream
+    assert "codec" not in stream
+    assert "maxTimeout" not in stream
 
 
 def test_orion_playlist_stream_is_marked_as_playlist():

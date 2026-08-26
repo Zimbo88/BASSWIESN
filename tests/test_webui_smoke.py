@@ -93,7 +93,7 @@ def test_webui_controls_are_present_and_wired_to_javascript():
     assert 'class="requires-ssh"' not in setup_assistant
     assert ".requires-ssh" in open("basswiesn/app/static/app.css", encoding="utf-8").read()
     assert 'id="setup-apply-dry-run"' in html
-    assert '<button class="nav-button" data-view="schedules">Wecker Timer</button>' in html
+    assert '<button class="nav-button" data-view="schedules" data-easy>Wecker Timer</button>' in html
     assert '<section class="view" id="view-schedules">' in html
     assert 'name="stop_action"' in html
     assert 'id="schedule-days-select"' in html
@@ -125,9 +125,12 @@ def test_webui_controls_are_present_and_wired_to_javascript():
     assert 'data-schedule-toggle' in js
     assert 'id="station-play-safe-volume"' in html
     assert 'max="5" value="1"' in html
-    assert 'safe_volume: dryRun ? null : safeVolume' in js
+    assert 'if (!dryRun && safeVolume !== null) body.safe_volume = safeVolume' in js
     assert 'if (deviceId) await playStation(created.id, true)' in js
-    assert 'Lautstärke ${safeVolume} wird vor und nach dem Start' in js
+    assert 'Die aktuelle Radio-Lautstärke bleibt unverändert.' in js
+    assert 'id="ui-mode-switch"' in html
+    assert 'id="key-safe-volume-enabled"' in html
+    assert 'if (safeVolume !== null) payload.safe_volume = safeVolume' in js
 
 
 def test_standalone_remote_controls_are_present_and_wired_to_remote_javascript():
@@ -139,7 +142,9 @@ def test_standalone_remote_controls_are_present_and_wired_to_remote_javascript()
     assert 'id="remote-volume"' in html
     assert "remote-play-station" in js
     assert "/stations/${encodeURIComponent(stationId)}/play" in js
-    assert "{ key, safe_volume: Number(volume.value) }" in js
+    assert 'id="remote-safe-start-enabled"' in html
+    assert 'if (safeStartEnabled.checked) payload.safe_volume' in js
+    assert 'await setVolume(volume.value || 5)' not in js
     assert "data-volume-step" in html
     assert "data-key" in html
 
@@ -151,6 +156,23 @@ def test_standalone_remote_controls_are_present_and_wired_to_remote_javascript()
         if button_id and button_id not in js and not data_keys.intersection(allowed_data_buttons):
             missing_buttons.append(button_id)
     assert missing_buttons == []
+
+
+def test_easy_mode_is_persisted_and_only_changes_ui_complexity():
+    with TestClient(create_web_app()) as client:
+        saved = client.post("/api/system/settings", json={"ui_mode": "easy"})
+        current = client.get("/api/system/settings")
+
+    assert saved.status_code == 200
+    assert saved.json()["ui_mode"] == "easy"
+    assert saved.json()["lab_mode"] == "false"
+    assert current.json()["ui_mode"] == "easy"
+    html, _parser = _controls()
+    css = open("basswiesn/app/static/app.css", encoding="utf-8").read()
+    js = open("basswiesn/app/static/app.js", encoding="utf-8").read()
+    assert 'data-view="setup" data-normal data-easy' in html
+    assert '.easy-mode .topnav > :not([data-easy])' in css
+    assert 'new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"])' in js
 
 
 def test_diagnostics_service_health_reports_internal_online(monkeypatch):

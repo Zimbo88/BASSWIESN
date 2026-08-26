@@ -135,7 +135,7 @@ function updateServerIdentity() {
 function ensureIntegratedPanels() {
   if (!document.getElementById("preset-checker-grid")) {
     const panel = document.createElement("section");
-    panel.className = "panel preset-checker";
+    panel.className = "panel preset-checker easy-hidden";
     panel.innerHTML = `<div class="panel-title-row"><div><h3 data-i18n="preset_checker">Preset Checker</h3><p class="muted-copy">Radio-Slots und BASSWIESN-Daten read-only vergleichen.</p></div><button class="command" id="preset-checker-refresh" type="button" data-i18n="refresh">Aktualisieren</button></div><p class="form-message" id="preset-checker-message"></p><div class="preset-checker-grid" id="preset-checker-grid"></div>`;
     const lastResult = document.getElementById("preset-result")?.closest(".panel");
     if (lastResult) lastResult.after(panel);
@@ -385,7 +385,7 @@ async function refreshStations(selectedStationId = "") {
   }
 }
 
-async function loadPresetsForSelectedDevice() {
+async function loadPresetsForSelectedDevice(probe = false) {
   const deviceId = selectedDeviceId();
   if (!deviceId) {
     state.presets = [];
@@ -399,7 +399,7 @@ async function loadPresetsForSelectedDevice() {
     state.presets = [];
   }
   try {
-    state.presetStatus = await getJson(`/api/presets/${encodeURIComponent(deviceId)}/status`);
+    state.presetStatus = await getJson(`/api/presets/${encodeURIComponent(deviceId)}/status${probe ? "?probe=true" : ""}`);
   } catch {
     state.presetStatus = null;
   }
@@ -411,14 +411,15 @@ function renderPresetChecker() {
   const grid = document.getElementById("preset-checker-grid");
   if (!grid) return;
   const slots = state.presetStatus?.slots || [];
-  const labels = { green: i18nT("match"), yellow: i18nT("different"), red: i18nT("missing"), unknown: i18nT("unreadable") };
+  const labels = { valid: "VALID", warning: "WARNING", broken: "BROKEN", unknown: "UNKNOWN" };
   grid.innerHTML = slots.length ? slots.map((slot) => {
     const radioLocation = slot.radio?.location || "–";
     const basswiesnLocation = slot.basswiesn?.location || "–";
     const sync = state.presetStatus?.sync_state || {};
     const source = slot.basswiesn?.source || "–";
     const stream = slot.basswiesn?.stream_url || "–";
-    return `<article class="preset-compare-card preset-${escapeHtml(slot.state)}"><header><strong>Preset ${slot.button}</strong>${statusPill(labels[slot.state] || i18nT("unknown"))}</header><div class="preset-compare-columns"><section><b>Radio</b><span>${escapeHtml(slot.radio?.title || "–")}</span><small>${escapeHtml(slot.radio?.source || "–")} · Readback ${escapeHtml(text(state.presetStatus?.radio_error ? "fehlt" : "vorhanden"))}</small></section><section><b>BASSWIESN</b><span>${escapeHtml(slot.basswiesn?.title || "–")}</span><small>${escapeHtml(slot.basswiesn?.provider || source)} · Logo ${escapeHtml(slot.basswiesn?.logo_mode || "radio_symbol")}</small></section></div><p class="preset-dependency-line"><strong>Quelle:</strong> ${escapeHtml(source)} · <strong>Stream:</strong> ${escapeHtml(stream)}</p><small>Letzter Sync: ${escapeHtml(text(sync.updated_at || sync.last_success_at, "unbekannt"))}</small><details><summary>${escapeHtml(i18nT("details"))}</summary><p>${escapeHtml((slot.changed_fields || []).join(", ") || labels[slot.state] || "–")}</p><div class="preset-raw-grid"><section><b>Radio location/XML</b><pre>${escapeHtml(radioLocation)}</pre></section><section><b>BASSWIESN location/XML</b><pre>${escapeHtml(basswiesnLocation)}</pre></section></div></details></article>`;
+    const checks = (slot.checks || []).map((check) => `<li class="preset-check preset-${escapeHtml(String(check.status || "unknown").toLowerCase())}"><strong>${escapeHtml(check.id || "check")}: ${escapeHtml(check.status || "UNKNOWN")}</strong><span>${escapeHtml(check.message || "")}</span></li>`).join("");
+    return `<article class="preset-compare-card preset-${escapeHtml(slot.state)}"><header><strong>Preset ${slot.button}</strong>${statusPill(labels[slot.state] || slot.verdict || "UNKNOWN")}</header><p>${escapeHtml(slot.message || "")}</p><div class="preset-compare-columns"><section><b>Radio</b><span>${escapeHtml(slot.radio?.title || "–")}</span><small>${escapeHtml(slot.radio?.source || "–")} · Readback ${escapeHtml(text(state.presetStatus?.radio_error ? "fehlt" : "vorhanden"))}</small></section><section><b>BASSWIESN</b><span>${escapeHtml(slot.basswiesn?.title || "–")}</span><small>${escapeHtml(slot.basswiesn?.provider || source)} · Logo ${escapeHtml(slot.basswiesn?.logo_mode || "radio_symbol")}</small></section></div><p class="preset-dependency-line"><strong>Quelle:</strong> ${escapeHtml(source)} · <strong>Stream:</strong> ${escapeHtml(stream)}</p><small>Letzter Sync: ${escapeHtml(text(sync.updated_at || sync.last_success_at, "unbekannt"))}</small><details><summary>${escapeHtml(i18nT("details"))}</summary><ul class="preset-check-list">${checks}</ul><p>${escapeHtml((slot.changed_fields || []).join(", ") || labels[slot.state] || "–")}</p><div class="preset-raw-grid"><section><b>Radio location/XML</b><pre>${escapeHtml(radioLocation)}</pre></section><section><b>BASSWIESN location/XML</b><pre>${escapeHtml(basswiesnLocation)}</pre></section></div></details></article>`;
   }).join("") : `<div class="empty">${escapeHtml(state.presetStatus?.radio_error || i18nT("unknown"))}</div>`;
 }
 
@@ -557,6 +558,7 @@ function renderAllRadioButtons() {
 
 function renderDevices() {
   const isProtected = (d) => Boolean(d?.protected);
+  const networkDevices = state.devices.filter((d) => !isProtected(d));
   const protectedBadge = (d) => isProtected(d) ? statusPill("GESCHÜTZT · kein Netzwerkzugriff", "bad") : "";
   const healthFor = (d) => state.deviceHealth.find((item) => item.device_id === d.device_id) || d.policy || {};
   const policyLine = (d) => {
@@ -566,9 +568,9 @@ function renderDevices() {
     const circuit = statusPill(`Circuit ${text(h.circuit_state, "unbekannt")}`, h.circuit_state === "open" ? "pending" : h.circuit_state === "closed" ? "ready" : "");
     const next = h.next_planned_poll ? ` · nächste Prüfung ${escapeHtml(h.next_planned_poll)}` : "";
     const reason = h.last_skip_reason ? ` · ${escapeHtml(h.last_skip_reason)}` : "";
-    return `<small class="policy-line">${safe}${circuit} · ${escapeHtml(text(h.suspected_state, "Zustand unbekannt"))} · Backoff ${escapeHtml(text(h.current_backoff_seconds, 0))}s${next}${reason}</small>`;
+    return `<small class="policy-line easy-hidden">${safe}${circuit} · ${escapeHtml(text(h.suspected_state, "Zustand unbekannt"))} · Backoff ${escapeHtml(text(h.current_backoff_seconds, 0))}s${next}${reason}</small>`;
   };
-  const badges = (d) => { const s = state.deviceStatuses.find((item) => item.device_id === d.device_id); if (!s) return `<div class="device-status-badges">${statusPill("Status unbekannt / noch nicht geprüft")}</div>`; const flag = (label, value, yes, no) => statusPill(`${label} ${value === null ? "unbekannt / noch nicht geprüft" : value ? yes : no}`, value === true ? "ready" : ""); const sshLabel = s.ssh === "available" ? "SSH verfügbar" : s.ssh === "unavailable" ? "SSH nicht verfügbar" : "SSH noch nicht geprüft"; return `<div class="device-status-badges">${statusPill(sshLabel, s.ssh === "available" ? "ready" : "")}${flag("Persistent SSH", s.persistent_ssh, "ja", "nein")}${flag("remote_services", s.remote_services, "aktiv", "fehlt")}${flag("Host Redirect", s.host_redirect, "ja", "nein")}</div>`; };
+  const badges = (d) => { const s = state.deviceStatuses.find((item) => item.device_id === d.device_id); if (!s) return `<div class="device-status-badges easy-hidden">${statusPill("Status unbekannt / noch nicht geprüft")}</div>`; const flag = (label, value, yes, no) => statusPill(`${label} ${value === null ? "unbekannt / noch nicht geprüft" : value ? yes : no}`, value === true ? "ready" : ""); const sshLabel = s.ssh === "available" ? "SSH verfügbar" : s.ssh === "unavailable" ? "SSH nicht verfügbar" : "SSH noch nicht geprüft"; return `<div class="device-status-badges easy-hidden">${statusPill(sshLabel, s.ssh === "available" ? "ready" : "")}${flag("Persistent SSH", s.persistent_ssh, "ja", "nein")}${flag("remote_services", s.remote_services, "aktiv", "fehlt")}${flag("Host Redirect", s.host_redirect, "ja", "nein")}</div>`; };
   const offlineLine = (d) => d.reachable === false ? `<small>offline · zuletzt gesehen ${escapeHtml(text(d.last_seen_at, "unbekannt"))}${d.offline_reason ? ` · ${escapeHtml(d.offline_reason)}` : ""}</small>` : "";
   const repairButton = (d) => !isProtected(d) && ["mixed", "bose", "other"].includes(d.configured_for) ? `<button class="command" data-view-jump="setup" type="button">Setup reparieren</button>` : "";
   const checkButton = (d) => isProtected(d) ? `<span class="protected-label">vollständig geschützt</span>` : `<button class="command" data-check-device="${escapeHtml(d.device_id)}" type="button">erneut prüfen</button>`;
@@ -626,15 +628,15 @@ function renderDevices() {
   [presetSelect, masterSelect, settingsSelect, keyDeviceSelect, displayDeviceSelect, displayRecoveryDeviceSelect, scheduleDeviceSelect, renameSelect, telemetrySelect, radioLogDeviceSelect, sshLogDeviceSelect, setupLiveTestDevice, cloneSourceSelect, cloneTargetSelect, deviceInfoSelect, guidedSetupSelect, profileApplyDevice, recoveryDeviceSelect, recoveryResetDeviceSelect, mediaDeviceSelect, stationPlayDevice, nativeStationDevice, nativeStationAddDevice, bassCapabilitiesDevice, sourceNameDevice, wirelessProfileDevice, zoneStatusDevice, cloudRouteDevice, setupWizardDevice, backupDeviceSelect, referenceSourceDevice, referenceTargetDevice, telnetDeviceSelect, batteryPatchDeviceSelect, standbyClockDeviceSelect, maintenanceRebootDevice, scenarioMaster, scenarioTriggerDevice].forEach((select) => {
     if (!select) return;
     const previous = select.value;
-    select.innerHTML = state.devices.length
-      ? state.devices.map((d) => `<option value="${escapeHtml(d.device_id)}">${escapeHtml(text(d.name, d.device_id))} · ${escapeHtml(text(d.ip_address))}</option>`).join("")
-      : `<option value="">No devices</option>`;
-    if (previous) select.value = previous;
+    select.innerHTML = networkDevices.length
+      ? networkDevices.map((d) => `<option value="${escapeHtml(d.device_id)}">${escapeHtml(text(d.name, d.device_id))} · ${escapeHtml(text(d.ip_address))}</option>`).join("")
+      : `<option value="">No usable devices</option>`;
+    if (previous && networkDevices.some((d) => d.device_id === previous)) select.value = previous;
   });
   if (scheduleMasterSelect) {
     const previous = scheduleMasterSelect.value;
-    scheduleMasterSelect.innerHTML = `<option value="">Kein Multiroom</option>` + (state.devices.length
-      ? state.devices.map((d) => `<option value="${escapeHtml(d.device_id)}">${escapeHtml(text(d.name, d.device_id))} · ${escapeHtml(text(d.ip_address))}</option>`).join("")
+    scheduleMasterSelect.innerHTML = `<option value="">Kein Multiroom</option>` + (networkDevices.length
+      ? networkDevices.map((d) => `<option value="${escapeHtml(d.device_id)}">${escapeHtml(text(d.name, d.device_id))} · ${escapeHtml(text(d.ip_address))}</option>`).join("")
       : "");
     scheduleMasterSelect.value = previous || "";
   }
@@ -649,16 +651,18 @@ function renderDevices() {
   renderScenarioMembers();
   syncResearchHealthDeviceSelect();
   renderAllRadioButtons();
+  syncSafeStartControl();
 }
 
 function syncResearchHealthDeviceSelect() {
   const select = document.getElementById("health-device-select");
   if (!select) return;
   const previous = select.value || state.researchHealth.deviceId;
-  select.innerHTML = state.devices.length
-    ? state.devices.map((device) => `<option value="${escapeHtml(device.device_id)}">${escapeHtml(text(device.name, device.device_id))} · ${escapeHtml(text(device.ip_address))}</option>`).join("")
+  const available = state.devices.filter((device) => !device.protected);
+  select.innerHTML = available.length
+    ? available.map((device) => `<option value="${escapeHtml(device.device_id)}">${escapeHtml(text(device.name, device.device_id))} · ${escapeHtml(text(device.ip_address))}</option>`).join("")
     : `<option value="">Noch kein Radio vorhanden</option>`;
-  if (previous && state.devices.some((device) => device.device_id === previous)) select.value = previous;
+  if (previous && available.some((device) => device.device_id === previous)) select.value = previous;
   state.researchHealth.deviceId = select.value || "";
 }
 
@@ -947,15 +951,37 @@ function renderMultiroomMembers() {
   if (view) view.hidden = false;
   const box = document.getElementById("multiroom-members");
   if (!box) return;
+  const selectedMembers = new Set(Array.from(box.querySelectorAll("input:checked")).map((node) => node.value));
   const masterId = document.getElementById("multiroom-master")?.value;
   box.innerHTML = state.devices.length
-    ? state.devices.map((device) => `<label class="member-row ${device.protected ? "is-protected" : ""}"><input type="checkbox" value="${escapeHtml(device.device_id)}" ${device.device_id === masterId || device.protected ? "disabled" : ""}><span>${escapeHtml(text(device.name, device.device_id))}${device.protected ? " · GESCHÜTZT" : ""}</span><small>${escapeHtml(text(device.ip_address))}</small></label>`).join("")
+    ? state.devices.map((device) => `<label class="member-row ${device.protected ? "is-protected" : ""}"><input type="checkbox" value="${escapeHtml(device.device_id)}" ${selectedMembers.has(device.device_id) && device.device_id !== masterId && !device.protected ? "checked" : ""} ${device.device_id === masterId || device.protected ? "disabled" : ""}><span>${escapeHtml(text(device.name, device.device_id))}${device.protected ? " · GESCHÜTZT" : ""}</span><small>${escapeHtml(text(device.ip_address))}</small></label>`).join("")
     : `<div class="empty">Add at least two devices first.</div>`;
   const remove = document.getElementById("multiroom-remove-device");
   if (remove) {
     remove.innerHTML = state.devices.map((device) => `<button class="radio-choice ${state.multiroomRemoveDeviceId === device.device_id ? "is-selected" : ""}" type="button" data-multiroom-remove-device="${escapeHtml(device.device_id)}" ${device.protected ? "disabled" : ""}><strong>${escapeHtml(text(device.name, device.device_id))}</strong><small>${escapeHtml(device.ip_address)}${device.protected ? " · geschützt" : ""}</small></button>`).join("");
-    remove.querySelectorAll("[data-multiroom-remove-device]").forEach((button) => button.addEventListener("click", () => { state.multiroomRemoveDeviceId = button.dataset.multiroomRemoveDevice; renderMultiroomMembers(); }));
+    remove.querySelectorAll("[data-multiroom-remove-device]").forEach((button) => button.addEventListener("click", () => {
+      state.multiroomRemoveDeviceId = button.dataset.multiroomRemoveDevice;
+      remove.querySelectorAll("[data-multiroom-remove-device]").forEach((item) => item.classList.toggle("is-selected", item.dataset.multiroomRemoveDevice === state.multiroomRemoveDeviceId));
+    }));
   }
+  renderMultiroomStartVolumes();
+}
+
+function renderMultiroomStartVolumes() {
+  const enabled = document.getElementById("multiroom-start-volumes-enabled")?.checked;
+  const box = document.getElementById("multiroom-start-volumes");
+  if (!box) return;
+  box.hidden = !enabled;
+  if (!enabled) return;
+  const ids = [
+    document.getElementById("multiroom-master")?.value,
+    ...Array.from(document.querySelectorAll("#multiroom-members input:checked")).map((node) => node.value),
+  ].filter(Boolean);
+  const oldValues = new Map(Array.from(box.querySelectorAll("input[data-start-volume]")).map((input) => [input.dataset.startVolume, input.value]));
+  box.innerHTML = ids.map((deviceId) => {
+    const device = state.devices.find((item) => item.device_id === deviceId);
+    return `<label>${escapeHtml(text(device?.name, deviceId))}<input data-start-volume="${escapeHtml(deviceId)}" type="number" min="0" max="100" value="${escapeHtml(oldValues.get(deviceId) || "1")}"></label>`;
+  }).join("");
 }
 
 function renderMultiroomMethods() {
@@ -1219,7 +1245,12 @@ function renderSystemSettings() {
   if (displayMode) displayMode.value = settings.display_metadata_mode || "station_clock";
   const firstRunWarning = document.getElementById("first-run-warning-required");
   if (firstRunWarning) firstRunWarning.value = settings.first_run_warning_required || "true";
-  document.getElementById("lab-mode").checked = settings.lab_mode === "true";
+  const mode = ["easy", "standard", "lab"].includes(settings.ui_mode) ? settings.ui_mode : (settings.lab_mode === "true" ? "lab" : "standard");
+  const modeSetting = document.getElementById("ui-mode-setting");
+  const modeSwitch = document.getElementById("ui-mode-switch");
+  if (modeSetting) modeSetting.value = mode;
+  if (modeSwitch) modeSwitch.value = mode;
+  document.getElementById("lab-mode").checked = mode === "lab";
   document.getElementById("guided-hints").checked = settings.guided_hints !== "false";
   document.getElementById("show-startup-warning").checked = settings.show_startup_warning !== "false";
   document.getElementById("ip-write-guard").checked = settings.ip_write_guard === "true";
@@ -1233,6 +1264,8 @@ function renderSystemSettings() {
   if (allowedIps) allowedIps.value = settings.ip_write_allowed_ips || "";
   const protectedIps = document.getElementById("protected-device-ips");
   if (protectedIps) protectedIps.value = settings.protected_device_ips || settings.effective_protected_device_ips || "";
+  const protectedIds = document.getElementById("protected-device-ids");
+  if (protectedIds) protectedIds.value = settings.protected_device_ids || settings.effective_protected_device_ids || "";
   const updateEnabled = document.getElementById("update-check-enabled");
   if (updateEnabled) updateEnabled.checked = settings.update_check_enabled === "true";
   const manifestUrl = document.getElementById("update-manifest-url");
@@ -1282,7 +1315,7 @@ const ABOUT_COPY = {
     project: "Projekt",
     facts: ["Version", "", "Firmware", "27.0.x", "Verifizierte Geräte", "Arbeitsgrundsätze"],
     principles: ["sichere Abläufe", "niedrige Testlautstärke", "Rücklesen vor Erfolgsmeldungen", "kein Blindvertrauen in Befehle"],
-    backups: "Backups waren problematisch und wurden deaktiviert.",
+    backups: "Backup und Restore sind verfügbar; die Oberfläche zeigt den jeweils nachgewiesenen Umfang.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   en: {
@@ -1303,7 +1336,7 @@ const ABOUT_COPY = {
     project: "Project",
     facts: ["Version", "", "Firmware", "27.0.x", "Verified devices", "Working principles"],
     principles: ["safe workflows", "low test volume", "read back before reporting success", "no blind trust in commands"],
-    backups: "Backups were problematic and have been disabled.",
+    backups: "Backup and restore are available; the interface shows the exact scope that can be verified.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   fr: {
@@ -1324,7 +1357,7 @@ const ABOUT_COPY = {
     project: "Projet",
     facts: ["Version", "", "Firmware", "27.0.x", "Appareils vérifiés", "Principes de travail"],
     principles: ["procédures sûres", "volume de test bas", "relire avant d'annoncer le succès", "pas de confiance aveugle dans les commandes"],
-    backups: "Les sauvegardes posaient problème et ont été désactivées.",
+    backups: "La sauvegarde et la restauration sont disponibles; l’interface indique la portée vérifiable.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   it: {
@@ -1345,7 +1378,7 @@ const ABOUT_COPY = {
     project: "Progetto",
     facts: ["Versione", "", "Firmware", "27.0.x", "Dispositivi verificati", "Principi di lavoro"],
     principles: ["flussi sicuri", "volume di test basso", "rilettura prima del successo", "nessuna fiducia cieca nei comandi"],
-    backups: "I backup erano problematici e sono stati disattivati.",
+    backups: "Backup e ripristino sono disponibili; l’interfaccia mostra l’ambito verificabile.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   es: {
@@ -1366,7 +1399,7 @@ const ABOUT_COPY = {
     project: "Proyecto",
     facts: ["Versión", "", "Firmware", "27.0.x", "Dispositivos verificados", "Principios de trabajo"],
     principles: ["flujos seguros", "volumen de prueba bajo", "leer de vuelta antes de informar éxito", "no confiar ciegamente en comandos"],
-    backups: "Los backups eran problemáticos y se han desactivado.",
+    backups: "La copia de seguridad y la restauración están disponibles; la interfaz muestra el alcance verificable.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   nl: {
@@ -1387,7 +1420,7 @@ const ABOUT_COPY = {
     project: "Project",
     facts: ["Versie", "", "Firmware", "27.0.x", "Geverifieerde apparaten", "Werkprincipes"],
     principles: ["veilige workflows", "laag testvolume", "teruglezen vóór succesmelding", "geen blind vertrouwen in commando's"],
-    backups: "Back-ups waren problematisch en zijn uitgeschakeld.",
+    backups: "Back-up en herstel zijn beschikbaar; de interface toont de aantoonbare reikwijdte.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   ja: {
@@ -1408,7 +1441,7 @@ const ABOUT_COPY = {
     project: "プロジェクト",
     facts: ["バージョン", "", "ファームウェア", "27.0.x", "検証済み機器", "作業原則"],
     principles: ["安全な手順", "低いテスト音量", "成功表示の前に読み戻す", "コマンドを盲信しない"],
-    backups: "バックアップには問題があったため無効化されています。",
+    backups: "バックアップと復元を利用でき、検証可能な範囲が画面に表示されます。",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   }
 };
@@ -1432,7 +1465,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projeto",
     facts: ["Versão", "", "Firmware", "27.0.x", "Dispositivos verificados", "Princípios de trabalho"],
     principles: ["processos seguros", "volume de teste baixo", "read-back antes de indicar sucesso", "não confiar cegamente em comandos"],
-    backups: "Os backups eram problemáticos e foram desativados.",
+    backups: "Backup e restauração estão disponíveis; a interface mostra o escopo verificável.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   da: {
@@ -1453,7 +1486,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projekt",
     facts: ["Version", "", "Firmware", "27.0.x", "Verificerede enheder", "Arbejdsprincipper"],
     principles: ["sikre arbejdsgange", "lav testlydstyrke", "read-back før succesmelding", "ingen blind tillid til kommandoer"],
-    backups: "Backups var problematiske og er deaktiveret.",
+    backups: "Backup og gendannelse er tilgængelige; brugerfladen viser det verificerbare omfang.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   sv: {
@@ -1474,7 +1507,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projekt",
     facts: ["Version", "", "Firmware", "27.0.x", "Verifierade enheter", "Arbetsprinciper"],
     principles: ["säkra arbetsflöden", "låg testvolym", "återläsning före framgångsmeddelande", "ingen blind tillit till kommandon"],
-    backups: "Backuper var problematiska och har stängts av.",
+    backups: "Säkerhetskopiering och återställning finns; gränssnittet visar verifierbar omfattning.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   no: {
@@ -1495,7 +1528,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Prosjekt",
     facts: ["Versjon", "", "Fastvare", "27.0.x", "Verifiserte enheter", "Arbeidsprinsipper"],
     principles: ["sikre arbeidsflyter", "lavt testvolum", "tilbake-lesing før suksessmelding", "ingen blind tillit til kommandoer"],
-    backups: "Backuper var problematiske og er deaktivert.",
+    backups: "Sikkerhetskopi og gjenoppretting er tilgjengelig; grensesnittet viser verifiserbart omfang.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   fi: {
@@ -1516,7 +1549,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projekti",
     facts: ["Versio", "", "Laiteohjelmisto", "27.0.x", "Varmennetut laitteet", "Työperiaatteet"],
     principles: ["turvalliset työnkulut", "matala testivolyymi", "takaisinluku ennen onnistumisilmoitusta", "ei sokeaa luottamusta komentoihin"],
-    backups: "Varmuuskopioissa oli ongelmia ja ne on poistettu käytöstä.",
+    backups: "Varmuuskopiointi ja palautus ovat käytettävissä; käyttöliittymä näyttää varmennetun laajuuden.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   pl: {
@@ -1537,7 +1570,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projekt",
     facts: ["Wersja", "", "Firmware", "27.0.x", "Zweryfikowane urządzenia", "Zasady pracy"],
     principles: ["bezpieczne procesy", "niska głośność testowa", "odczyt zwrotny przed zgłoszeniem sukcesu", "bez ślepego zaufania do poleceń"],
-    backups: "Backupy były problematyczne i zostały wyłączone.",
+    backups: "Kopia zapasowa i przywracanie są dostępne; interfejs pokazuje możliwy do potwierdzenia zakres.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   cs: {
@@ -1558,7 +1591,7 @@ const ABOUT_COPY_EXTENDED = {
     project: "Projekt",
     facts: ["Verze", "", "Firmware", "27.0.x", "Ověřená zařízení", "Pracovní zásady"],
     principles: ["bezpečné postupy", "nízká testovací hlasitost", "zpětné čtení před oznámením úspěchu", "žádná slepá důvěra v příkazy"],
-    backups: "Zálohy byly problematické a byly vypnuty.",
+    backups: "Záloha a obnova jsou dostupné; rozhraní zobrazuje ověřitelný rozsah.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   }
 };
@@ -1583,7 +1616,7 @@ Object.assign(ABOUT_COPY, {
     project: "Projekt",
     facts: ["Verzia", "", "Firmvér", "27.0.x", "Overené zariadenia", "Pracovné zásady"],
     principles: ["bezpečné postupy", "nízka testovacia hlasitosť", "read-back pred oznámením úspechu", "žiadna slepá dôvera v príkazy"],
-    backups: "Zálohy boli problematické a boli vypnuté.",
+    backups: "Záloha a obnova sú dostupné; rozhranie zobrazuje overiteľný rozsah.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   hu: {
@@ -1604,7 +1637,7 @@ Object.assign(ABOUT_COPY, {
     project: "Projekt",
     facts: ["Verzió", "", "Firmware", "27.0.x", "Ellenőrzött eszközök", "Munkaprincipiumok"],
     principles: ["biztonságos folyamatok", "alacsony teszthangerő", "visszaolvasás sikerjelzés előtt", "nincs vak bizalom a parancsokban"],
-    backups: "A biztonsági mentések problémásak voltak, ezért le vannak tiltva.",
+    backups: "A biztonsági mentés és visszaállítás elérhető; a felület a bizonyítható hatókört mutatja.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   ro: {
@@ -1625,7 +1658,7 @@ Object.assign(ABOUT_COPY, {
     project: "Proiect",
     facts: ["Versiune", "", "Firmware", "27.0.x", "Dispozitive verificate", "Principii de lucru"],
     principles: ["fluxuri sigure", "volum de test scăzut", "read-back înainte de raportarea succesului", "fără încredere oarbă în comenzi"],
-    backups: "Backupurile erau problematice și au fost dezactivate.",
+    backups: "Backupul și restaurarea sunt disponibile; interfața arată domeniul verificabil.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   bg: {
@@ -1646,7 +1679,7 @@ Object.assign(ABOUT_COPY, {
     project: "Проект",
     facts: ["Версия", "", "Firmware", "27.0.x", "Проверени устройства", "Работни принципи"],
     principles: ["сигурни процеси", "ниска тестова сила на звука", "read-back преди съобщаване на успех", "без сляпо доверие в команди"],
-    backups: "Backup функциите бяха проблематични и са деактивирани.",
+    backups: "Архивирането и възстановяването са налични; интерфейсът показва проверимия обхват.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   }
 });
@@ -1670,7 +1703,7 @@ Object.assign(ABOUT_COPY, {
     project: "Projekt",
     facts: ["Verzija", "", "Firmware", "27.0.x", "Provjereni uređaji", "Radna načela"],
     principles: ["sigurni postupci", "niska testna glasnoća", "read-back prije prijave uspjeha", "bez slijepog povjerenja u naredbe"],
-    backups: "Backupi su bili problematični i onemogućeni su.",
+    backups: "Sigurnosna kopija i vraćanje su dostupni; sučelje prikazuje provjerljivi opseg.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   sl: {
@@ -1691,7 +1724,7 @@ Object.assign(ABOUT_COPY, {
     project: "Projekt",
     facts: ["Različica", "", "Firmware", "27.0.x", "Preverjene naprave", "Delovna načela"],
     principles: ["varni postopki", "nizka testna glasnost", "read-back pred prijavo uspeha", "brez slepega zaupanja v ukaze"],
-    backups: "Backupi so bili problematični in so onemogočeni.",
+    backups: "Varnostno kopiranje in obnovitev sta na voljo; vmesnik prikaže preverljiv obseg.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   el: {
@@ -1712,7 +1745,7 @@ Object.assign(ABOUT_COPY, {
     project: "Έργο",
     facts: ["Έκδοση", "", "Firmware", "27.0.x", "Επαληθευμένες συσκευές", "Αρχές εργασίας"],
     principles: ["ασφαλείς διαδικασίες", "χαμηλή ένταση δοκιμής", "read-back πριν από αναφορά επιτυχίας", "όχι τυφλή εμπιστοσύνη σε εντολές"],
-    backups: "Τα backup ήταν προβληματικά και έχουν απενεργοποιηθεί.",
+    backups: "Η δημιουργία και η επαναφορά backup είναι διαθέσιμες· η διεπαφή δείχνει το επαληθεύσιμο εύρος.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   tr: {
@@ -1733,7 +1766,7 @@ Object.assign(ABOUT_COPY, {
     project: "Proje",
     facts: ["Sürüm", "", "Firmware", "27.0.x", "Doğrulanmış cihazlar", "Çalışma ilkeleri"],
     principles: ["güvenli süreçler", "düşük test ses düzeyi", "başarı bildirmeden önce read-back", "komutlara kör güven yok"],
-    backups: "Backuplar sorunluydu ve devre dışı bırakıldı.",
+    backups: "Yedekleme ve geri yükleme kullanılabilir; arayüz doğrulanabilir kapsamı gösterir.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   ru: {
@@ -1754,7 +1787,7 @@ Object.assign(ABOUT_COPY, {
     project: "Проект",
     facts: ["Версия", "", "Прошивка", "27.0.x", "Проверенные устройства", "Принципы работы"],
     principles: ["безопасные процессы", "низкая тестовая громкость", "read-back перед сообщением об успехе", "нет слепого доверия командам"],
-    backups: "Backup был проблемным и отключен.",
+    backups: "Резервное копирование и восстановление доступны; интерфейс показывает проверяемый объём.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   uk: {
@@ -1775,7 +1808,7 @@ Object.assign(ABOUT_COPY, {
     project: "Проєкт",
     facts: ["Версія", "", "Firmware", "27.0.x", "Перевірені пристрої", "Принципи роботи"],
     principles: ["безпечні процеси", "низька тестова гучність", "read-back перед повідомленням про успіх", "без сліпої довіри до команд"],
-    backups: "Backup був проблемним і вимкнений.",
+    backups: "Резервне копіювання та відновлення доступні; інтерфейс показує перевірений обсяг.",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   },
   zh: {
@@ -1796,7 +1829,7 @@ Object.assign(ABOUT_COPY, {
     project: "项目",
     facts: ["版本", "", "Firmware", "27.0.x", "已验证设备", "工作原则"],
     principles: ["安全流程", "低测试音量", "报告成功前 read-back", "不盲目信任命令"],
-    backups: "Backup 曾存在问题，已被停用。",
+    backups: "备份和恢复可用；界面会显示能够验证的确切范围。",
     disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
   }
 });
@@ -1977,11 +2010,25 @@ function translateExactUiPhrases(root = document.body) {
 
 function applyUiPreferences() {
   if (!state.systemSettings) return;
-  const lab = state.systemSettings.lab_mode === "true";
+  const mode = ["easy", "standard", "lab"].includes(state.systemSettings.ui_mode)
+    ? state.systemSettings.ui_mode
+    : (state.systemSettings.lab_mode === "true" ? "lab" : "standard");
   const hints = state.systemSettings.guided_hints !== "false";
-  document.body.classList.toggle("normal-mode", !lab);
-  document.body.classList.toggle("lab-mode", lab);
+  document.body.classList.toggle("easy-mode", mode === "easy");
+  document.body.classList.toggle("standard-mode", mode === "standard");
+  document.body.classList.toggle("lab-mode", mode === "lab");
+  document.body.classList.remove("normal-mode");
   document.body.classList.toggle("guided-hints", hints);
+  const modeSetting = document.getElementById("ui-mode-setting");
+  const modeSwitch = document.getElementById("ui-mode-switch");
+  if (modeSetting) modeSetting.value = mode;
+  if (modeSwitch) modeSwitch.value = mode;
+  if (mode === "easy") {
+    document.querySelector(".advanced-nav")?.removeAttribute("open");
+    const active = document.querySelector(".nav-button.is-active")?.dataset.view;
+    const easyViews = new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"]);
+    if (!easyViews.has(active)) document.querySelector('.nav-button[data-view="setup"]')?.click();
+  }
   document.documentElement.lang = state.systemSettings.web_language || "de";
   window.BasswiesnI18n?.setLanguage(document.documentElement.lang);
   for (const [view, label] of Object.entries({ setup: i18nT("setup"), devices: i18nT("radios"), health: i18nT("status"), presets: i18nT("presets"), "system-settings": i18nT("settings"), telemetry: i18nT("diagnostics"), lab: i18nT("lab") })) {
@@ -1991,6 +2038,27 @@ function applyUiPreferences() {
   const save = document.querySelector("#system-settings-form button[type=submit]");
   if (save) save.textContent = i18nT("save_settings");
   translateCoreUi();
+}
+
+function safeStartStorageKey(deviceId) {
+  return `basswiesn_safe_start_volume_enabled_${deviceId || "none"}`;
+}
+
+function syncSafeStartControl() {
+  const deviceId = document.getElementById("key-device-select")?.value || "";
+  const checkbox = document.getElementById("key-safe-volume-enabled");
+  const field = document.getElementById("key-safe-volume-field");
+  if (!checkbox) return;
+  const stored = localStorage.getItem(safeStartStorageKey(deviceId));
+  checkbox.checked = stored === null ? state.systemSettings?.ui_mode !== "easy" : stored === "true";
+  if (field) field.hidden = !checkbox.checked;
+}
+
+function selectedSafeStartVolume() {
+  if (!document.getElementById("key-safe-volume-enabled")?.checked) return null;
+  const value = Number(document.getElementById("key-safe-volume")?.value ?? 5);
+  if (!Number.isInteger(value) || value < 0 || value > 100) throw new Error("Die sichere Startlautstärke muss zwischen 0 und 100 liegen.");
+  return value;
 }
 
 function applyCapabilityUi() {
@@ -2941,8 +3009,30 @@ document.querySelectorAll(".advanced-nav").forEach((details) => {
 document.getElementById("device-form").addEventListener("submit", saveDeviceForm);
 document.getElementById("setup-device-form").addEventListener("submit", saveDeviceForm);
 document.getElementById("preset-device-select").addEventListener("change", loadPresetsForSelectedDevice);
+document.getElementById("key-device-select")?.addEventListener("change", syncSafeStartControl);
+document.getElementById("key-safe-volume-enabled")?.addEventListener("change", (event) => {
+  const deviceId = document.getElementById("key-device-select")?.value || "";
+  localStorage.setItem(safeStartStorageKey(deviceId), event.currentTarget.checked ? "true" : "false");
+  const field = document.getElementById("key-safe-volume-field");
+  if (field) field.hidden = !event.currentTarget.checked;
+});
 document.querySelectorAll('input[name="button"]').forEach((input) => input.addEventListener("change", renderPresetSlots));
 document.getElementById("multiroom-master").addEventListener("change", renderMultiroomMembers);
+document.getElementById("multiroom-members")?.addEventListener("change", renderMultiroomStartVolumes);
+document.getElementById("multiroom-start-volumes-enabled")?.addEventListener("change", (event) => {
+  if (event.currentTarget.checked) {
+    const preserve = document.querySelector('#multiroom-form input[name="preserve_volumes"]');
+    if (preserve) preserve.checked = false;
+  }
+  renderMultiroomStartVolumes();
+});
+document.querySelector('#multiroom-form input[name="preserve_volumes"]')?.addEventListener("change", (event) => {
+  if (event.currentTarget.checked) {
+    const custom = document.getElementById("multiroom-start-volumes-enabled");
+    if (custom) custom.checked = false;
+  }
+  renderMultiroomStartVolumes();
+});
 
 document.getElementById("maintenance-reboot-now")?.addEventListener("click", async () => {
   const deviceId = document.getElementById("maintenance-reboot-device")?.value;
@@ -3021,6 +3111,20 @@ document.getElementById("system-settings-form")?.addEventListener("submit", asyn
   syncSetupControls();
   document.documentElement.lang = result.web_language || "en";
   document.getElementById("system-settings-output").textContent = JSON.stringify({ ...result, ui_note: i18nT("language_saved_note") }, null, 2);
+});
+
+document.getElementById("ui-mode-switch")?.addEventListener("change", async (event) => {
+  const uiMode = event.currentTarget.value;
+  try {
+    state.systemSettings = await postJson("/api/system/settings", { ui_mode: uiMode });
+    renderSystemSettings();
+    applyUiPreferences();
+    syncSafeStartControl();
+    showToast(`${uiMode === "easy" ? "Easy" : uiMode === "standard" ? "Standard" : "LAB"} Mode aktiviert.`);
+  } catch (error) {
+    renderSystemSettings();
+    showApiError(error, "Modus konnte nicht gespeichert werden");
+  }
 });
 
 document.getElementById("online-search-form").addEventListener("submit", async (event) => {
@@ -3627,10 +3731,14 @@ async function playStation(stationId, dryRun = true) {
   if (!deviceId || !stationId) return;
   const device = state.devices.find((item) => item.device_id === deviceId);
   const station = state.stations.find((item) => String(item.id) === String(stationId));
-  const safeVolume = Number(document.getElementById("station-play-safe-volume")?.value || 1);
-  if (!Number.isInteger(safeVolume) || safeVolume < 0 || safeVolume > 5) return showToast("Die sichere Testlautstärke muss zwischen 0 und 5 liegen.", "error");
-  if (!dryRun && !window.confirm(`${text(station?.name, "Diesen Sender")} auf ${text(device?.name, deviceId)} starten? Lautstärke ${safeVolume} wird vor und nach dem Start per Radio-Readback bestätigt.`)) return;
-  const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/stations/${encodeURIComponent(stationId)}/play`, { dry_run: dryRun, safe_volume: dryRun ? null : safeVolume, trigger: "webui", trigger_type: "station" });
+  let safeVolume = null;
+  try { safeVolume = selectedSafeStartVolume(); } catch (error) { return showToast(error.message, "error"); }
+  if (safeVolume !== null && safeVolume > 5) return showToast("Für einen Senderstart sind höchstens 5 erlaubt.", "error");
+  const safetyCopy = safeVolume === null ? "Die aktuelle Radio-Lautstärke bleibt unverändert." : `Lautstärke ${safeVolume} wird vor dem Start per Readback bestätigt.`;
+  if (!dryRun && !window.confirm(`${text(station?.name, "Diesen Sender")} auf ${text(device?.name, deviceId)} starten? ${safetyCopy}`)) return;
+  const body = { dry_run: dryRun, trigger: "webui", trigger_type: "station" };
+  if (!dryRun && safeVolume !== null) body.safe_volume = safeVolume;
+  const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/stations/${encodeURIComponent(stationId)}/play`, body);
   document.getElementById("station-play-output").textContent = JSON.stringify(result, null, 2);
   showToast(dryRun ? "Wiedergabevorschau erstellt – es wurde kein Audio gestartet." : `Wiedergabe gestartet; Lautstärke ${result.confirmed_volume} per Radio bestätigt.`);
 }
@@ -3685,13 +3793,18 @@ document.getElementById("preset-form").addEventListener("submit", async (event) 
   const formElement = event.currentTarget;
   const data = Object.fromEntries(new FormData(formElement).entries());
   const output = document.getElementById("preset-result");
+  const status = document.getElementById("preset-form-status");
   setFormBusy(formElement, true, "Preset wird gespeichert …");
   output.textContent = "Preset wird an das Radio übertragen und geprüft …";
+  if (status) status.textContent = `Preset ${data.button} wird übertragen und anschließend vom Radio gelesen …`;
   try {
     const result = await postJson(`/api/presets/${encodeURIComponent(data.device_id)}/${data.button}`, { station_id: Number(data.station_id), dry_run: false, memory_checked: true });
     output.textContent = result.dry_run
       ? `Vorschau für Slot ${result.button}. Noch nichts geschrieben.`
       : `Slot ${result.button} wurde auf dem Radio gespeichert und erfolgreich geprüft.`;
+    if (status) status.textContent = result.dry_run
+      ? `Vorschau für Preset ${result.button}; das Radio wurde nicht verändert.`
+      : `Preset ${result.button} wurde gespeichert und durch Radio-Readback bestätigt.`;
     showToast(result.dry_run ? "Preset-Vorschau erstellt" : `Preset ${result.button} ist auf dem Radio gespeichert`);
     await loadPresetsForSelectedDevice();
     if (state.guidedPreset.active && String(data.button) === "1") {
@@ -3700,6 +3813,7 @@ document.getElementById("preset-form").addEventListener("submit", async (event) 
     }
   } catch (error) {
     output.textContent = `Speichern fehlgeschlagen: ${error.message}`;
+    if (status) status.textContent = `Preset wurde nicht als erfolgreich gespeichert: ${error.message}`;
     showApiError(error, "Preset konnte nicht bestätigt werden");
   } finally {
     setFormBusy(formElement, false);
@@ -3714,8 +3828,10 @@ document.getElementById("preset-slot-grid")?.addEventListener("click", async (ev
     if (!deviceId) return showToast("Bitte zuerst ein Radio auswählen.", "error");
     play.disabled = true;
     try {
-      const safeVolume = Number(document.getElementById("key-safe-volume")?.value || 5);
-      const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, { key: `PRESET_${slot}`, safe_volume: safeVolume });
+      const safeVolume = selectedSafeStartVolume();
+      const payload = { key: `PRESET_${slot}` };
+      if (safeVolume !== null) payload.safe_volume = safeVolume;
+      const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, payload);
       document.getElementById("preset-result").textContent = JSON.stringify(result, null, 2);
       await postJson("/api/play-history/start", { device_id: deviceId, station_name: `Preset ${slot}`, trigger: `preset_${slot}`, trigger_type: "preset", preset_button: Number(slot), source: "PRESET" });
       if (state.guidedPreset.active && String(slot) === "1") completeGuidedPresetSetup();
@@ -3874,7 +3990,9 @@ document.getElementById("multiroom-form").addEventListener("submit", async (even
     document.getElementById("multiroom-output").textContent = "Bitte mindestens einen weiteren Raum auswählen.";
     return;
   }
-  const payload = { master_device_id: form.get("master_device_id"), member_device_ids: memberIds, station_id: form.get("station_id") || null, volume: Number(form.get("volume") || 5), preserve_volumes: form.get("preserve_volumes") === "on", latency_mode: form.get("latency_mode"), dry_run: true, memory_checked: true, read_volumes: true };
+  const setStartVolumes = form.get("set_start_volumes") === "on";
+  const startVolumes = Object.fromEntries(Array.from(document.querySelectorAll("#multiroom-start-volumes input[data-start-volume]")).map((input) => [input.dataset.startVolume, Number(input.value)]));
+  const payload = { master_device_id: form.get("master_device_id"), member_device_ids: memberIds, station_id: form.get("station_id") || null, volume: Number(form.get("volume") || 5), preserve_volumes: form.get("preserve_volumes") === "on", set_start_volumes: setStartVolumes, start_volumes: setStartVolumes ? startVolumes : {}, latency_mode: form.get("latency_mode"), dry_run: true, memory_checked: true, read_volumes: true };
   const output = document.getElementById("multiroom-output");
   const preview = document.getElementById("multiroom-preview");
   const confirm = document.getElementById("multiroom-confirm");
@@ -3884,7 +4002,8 @@ document.getElementById("multiroom-form").addEventListener("submit", async (even
     const result = await postJson("/api/multiroom/preview", payload);
     state.multiroomPendingPayload = { ...payload, dry_run: false, read_volumes: false };
     const volumeRows = (result.current_volumes || []).map((item) => `<span>${escapeHtml(text(item.name, item.device_id))} · ${escapeHtml(item.ip_address)} · Lautstärke ${escapeHtml(text(item.volume, "unbekannt"))}</span>`).join("");
-    if (preview) { preview.hidden = false; preview.innerHTML = `<strong>Zonenmaster</strong><span>${escapeHtml(text(result.master))}</span><strong>Teilnehmer</strong><span>${escapeHtml((result.members || []).join(", "))}</span><strong>Aktuelle Lautstärken</strong>${volumeRows || "<span>nicht gelesen</span>"}<strong>Geplante Aktion</strong><span>${result.preserve_volumes ? "BASSWIESN sendet kein SetVolume; Bose-Firmwareänderungen werden nur beobachtet und gemeldet" : `Zone mit Lautstärkelogik ${escapeHtml(payload.volume)}`}; Readback nach Ausführung erforderlich.</span><strong>Schutzstatus</strong><span>${result.blocked ? `Blockiert: ${escapeHtml((result.protected_devices || []).join(", "))}` : "Kein geschütztes Radio in der Vorschau."}</span>`; }
+    const volumePlan = result.preserve_volumes ? "BASSWIESN sendet kein SetVolume; Bose-Firmwareänderungen werden nur beobachtet und gemeldet" : result.set_start_volumes ? `Individuelle Startwerte: ${Object.entries(result.start_volumes || {}).map(([id, value]) => `${escapeHtml(id)} ${escapeHtml(value)}`).join(", ")}` : `Gemeinsame Lautstärke ${escapeHtml(payload.volume)}`;
+    if (preview) { preview.hidden = false; preview.innerHTML = `<strong>Zonenmaster</strong><span>${escapeHtml(text(result.master))}</span><strong>Teilnehmer</strong><span>${escapeHtml((result.members || []).join(", "))}</span><strong>Aktuelle Lautstärken</strong>${volumeRows || "<span>nicht gelesen</span>"}<strong>Geplante Aktion</strong><span>${volumePlan}; Readback nach Ausführung erforderlich.</span><strong>Schutzstatus</strong><span>${result.blocked ? `Blockiert: ${escapeHtml((result.protected_devices || []).join(", "))}` : "Kein geschütztes Radio in der Vorschau."}</span>`; }
     if (confirm) confirm.hidden = Boolean(result.blocked);
     output.textContent = "Vorschau erstellt. Erst die Bestätigung startet die geschützte Aktion.";
   } catch (error) {
@@ -3906,9 +4025,10 @@ document.getElementById("multiroom-confirm")?.addEventListener("click", async (e
     if (!verified) throw new Error("Multiroom-Readback wurde nicht für alle Radios bestätigt.");
     const firmwareVolumeChanges = Array.isArray(result.volume_warnings) ? result.volume_warnings : [];
     const firmwareWarning = firmwareVolumeChanges.length
-      ? `<span>Bose-Firmware änderte trotz ausbleibendem SetVolume: ${firmwareVolumeChanges.map((item) => `${escapeHtml(item.device_id)} ${escapeHtml(item.before)} → ${escapeHtml(item.after)}`).join(", ")}. BASSWIESN hat nicht automatisch zurückkorrigiert.</span>`
+      ? `<span>${result.preserve_volumes ? "Bose-Firmware änderte trotz ausbleibendem SetVolume" : "Bose-Firmware normalisierte Werte nach der bestätigten Startlautstärke"}: ${firmwareVolumeChanges.map((item) => `${escapeHtml(item.device_id)} ${escapeHtml(item.requested_start_volume ?? item.before)} → ${escapeHtml(item.after)}`).join(", ")}. BASSWIESN hat nicht heimlich zurückkorrigiert.</span>`
       : "";
-    output.innerHTML = `<div class="result-status ${firmwareVolumeChanges.length ? "pending" : "ok"}"><strong>${firmwareVolumeChanges.length ? "Multiroom bestätigt – Lautstärkeabweichung beobachtet" : "Multiroom bestätigt"}</strong><span>${escapeHtml(result.master)} ist mit ${(result.members || []).map(escapeHtml).join(", ")} verbunden ${result.preserve_volumes ? "ohne SetVolume durch BASSWIESN" : `bei Lautstärke ${escapeHtml(result.volume)}`}.</span>${firmwareWarning}</div>`;
+    const volumeSummary = result.preserve_volumes ? "ohne SetVolume durch BASSWIESN" : result.set_start_volumes ? "mit einzeln bestätigten Startlautstärken" : `bei Lautstärke ${escapeHtml(result.volume)}`;
+    output.innerHTML = `<div class="result-status ${firmwareVolumeChanges.length ? "pending" : "ok"}"><strong>${firmwareVolumeChanges.length ? "Multiroom bestätigt – Lautstärkeabweichung beobachtet" : "Multiroom bestätigt"}</strong><span>${escapeHtml(result.master)} ist mit ${(result.members || []).map(escapeHtml).join(", ")} verbunden ${volumeSummary}.</span>${firmwareWarning}</div>`;
     document.getElementById("multiroom-preview").hidden = true;
     confirmButton.hidden = true;
     showToast("Multiroom-Gruppe gestartet und per Readback bestätigt");
@@ -3930,9 +4050,16 @@ document.getElementById("multiroom-clear").addEventListener("click", async () =>
 
 document.getElementById("multiroom-remove")?.addEventListener("click", async () => {
   if (!state.multiroomRemoveDeviceId) return showToast("Bitte zuerst ein Radio auswählen.", "error");
-  if (!window.confirm("Experimentelle Lab-Aktion: Das Mitglied wirklich aus der aktiven Gruppe entfernen?")) return;
-  const result = await postJson("/api/multiroom/remove-device", { device_id: state.multiroomRemoveDeviceId, confirmation: "REMOVE MEMBER" });
-  document.getElementById("multiroom-output").innerHTML = `<div class="result-status ok"><strong>${result.already_standalone ? "Radio war bereits allein" : `${escapeHtml(result.name)} wurde herausgelöst`}</strong><span>${result.remaining?.length ? `Verbleibend: ${result.remaining.map(escapeHtml).join(", ")}` : "Keine weitere Gruppe aktiv."}</span></div>`;
+  if (!window.confirm("Dieses Radio aus der aktiven Gruppe entfernen? Es bleibt in BASSWIESN gespeichert.")) return;
+  const output = document.getElementById("multiroom-output");
+  output.textContent = "Neue Topologie wird geschrieben und auf Master sowie Mitglied geprüft …";
+  try {
+    const result = await postJson("/api/multiroom/remove-device", { device_id: state.multiroomRemoveDeviceId, confirmation: "REMOVE MEMBER" });
+    document.getElementById("multiroom-output").innerHTML = `<div class="result-status ok"><strong>${result.already_standalone ? "Radio war bereits allein" : `${escapeHtml(result.name)} wurde herausgelöst`}</strong><span>${result.remaining?.length ? `Verbleibend: ${result.remaining.map(escapeHtml).join(", ")}` : "Keine weitere Gruppe aktiv."}</span><span>Master- und Member-Readback bestätigt.</span></div>`;
+  } catch (error) {
+    output.innerHTML = `<div class="result-status bad"><strong>Mitglied nicht bestätigt entfernt</strong><span>${escapeHtml(error.message)}</span><span>Das Radio bleibt in BASSWIESN gespeichert. Gruppenstatus erneut lesen oder Gruppe kontrolliert auflösen.</span></div>`;
+    showApiError(error, "Mitglied konnte nicht sicher entfernt werden");
+  }
 });
 
 document.getElementById("multiroom-latency-form")?.addEventListener("submit", async (event) => {
@@ -4127,15 +4254,17 @@ async function sendKeyCommand(key, button = null) {
   if (!deviceId || !key) return;
   let confirmation = "";
   if (key === "POWER") {
-    if (!window.confirm(`Power/Standby für ${text(device?.name, deviceId)} senden? Die sichere Lautstärke wird danach geprüft.`)) return;
+    if (!window.confirm(`Power/Standby für ${text(device?.name, deviceId)} senden?`)) return;
     confirmation = "YES";
   }
   if (button) button.disabled = true;
   status.textContent = `${key} wird an ${text(device?.name, deviceId)} gesendet…`;
   status.className = "friendly-status is-working";
   try {
-    const safeVolume = Number(document.getElementById("key-safe-volume")?.value || 5);
-    const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, { key, safe_volume: safeVolume, confirmation, trigger: "webui" });
+    const safeVolume = selectedSafeStartVolume();
+    const payload = { key, confirmation, trigger: "webui" };
+    if (safeVolume !== null) payload.safe_volume = safeVolume;
+    const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, payload);
     document.getElementById("key-command-output").textContent = JSON.stringify(result, null, 2);
     status.textContent = `${text(device?.name, "Radio")} hat den Befehl ${key} angenommen.`;
     status.className = "friendly-status is-ok";
@@ -4312,8 +4441,9 @@ document.addEventListener("click", async (event) => {
   const deviceId = selectedDeviceId();
   try {
     if (id === "preset-checker-refresh") {
-      await loadPresetsForSelectedDevice();
-      document.getElementById("preset-checker-message").textContent = "Vergleich aktualisiert.";
+      document.getElementById("preset-checker-message").textContent = "Radio, Provider und Streams werden read-only geprüft …";
+      await loadPresetsForSelectedDevice(true);
+      document.getElementById("preset-checker-message").textContent = "Prüfung abgeschlossen. UNKNOWN bedeutet: Es fehlt belastbare Evidence – nicht automatisch ein Fehler.";
     } else if (id === "update-check") {
       const output = document.getElementById("update-status");
       output.textContent = i18nT("loading");

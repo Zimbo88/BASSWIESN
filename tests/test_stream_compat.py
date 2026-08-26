@@ -1,6 +1,13 @@
 import asyncio
 
-from basswiesn.app.services.stream_compat import analyze_stream_url, is_hls_stream, resolve_stream_url
+from basswiesn.app.services.network_security import UrlValidation, pinned_http_target
+from basswiesn.app.services.stream_compat import (
+    ProtectedStreamTarget,
+    analyze_stream_url,
+    is_hls_stream,
+    probe_stream_reachability,
+    resolve_stream_url,
+)
 
 
 def test_hls_detection_by_url_path_and_mime_and_content():
@@ -114,5 +121,141 @@ def test_resolver_timeout_does_not_crash(monkeypatch):
 
     assert result.stream_url_resolved == "http://example.test/live.mp3"
     assert result.stream_format == "mp3"
+
+
+def test_pinned_target_prefers_validated_ipv4_but_supports_ipv6_only():
+    dual = UrlValidation(
+        True,
+        "ok",
+        hostname="radio.example",
+        addresses=("2001:db8::42", "93.184.216.34"),
+        scheme="https",
+        port=443,
+    )
+    ipv6 = UrlValidation(
+        True,
+        "ok",
+        hostname="radio.example",
+        addresses=("2001:db8::42",),
+        scheme="https",
+        port=443,
+    )
+
+    dual_url, dual_headers, _extensions = pinned_http_target(
+        "https://radio.example/live.mp3", dual
+    )
+    ipv6_url, _, _ = pinned_http_target(
+        "https://radio.example/live.mp3", ipv6
+    )
+
+    assert dual_url == "https://93.184.216.34/live.mp3"
+    assert dual_headers["Host"] == "radio.example"
+    assert ipv6_url == "https://[2001:db8::42]/live.mp3"
+
+
+def test_explicit_stream_probe_reports_direct_audio(monkeypatch):
+    monkeypatch.setattr(
+        "basswiesn.app.services.stream_compat._validate_stream_target",
+        lambda _url: UrlValidation(
+            True,
+            "ok",
+            hostname="radio.example",
+            addresses=("93.184.216.34",),
+            scheme="http",
+            port=80,
+        ),
+    )
+
+    class Response:
+        status_code = 206
+        headers = {"content-type": "audio/mpeg"}
+        content = b"ID3"
+        text = "ID3"
+        async def aiter_bytes(self):
+            yield self.content
+
+    class StreamContext:
+        async def __aenter__(self):
+            return Response()
+        async def __aexit__(self, *args):
+            return False
+
+    class Client:
+        def __init__(self, *args, **kwargs):
+            pass
+        async def __aenter__(self):
+            return self
+        async def __aexit__(self, *args):
+            return False
+        def stream(self, *args, **kwargs):
+            return StreamContext()
+
+    monkeypatch.setattr(
+        "basswiesn.app.services.stream_compat.httpx.AsyncClient", Client
+    )
+    result = asyncio.run(
+        probe_stream_reachability("http://radio.example/live.mp3")
+    )
+
+    assert result["status"] == "VALID"
+    assert result["reachable"] is True
+    assert result["codec"] == "mp3"
+
+
+def test_explicit_stream_probe_stops_after_first_chunk_when_range_is_ignored(monkeypatch):
+    monkeypatch.setattr(
+        "basswiesn.app.services.stream_compat._validate_stream_target",
+        lambda _url: UrlValidation(True, "ok", hostname="radio.example", addresses=("93.184.216.34",), scheme="http", port=80),
+    )
+    chunks_requested = []
+
+    class Response:
+        status_code = 200
+        headers = {"content-type": "audio/mpeg"}
+        async def aiter_bytes(self):
+            chunks_requested.append(1)
+            yield b"ID3" + (b"x" * 8192)
+            raise AssertionError("the checker must close an endless stream after the preview")
+
+    class StreamContext:
+        async def __aenter__(self):
+            return Response()
+        async def __aexit__(self, *args):
+            return False
+
+    class Client:
+        def __init__(self, *args, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): return False
+        def stream(self, *args, **kwargs): return StreamContext()
+
+    monkeypatch.setattr("basswiesn.app.services.stream_compat.httpx.AsyncClient", Client)
+    result = asyncio.run(probe_stream_reachability("http://radio.example/live.mp3"))
+
+    assert result["status"] == "VALID"
+    assert chunks_requested == [1]
+
+
+def test_explicit_stream_probe_blocks_protected_target_before_transport(monkeypatch):
+    def protected(_url):
+        raise ProtectedStreamTarget("stream URL resolves to a protected device")
+
+    class ForbiddenClient:
+        def __init__(self, *args, **kwargs):
+            raise AssertionError("protected stream must be blocked before HTTP")
+
+    monkeypatch.setattr(
+        "basswiesn.app.services.stream_compat._validate_stream_target", protected
+    )
+    monkeypatch.setattr(
+        "basswiesn.app.services.stream_compat.httpx.AsyncClient", ForbiddenClient
+    )
+    result = asyncio.run(
+        probe_stream_reachability("http://protected.example/live.mp3")
+    )
+
+    assert result["status"] == "BROKEN"
+    assert result["reachable"] is False
+    assert result["protected"] is True
 import pytest as _pytest_marker
 pytestmark = _pytest_marker.mark.unit

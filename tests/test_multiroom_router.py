@@ -38,7 +38,7 @@ def test_multiroom_human_ui_targets_one_group_and_explains_firmware_volume_chang
     assert "Ausgewählte Gruppe auflösen" in html
     assert 'postJson("/api/multiroom/clear",' in script
     assert "Bose-Firmware änderte trotz ausbleibendem SetVolume" in script
-    assert "BASSWIESN hat nicht automatisch zurückkorrigiert" in script
+    assert "BASSWIESN hat nicht heimlich zurückkorrigiert" in script
     assert 'confirmation, trigger: "webui"' in script
 
 
@@ -241,6 +241,77 @@ def test_multiroom_preserve_volumes_documents_firmware_jump_without_set_volume(m
     assert '"after":10' in ledger.readback
     assert ledger.rollback_ref == ""
     db.close()
+
+
+def test_multiroom_individual_start_volumes_are_written_before_zone_and_verified(monkeypatch):
+    zones = {
+        "192.0.2.45": "<zone />",
+        "192.0.2.46": "<zone />",
+    }
+    volumes = {"192.0.2.45": 20, "192.0.2.46": 30}
+    calls = []
+
+    class Client:
+        def __init__(self, ip_address: str):
+            self.ip_address = ip_address
+
+        async def get_xml(self, path: str) -> str:
+            if path == "/getZone":
+                return zones[self.ip_address]
+            if path == "/volume":
+                return f"<volume><actualvolume>{volumes[self.ip_address]}</actualvolume></volume>"
+            raise AssertionError(path)
+
+        async def post_xml(self, path: str, body: str, headers=None) -> str:
+            calls.append((self.ip_address, path, body))
+            if path == "/volume":
+                volumes[self.ip_address] = int(body.removeprefix("<volume>").removesuffix("</volume>"))
+            elif path == "/setZone":
+                zones["192.0.2.45"] = '<zone master="MRVOLMASTER"><member ipaddress="192.0.2.46">MRVOLMEMBER</member></zone>'
+                zones["192.0.2.46"] = '<zone master="MRVOLMASTER"><member ipaddress="192.0.2.46">MRVOLMEMBER</member></zone>'
+                # Real firmware can normalize a member after the requested
+                # pre-zone value was already written and read back.
+                volumes["192.0.2.46"] = 10
+            elif path != "/rebroadcastlatencymode":
+                raise AssertionError(path)
+            return "<status>OK</status>"
+
+    monkeypatch.setattr("basswiesn.app.routers.multiroom.SoundTouchClient", Client)
+    with TestClient(create_web_app()) as client:
+        client.post("/api/devices", json={"device_id": "MRVOLMASTER", "name": "Master", "ip_address": "192.0.2.45", "model": "SoundTouch Test"})
+        client.post("/api/devices", json={"device_id": "MRVOLMEMBER", "name": "Member", "ip_address": "192.0.2.46", "model": "SoundTouch Test"})
+        preview = client.post("/api/multiroom/preview", json={"master_device_id": "MRVOLMASTER", "member_device_ids": ["MRVOLMEMBER"], "set_start_volumes": True, "start_volumes": {"MRVOLMASTER": 2, "MRVOLMEMBER": 4}})
+        response = client.post("/api/multiroom/set", json={"master_device_id": "MRVOLMASTER", "member_device_ids": ["MRVOLMEMBER"], "set_start_volumes": True, "start_volumes": {"MRVOLMASTER": 2, "MRVOLMEMBER": 4}, "dry_run": False, "memory_checked": True})
+
+    assert preview.status_code == 200
+    assert preview.json()["start_volumes"] == {"MRVOLMASTER": 2, "MRVOLMEMBER": 4}
+    assert response.status_code == 200
+    assert response.json()["automatic_volume_action"] == "SET_INDIVIDUAL_START_VOLUMES_BEFORE_ZONE"
+    assert response.json()["volume_warnings"] == [{
+        "device_id": "MRVOLMEMBER",
+        "before": 30,
+        "after": 10,
+        "requested_start_volume": 4,
+        "origin": "firmware_after_zone",
+    }]
+    assert volumes == {"192.0.2.45": 2, "192.0.2.46": 10}
+    first_zone = next(index for index, call in enumerate(calls) if call[1] == "/setZone")
+    assert {(ip, body) for ip, path, body in calls[:first_zone] if path == "/volume"} == {
+        ("192.0.2.45", "<volume>2</volume>"),
+        ("192.0.2.46", "<volume>4</volume>"),
+    }
+    assert all(path != "/volume" for _ip, path, _body in calls[first_zone + 1:])
+    assert all(item["ok"] for item in response.json()["verification"])
+
+
+def test_multiroom_individual_volumes_reject_missing_selected_radio():
+    with TestClient(create_web_app()) as client:
+        client.post("/api/devices", json={"device_id": "MRBADMASTER", "name": "Master", "ip_address": "192.0.2.47", "model": "SoundTouch Test"})
+        client.post("/api/devices", json={"device_id": "MRBADMEMBER", "name": "Member", "ip_address": "192.0.2.48", "model": "SoundTouch Test"})
+        response = client.post("/api/multiroom/preview", json={"master_device_id": "MRBADMASTER", "member_device_ids": ["MRBADMEMBER"], "set_start_volumes": True, "start_volumes": {"MRBADMASTER": 2}})
+
+    assert response.status_code == 400
+    assert response.json()["detail"]["error"] == "start_volumes must contain exactly the selected radios"
 
 
 def test_schedule_roundtrip_keeps_multiroom_fields_as_lists():
@@ -591,6 +662,47 @@ def test_multiroom_remove_member_finds_master_when_slave_reports_standalone(monk
     assert removed.json()["device_still_configured"] is True
     assert any(item["device_id"] == "MRFINDSLAVE" for item in devices.json())
     assert zone_by_ip["192.0.2.83"] == '<zone master="MRFINDMASTER" />'
+
+
+def test_multiroom_remove_member_waits_for_distributed_zone_readback(monkeypatch):
+    old_master = '<zone master="MRDELAYMASTER"><member ipaddress="192.0.2.88">MRDELAYMEMBER</member></zone>'
+    old_member = '<zone master="MRDELAYMASTER"><member ipaddress="192.0.2.88">MRDELAYMEMBER</member></zone>'
+    state = {"written": False, "reads": {"192.0.2.87": 0, "192.0.2.88": 0}}
+
+    class Client:
+        def __init__(self, ip_address: str):
+            self.ip_address = ip_address
+
+        async def get_xml(self, path: str) -> str:
+            assert path == "/getZone"
+            if not state["written"]:
+                return old_master if self.ip_address == "192.0.2.87" else old_member
+            state["reads"][self.ip_address] += 1
+            if state["reads"][self.ip_address] <= 2:
+                return old_master if self.ip_address == "192.0.2.87" else old_member
+            return '<zone master="MRDELAYMASTER" />' if self.ip_address == "192.0.2.87" else "<zone />"
+
+        async def post_xml(self, path: str, body: str, headers=None) -> str:
+            assert path == "/setZone"
+            assert body == '<zone master="MRDELAYMASTER" />'
+            state["written"] = True
+            return "<status>OK</status>"
+
+    async def no_sleep(_seconds):
+        return None
+
+    monkeypatch.setattr("basswiesn.app.routers.multiroom.SoundTouchClient", Client)
+    monkeypatch.setattr("basswiesn.app.routers.multiroom.asyncio.sleep", no_sleep)
+    with TestClient(create_web_app()) as client:
+        client.post("/api/devices", json={"device_id": "MRDELAYMASTER", "name": "Master", "ip_address": "192.0.2.87", "model": "SoundTouch Test"})
+        client.post("/api/devices", json={"device_id": "MRDELAYMEMBER", "name": "Member", "ip_address": "192.0.2.88", "model": "SoundTouch Test"})
+        removed = client.post("/api/multiroom/remove-device", json={"device_id": "MRDELAYMEMBER", "confirmation": "REMOVE MEMBER"})
+
+    assert removed.status_code == 200
+    assert removed.json()["removed"] is True
+    assert len(removed.json()["readback_attempts"]) == 3
+    assert removed.json()["readback_attempts"][-1]["master_excludes_target"] is True
+    assert removed.json()["readback_attempts"][-1]["target_is_standalone"] is True
 
 
 def test_multiroom_remove_offline_member_returns_clear_error_and_keeps_device(monkeypatch):

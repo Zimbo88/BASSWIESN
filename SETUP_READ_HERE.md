@@ -1,4 +1,4 @@
-# BASSWIESN 2.0 Setup Guide
+# BASSWIESN 2.5 Setup Guide
 
 This guide describes the normal end-user setup flow. BASSWIESN is an
 independent, unofficial project and is not affiliated with Bose.
@@ -155,5 +155,6 @@ BASSWIESN supports operation on a trusted private LAN. Do not expose its ports
 directly to the public Internet. Use a separately managed authenticated reverse
 proxy if remote access is required.
 
-For deeper technical information, see `docs/architecture.md`,
-`docs/THREAT_MODEL.md`, `docs/LAB_MODE.md` and the API documentation.
+For release-specific behavior and known limitations, see
+`docs/releases/2.5.0/RELEASE_NOTES_2.5.0.md`. Advanced diagnostics and LAB
+features are documented directly in the corresponding Web UI sections.

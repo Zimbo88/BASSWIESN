@@ -69,6 +69,12 @@ def test_dashboard_has_no_document_overflow_and_live_backend_version(width: int,
 
 def test_mobile_active_tab_is_scrolled_into_the_reachable_tab_strip():
     with _LiveServer() as server, sync_playwright() as playwright:
+        settings = httpx.post(
+            f"{server.url}/api/system/settings",
+            json={"ui_mode": "standard", "show_startup_warning": "false", "first_run_warning_required": "false"},
+            timeout=2,
+        )
+        assert settings.status_code == 200
         browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
         page = browser.new_page(viewport={"width": 390, "height": 844})
         page.goto(server.url, wait_until="domcontentloaded")
@@ -89,7 +95,7 @@ def test_mobile_advanced_lab_menu_stays_in_viewport_and_all_items_are_clickable(
     with _LiveServer() as server, sync_playwright() as playwright:
         settings = httpx.post(
             f"{server.url}/api/system/settings",
-            json={"lab_mode": "true", "show_startup_warning": "false", "first_run_warning_required": "false"},
+            json={"ui_mode": "lab", "show_startup_warning": "false", "first_run_warning_required": "false"},
             timeout=2,
         )
         assert settings.status_code == 200
@@ -174,7 +180,7 @@ def test_web_language_switch_wires_all_supported_languages_to_visible_ui():
             code = language["code"]
             settings = httpx.post(
                 f"{server.url}/api/system/settings",
-                json={"web_language": code, "show_startup_warning": "false", "first_run_warning_required": "false"},
+                json={"web_language": code, "ui_mode": "standard", "show_startup_warning": "false", "first_run_warning_required": "false"},
                 timeout=2,
             )
             assert settings.status_code == 200

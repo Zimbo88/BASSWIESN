@@ -2892,7 +2892,7 @@ async def configure_maintenance_reboot(device_id: str, payload: dict, db: Sessio
             status_code=409,
             detail={
                 "error": "automatic_radio_reboot_disabled",
-                "message": "Automatische Radio-Reboots sind in BASSWIESN 2.0.0 deaktiviert. Ein Reboot ist nur manuell im LAB erlaubt.",
+                "message": "Automatische Radio-Reboots sind in BASSWIESN 2.5.0 deaktiviert. Ein Reboot ist nur manuell im LAB erlaubt.",
             },
         )
     device.maintenance_reboot_enabled = False

@@ -32,7 +32,11 @@ from basswiesn.app.services.updates import check_update
 from basswiesn.app.services.backup_restore import create_system_backup, prepare_system_restore, preview_system_backup
 from basswiesn.app.services.offline_mode import allowed_stream_hosts, external_request_decision, offline_status, record_dependency
 from basswiesn.app.services.offline_preflight import build_offline_preflight, probe_stream_reference
-from basswiesn.app.services.protected_devices import protected_device_ips, require_unprotected_device
+from basswiesn.app.services.protected_devices import (
+    protected_device_ids,
+    protected_device_ips,
+    require_unprotected_device,
+)
 
 router = APIRouter(prefix="/api", tags=["media"])
 
@@ -466,6 +470,17 @@ async def system_settings(request: Request, db: Session = Depends(get_db)) -> di
     detected_language = _detected_web_language(raspberry_locale, browser_locale)
     config = get_settings()
     lan_host = rows.get("lan_host", config.lan_host)
+    ui_mode = rows.get("ui_mode", "")
+    if ui_mode not in {"easy", "standard", "lab"}:
+        # Existing installations already persisted the old lab-mode switch;
+        # retain that preference. A truly fresh database starts in Easy Mode.
+        ui_mode = (
+            "lab"
+            if rows.get("lab_mode") == "true"
+            else "standard"
+            if "lab_mode" in rows
+            else "easy"
+        )
     return {
         "version": config.version,
         "lan_host": lan_host,
@@ -480,12 +495,15 @@ async def system_settings(request: Request, db: Session = Depends(get_db)) -> di
         "first_run_warning_required": rows.get("first_run_warning_required", "true"),
         "show_startup_warning": rows.get("show_startup_warning", "true"),
         "lab_mode": rows.get("lab_mode", "false"),
+        "ui_mode": ui_mode,
         "guided_hints": rows.get("guided_hints", "true"),
         "safe_startup_volume": int(rows.get("safe_startup_volume", "30") or 30),
         "ip_write_guard": rows.get("ip_write_guard", "false"),
         "ip_write_allowed_ips": rows.get("ip_write_allowed_ips", ""),
         "protected_device_ips": rows.get("protected_device_ips", ",".join(config.protected_device_ips)),
         "effective_protected_device_ips": ",".join(sorted(protected_device_ips())),
+        "protected_device_ids": rows.get("protected_device_ids", ",".join(config.protected_device_ids)),
+        "effective_protected_device_ids": ",".join(sorted(protected_device_ids())),
         "update_check_enabled": rows.get("update_check_enabled", "true" if config.update_check_enabled else "false"),
         "update_channel": rows.get("update_channel", config.update_channel),
         "update_manifest_url": rows.get("update_manifest_url", config.update_manifest_url),
@@ -503,7 +521,7 @@ async def system_settings(request: Request, db: Session = Depends(get_db)) -> di
 
 @router.post("/system/settings")
 async def save_system_settings(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
-    allowed = {"lan_host", "web_language", "default_timezone", "device_language_default", "display_metadata_mode", "first_run_warning_required", "show_startup_warning", "lab_mode", "guided_hints", "safe_startup_volume", "ip_write_guard", "ip_write_allowed_ips", "protected_device_ips", "support_latest_firmware_only", "latest_supported_firmware_family", "update_check_enabled", "update_channel", "update_manifest_url", "update_repo_url", "offline_mode", "offline_allowed_stream_hosts"}
+    allowed = {"lan_host", "web_language", "default_timezone", "device_language_default", "display_metadata_mode", "first_run_warning_required", "show_startup_warning", "lab_mode", "ui_mode", "guided_hints", "safe_startup_volume", "ip_write_guard", "ip_write_allowed_ips", "protected_device_ips", "protected_device_ids", "support_latest_firmware_only", "latest_supported_firmware_family", "update_check_enabled", "update_channel", "update_manifest_url", "update_repo_url", "offline_mode", "offline_allowed_stream_hosts"}
     values = {key: str(payload.get(key, "")) for key in allowed if key in payload}
     if values.get("web_language") and values["web_language"] not in WEB_LANGUAGE_CODES:
         raise HTTPException(status_code=400, detail="unsupported web language")
@@ -539,6 +557,25 @@ async def save_system_settings(payload: dict, request: Request, db: Session = De
             values["protected_device_ips"] = ",".join(sorted({str(ipaddress.ip_address(item)) for item in candidates}))
         except ValueError as exc:
             raise HTTPException(status_code=400, detail="protected IPs must contain valid IPv4/IPv6 addresses") from exc
+    if "protected_device_ids" in values:
+        identifiers = []
+        for item in re.split(r"[\s,;]+", values["protected_device_ids"].strip()):
+            if not item:
+                continue
+            normalized = item.strip().upper()
+            if not re.fullmatch(r"[A-Z0-9_.:-]{4,128}", normalized):
+                raise HTTPException(status_code=400, detail="protected device IDs contain unsupported characters")
+            identifiers.append(normalized)
+        values["protected_device_ids"] = ",".join(sorted(set(identifiers)))
+    if values.get("ui_mode") and values["ui_mode"] not in {"easy", "standard", "lab"}:
+        raise HTTPException(status_code=400, detail="ui_mode must be easy, standard or lab")
+    if "ui_mode" in values:
+        values["lab_mode"] = "true" if values["ui_mode"] == "lab" else "false"
+    elif "lab_mode" in values:
+        # Backward compatibility for 1.x/2.0 clients that only knew the
+        # boolean LAB switch.  A deliberate legacy toggle must not leave the
+        # newly introduced Easy Mode active and hide the requested tools.
+        values["ui_mode"] = "lab" if values["lab_mode"] in {"true", "on", "1", "yes"} else "standard"
     if values.get("display_metadata_mode") and values["display_metadata_mode"] not in {item["key"] for item in DISPLAY_METADATA_MODES}:
         raise HTTPException(status_code=400, detail="unsupported display metadata mode")
     if values.get("update_channel") and values["update_channel"] not in {"manual", "stable", "beta"}:

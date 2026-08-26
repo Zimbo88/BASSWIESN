@@ -285,7 +285,8 @@ def test_preset_checker_returns_both_sides_and_changed_fields(monkeypatch):
         response = client.get("/api/presets/CHECK/status?probe=true")
         preview = client.post("/api/presets/CHECK/sync", json={"dry_run": True})
     slot = response.json()["slots"][0]
-    assert slot["state"] == "yellow"
+    assert slot["verdict"] == "BROKEN"
+    assert slot["state"] == "broken"
     assert slot["radio"]["title"] == "Radio title"
     assert slot["basswiesn"]["title"] == "Local title"
     assert {"source", "location", "xml"} <= set(slot["changed_fields"])

@@ -10,6 +10,7 @@ from urllib.parse import parse_qs, unquote, urlsplit
 from uuid import uuid4
 from xml.etree import ElementTree as ET
 
+import httpx
 from sqlalchemy.orm import Session
 
 from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
@@ -66,6 +67,7 @@ from basswiesn.app.services.orion import (
 from basswiesn.app.services.research_runtime import (
     project_airplay_readiness_from_persisted,
 )
+from basswiesn.app.services.ssdp_discovery import rediscover_device_by_id
 from basswiesn.app.routers.shared import summarize_payload
 
 
@@ -74,6 +76,7 @@ PLAYBACK_KEY_SUFFIX = ":runtime_state"
 OFFLINE_FAILURE_THRESHOLD = 3
 KEEPALIVE_PAUSE_FAILURE_THRESHOLD = 5
 KEEPALIVE_BACKOFF_SECONDS = (5 * 60, 15 * 60, 30 * 60, 60 * 60)
+REDISCOVERY_INTERVAL_SECONDS = 5 * 60
 _last_ok_log: dict[str, datetime] = {}
 
 
@@ -1026,6 +1029,63 @@ def _client_for_device(device: Device, policy, purpose: str, client_factory):
         return client_factory(device.ip_address)
 
 
+def _production_rediscovery_handler(client_factory, rediscovery_handler):
+    """Keep injected test clients offline unless a test opts in explicitly."""
+
+    if rediscovery_handler is not None:
+        return rediscovery_handler
+    if client_factory is SoundTouchClient:
+        return rediscover_device_by_id
+    return None
+
+
+def _rediscovery_due(keepalive: dict[str, Any], now: datetime) -> bool:
+    last_attempt = _parse_iso(keepalive.get("last_rediscovery_attempt_at"))
+    return (
+        last_attempt is None
+        or (now - last_attempt).total_seconds() >= REDISCOVERY_INTERVAL_SECONDS
+    )
+
+
+async def _attempt_rediscovery(
+    db: Session,
+    device: Device,
+    *,
+    now: datetime,
+    handler,
+) -> dict:
+    if handler is None:
+        return {"status": "not_configured", "verified": False}
+    try:
+        result = await handler(db, device.device_id)
+    except Exception as exc:
+        result = {
+            "status": "error",
+            "verified": False,
+            "error_type": type(exc).__name__,
+        }
+    if not result.get("verified"):
+        _row, stored = load_runtime_state(db, device.device_id)
+        keepalive = stored.get("playback_keepalive") or {}
+        keepalive.update(
+            {
+                "last_rediscovery_attempt_at": now.isoformat(),
+                "rediscovery_status": str(result.get("status") or "unknown"),
+            }
+        )
+        stored["playback_keepalive"] = keepalive
+        save_runtime_state(db, device.device_id, stored, commit=True)
+    write_masterlog(
+        "device_rediscovery_attempt",
+        device_id=device.device_id,
+        radio_ip=device.ip_address,
+        status=result.get("status", "unknown"),
+        verified=bool(result.get("verified")),
+        unicast_attempted=bool(result.get("unicast_attempted")),
+    )
+    return result
+
+
 async def run_playback_keepalive_for_device(
     device: Device,
     db: Session,
@@ -1033,6 +1093,7 @@ async def run_playback_keepalive_for_device(
     now: datetime | None = None,
     client_factory=SoundTouchClient,
     research_runtime=None,
+    rediscovery_handler=None,
 ) -> dict:
     now = _as_utc(now) or datetime.now(UTC)
     if is_protected_device(device):
@@ -1054,9 +1115,28 @@ async def run_playback_keepalive_for_device(
         }
     _row, stored = load_runtime_state(db, device.device_id)
     keepalive = stored.get("playback_keepalive") or {}
+    rediscovery = _production_rediscovery_handler(
+        client_factory, rediscovery_handler
+    )
     policy = policy_for_device(device, db, runtime_state=stored, now=now)
     last_probe_at = _parse_iso(keepalive.get("last_keepalive_at"))
     decision = should_poll(policy, now=now, last_probe_at=last_probe_at)
+    if (
+        not decision.allowed
+        and policy.failure_count > 0
+        and rediscovery is not None
+        and _rediscovery_due(keepalive, now)
+    ):
+        rediscovery_result = await _attempt_rediscovery(
+            db, device, now=now, handler=rediscovery
+        )
+        if rediscovery_result.get("verified"):
+            db.refresh(device)
+            _row, stored = load_runtime_state(db, device.device_id)
+            keepalive = stored.get("playback_keepalive") or {}
+            policy = policy_for_device(device, db, runtime_state=stored, now=now)
+            last_probe_at = _parse_iso(keepalive.get("last_keepalive_at"))
+            decision = should_poll(policy, now=now, last_probe_at=last_probe_at)
     if not decision.allowed:
         keepalive.update({
             "paused": True,
@@ -1115,6 +1195,7 @@ async def run_playback_keepalive_for_device(
             client_factory=client_factory,
             policy=policy,
             research_runtime=research_runtime,
+            rediscovery_handler=rediscovery,
         )
 
 
@@ -1126,6 +1207,7 @@ async def _run_playback_keepalive_for_device_locked(
     client_factory,
     policy,
     research_runtime=None,
+    rediscovery_handler=None,
 ) -> dict:
     _row, stored = load_runtime_state(db, device.device_id)
     keepalive = stored.get("playback_keepalive") or {}
@@ -1603,6 +1685,30 @@ async def _run_playback_keepalive_for_device_locked(
         }
     except Exception as exc:
         db.rollback()
+        if (
+            rediscovery_handler is not None
+            and isinstance(
+                exc, (httpx.TransportError, OSError, asyncio.TimeoutError)
+            )
+            and _rediscovery_due(keepalive, now)
+        ):
+            rediscovery_result = await _attempt_rediscovery(
+                db, device, now=now, handler=rediscovery_handler
+            )
+            if rediscovery_result.get("verified"):
+                db.refresh(device)
+                retry_policy = policy_for_device(device, db, now=now)
+                retry_result = await _run_playback_keepalive_for_device_locked(
+                    device,
+                    db,
+                    now=now,
+                    client_factory=client_factory,
+                    policy=retry_policy,
+                    research_runtime=research_runtime,
+                    rediscovery_handler=None,
+                )
+                retry_result["rediscovery"] = rediscovery_result
+                return retry_result
         error = _error_text(exc)
         failures = max(int(keepalive.get("consecutive_failures") or 0), int(getattr(device, "failure_count", 0) or 0)) + 1
         backoff = recommended_backoff_seconds(failures, policy.device_class)
@@ -1708,6 +1814,7 @@ async def run_playback_keepalive_once(
     client_factory=SoundTouchClient,
     now: datetime | None = None,
     research_runtime=None,
+    rediscovery_handler=None,
 ) -> list[dict]:
     results = []
     for device in db.query(Device).order_by(Device.name).all():
@@ -1720,6 +1827,7 @@ async def run_playback_keepalive_once(
                 now=now,
                 client_factory=client_factory,
                 research_runtime=research_runtime,
+                rediscovery_handler=rediscovery_handler,
             )
         )
     return results

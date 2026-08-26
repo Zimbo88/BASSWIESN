@@ -78,8 +78,9 @@ def test_masterlog_creates_parseable_jsonl_and_masks_secrets(tmp_path, monkeypat
         nested={"access_token": "also-secret"},
     )
 
-    line = (Path(tmp_path) / "logs" / "master.log").read_text(encoding="utf-8").strip()
-    record = json.loads(line)
+    lines = (Path(tmp_path) / "logs" / "master.log").read_text(encoding="utf-8").splitlines()
+    records = [json.loads(line) for line in lines]
+    record = next(item for item in reversed(records) if item.get("event") == "test_event")
     assert record["event"] == "test_event"
     assert record["device_id"] == "RADIO-1"
     assert record["password"] == "***REDACTED***"

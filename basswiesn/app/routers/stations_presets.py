@@ -23,11 +23,22 @@ from basswiesn.app.services.orion import (
 from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
 from basswiesn.app.services.xml import content_item_xml
 from basswiesn.app.core.masterlog import write_masterlog
-from basswiesn.app.services.device_state import update_runtime_state
-from basswiesn.app.services.provider_registry import STREAM_SOURCE_PRIORITY, normalize_source_name
+from basswiesn.app.services.device_state import (
+    load_runtime_state,
+    merge_provider_maps,
+    parse_service_availability_xml,
+    parse_sources_xml,
+    update_runtime_state,
+)
+from basswiesn.app.services.provider_registry import (
+    SERVICE_MANIFEST,
+    STREAM_SOURCE_PRIORITY,
+    normalize_source_name,
+)
 from basswiesn.app.services.stream_compat import (
     ProtectedStreamTarget,
     analyze_stream_url,
+    probe_stream_reachability,
     resolve_stream_url,
 )
 from basswiesn.app.services.logo_validation import probe_logo_reference, validate_logo_reference
@@ -1428,6 +1439,38 @@ async def play_station_on_device(device_id: str, station_id: int, payload: dict,
     return {"dry_run": False, "device_id": device.device_id, "station_id": station.id, "path": "/select", "response": response, "confirmed_volume": confirmed_volume, "playback_history": "pending_live_confirmation"}
 
 
+def _preset_check(
+    check_id: str,
+    status: str,
+    message: str,
+    *,
+    evidence: dict | None = None,
+    affects_verdict: bool = True,
+) -> dict:
+    return {
+        "id": check_id,
+        "status": status,
+        "message": message,
+        "evidence": evidence or {},
+        "affects_verdict": affects_verdict,
+    }
+
+
+def _preset_verdict(checks: list[dict]) -> str:
+    statuses = {
+        str(item.get("status") or "UNKNOWN").upper()
+        for item in checks
+        if item.get("affects_verdict", True)
+    }
+    if "BROKEN" in statuses:
+        return "BROKEN"
+    if "WARNING" in statuses:
+        return "WARNING"
+    if "UNKNOWN" in statuses:
+        return "UNKNOWN"
+    return "VALID"
+
+
 @router.get("/presets/{device_id}/status")
 async def preset_status(
     device_id: str,
@@ -1438,19 +1481,41 @@ async def preset_status(
     local_rows = db.query(Preset).filter(Preset.device_id == device_id).order_by(Preset.button).all()
     local = {row.button: row for row in local_rows}
     snapshot = None
+    live_providers: dict[str, dict] = {}
     if probe:
         try:
-            radio_xml = await _soundtouch_client_for(
+            client = _soundtouch_client_for(
                 device,
                 purpose="preset_status_explicit_read",
                 trigger="explicit_user_action",
-            ).get_xml("/presets")
+            )
+            radio_xml = await client.get_xml("/presets")
             snapshot = ConfigBackup(device_id=device.device_id, path="/presets", content=radio_xml)
             db.add(snapshot)
             db.commit()
             db.refresh(snapshot)
             radio_rows = preset_summaries_from_xml(radio_xml)
             radio_error = ""
+            observed_at = utc_now().isoformat()
+            source_providers: dict = {}
+            availability_providers: dict = {}
+            try:
+                _source_rows, source_providers = parse_sources_xml(
+                    await client.get_xml("/sources"), observed_at
+                )
+            except Exception:
+                pass
+            try:
+                _availability_rows, availability_providers = (
+                    parse_service_availability_xml(
+                        await client.get_xml("/serviceAvailability"), observed_at
+                    )
+                )
+            except Exception:
+                pass
+            live_providers = merge_provider_maps(
+                source_providers, availability_providers
+            )
         except Exception as exc:
             radio_xml = ""
             radio_rows = []
@@ -1465,6 +1530,34 @@ async def preset_status(
         radio_xml = snapshot.content if snapshot is not None else ""
         radio_rows = preset_summaries_from_xml(radio_xml) if radio_xml else []
         radio_error = "" if snapshot is not None else "Radio noch nicht ausdrücklich gelesen"
+    _runtime_row, runtime = load_runtime_state(db, device_id)
+    providers = live_providers or runtime.get("providers") or {}
+    stream_probes: dict[int, dict] = {}
+    if probe:
+        for row in local_rows:
+            if not row.station_id or row.station_id in stream_probes:
+                continue
+            station = db.query(Station).filter(Station.id == row.station_id).one_or_none()
+            if station is None or not str(station.stream_url or "").strip():
+                continue
+            decision = external_request_decision(
+                db,
+                service="preset_checker",
+                url_or_host=station.stream_url,
+                reason="explicit preset stream check",
+                required=True,
+                stream_target=True,
+                manual_action=True,
+            )
+            stream_probes[row.station_id] = (
+                await probe_stream_reachability(station.stream_url)
+                if decision.allowed
+                else {
+                    "status": "UNKNOWN",
+                    "reachable": None,
+                    "reason": "blocked by Strict Offline Mode",
+                }
+            )
     radio = {row["button"]: row for row in radio_rows}
     slots = []
     for button in range(1, 7):
@@ -1475,29 +1568,102 @@ async def preset_status(
         radio_location = radio_row.get("location", "") if radio_row else ""
         local_source = local_row.source if local_row else ""
         radio_source = radio_row.get("source", "") if radio_row else ""
+        empty_on_both = not local_location and not radio_location
         mutation = db.query(PresetMutation).filter(
             PresetMutation.device_id == device_id,
             PresetMutation.button == button,
         ).order_by(PresetMutation.revision.desc()).first()
         location_match = _locations_match(local_location, radio_location)
-        if radio_error:
-            state = "unknown"
-            message = "radio presets unreadable"
-        elif local_location and radio_location and location_match:
-            state = "green"
-            message = "local and radio preset match"
-        elif local_location and radio_location:
-            state = "yellow"
-            message = "local and radio preset differ"
-        elif local_location and not radio_location:
-            state = "red"
-            message = "local preset exists, radio slot empty/unreadable"
-        elif radio_location and not local_location:
-            state = "red"
-            message = "radio preset exists, basswiesn has no local slot"
+        checks: list[dict] = []
+        checks.append(
+            _preset_check(
+                "radio_readback",
+                "BROKEN" if radio_error and probe else "UNKNOWN" if radio_error else "VALID" if probe else "UNKNOWN",
+                radio_error or ("live /presets readback received" if probe else "using persisted radio snapshot"),
+                evidence={"live": probe, "observed_at": snapshot.created_at.isoformat() if snapshot is not None else None},
+            )
+        )
+        if not local_location and not radio_location:
+            checks.append(_preset_check("slot_content", "VALID", "slot is empty on both sides"))
+        elif not local_location:
+            checks.append(_preset_check("local_mapping", "WARNING", "radio slot exists without a BASSWIESN mapping"))
+        elif not radio_location:
+            checks.append(_preset_check("radio_slot", "BROKEN", "BASSWIESN mapping exists but radio slot is empty"))
+        elif not location_match:
+            checks.append(_preset_check("location", "BROKEN", "radio and BASSWIESN locations differ", evidence={"local": local_location, "radio": radio_location}))
         else:
-            state = "red"
-            message = "empty on both sides"
+            checks.append(_preset_check("location", "VALID", "radio and BASSWIESN locations match"))
+
+        normalized_source = normalize_source_name(
+            radio_source or local_source, fallback=""
+        )
+        provider_contract = SERVICE_MANIFEST.get(normalized_source)
+        if not normalized_source or provider_contract is None:
+            checks.append(_preset_check("source", "BROKEN", "preset source is missing or unrecognized", evidence={"source": normalized_source}))
+        elif provider_contract.get("contract_status") == "CONFIRMED":
+            checks.append(_preset_check("source", "VALID", "source uses a confirmed BASSWIESN contract", evidence={"source": normalized_source}))
+        elif provider_contract.get("contract_status") == "UNSUPPORTED":
+            checks.append(_preset_check("source", "WARNING", "source depends on an unsupported or obsolete provider contract", evidence={"source": normalized_source}))
+        else:
+            checks.append(_preset_check("source", "WARNING", "source contract is not confirmed for local preset playback", evidence={"source": normalized_source}))
+
+        local_account = str(local_row.source_account or "") if local_row else ""
+        radio_account = str(radio_row.get("source_account", "") or "") if radio_row else ""
+        checks.append(
+            _preset_check(
+                "source_account",
+                "VALID" if local_account == radio_account else "BROKEN",
+                "sourceAccount matches" if local_account == radio_account else "sourceAccount differs between radio and BASSWIESN",
+                evidence={"local": local_account, "radio": radio_account},
+            )
+        )
+        if local_row and local_row.station_id and local_station is None:
+            checks.append(_preset_check("station_mapping", "BROKEN", "referenced BASSWIESN station no longer exists"))
+        elif local_row and local_station is None:
+            checks.append(_preset_check("station_mapping", "WARNING", "preset has no BASSWIESN station mapping"))
+        elif local_station is not None:
+            checks.append(_preset_check("station_mapping", "VALID", "BASSWIESN station mapping exists", evidence={"station_id": local_station.id}))
+
+        if local_station is not None:
+            compatibility = analyze_stream_url(
+                local_station.stream_url_resolved or local_station.stream_url,
+                local_station.stream_mime,
+            )
+            compatibility_status = (
+                "BROKEN" if compatibility.is_hls or compatibility.compatibility_score < 40
+                else "WARNING" if not compatibility.is_direct_audio or compatibility.compatibility_score < 70
+                else "VALID"
+            )
+            checks.append(_preset_check("codec", compatibility_status, compatibility.compatibility_warning or f"{compatibility.stream_format or 'unknown'} compatibility score {compatibility.compatibility_score}", evidence=compatibility.to_dict()))
+            stream_probe = stream_probes.get(local_station.id)
+            checks.append(
+                _preset_check(
+                    "stream_reachability",
+                    str(stream_probe.get("status") or "UNKNOWN") if stream_probe else "UNKNOWN",
+                    str(stream_probe.get("reason") or "run an explicit checker refresh to test the stream") if stream_probe else "run an explicit checker refresh to test the stream",
+                    evidence=stream_probe or {},
+                )
+            )
+
+        provider_state = providers.get(normalized_source) if normalized_source else None
+        if provider_state and provider_state.get("available"):
+            checks.append(_preset_check("provider_availability", "VALID", "provider is reported available", evidence=provider_state))
+        elif provider_state and (provider_state.get("service_observed") or provider_state.get("source_observed")):
+            checks.append(_preset_check("provider_availability", "BROKEN", "provider is reported unavailable", evidence=provider_state))
+        else:
+            checks.append(_preset_check("provider_availability", "UNKNOWN", "provider availability was not observed", evidence=provider_state or {}))
+        checks.append(_preset_check("hardware_button_playability", "UNKNOWN", "physical preset-button playback requires a manual step", affects_verdict=False))
+        if empty_on_both:
+            checks = [
+                item
+                for item in checks
+                if item["id"]
+                in {
+                    "radio_readback",
+                    "slot_content",
+                    "hardware_button_playability",
+                }
+            ]
         local_xml = local_row.content_item_xml if local_row else ""
         radio_item_xml = radio_row.get("content_item_xml", "") if radio_row else ""
         logo = validate_logo_reference(local_station.image_url) if local_station is not None else {"configured": False, "valid": False, "verification": "not_configured", "reason": "Kein lokaler Sender"}
@@ -1506,9 +1672,10 @@ async def preset_status(
         if local_location != radio_location and not location_match: changed_fields.append("location")
         if local_xml and radio_item_xml and _canonical_xml(local_xml) != _canonical_xml(radio_item_xml) and not location_match: changed_fields.append("xml")
         if mutation is not None and mutation.diverged:
-            state = "yellow"
-            message = "Radio und lokaler Stand müssen abgeglichen werden"
-        slots.append({"button": button, "state": state, "message": message, "changed_fields": changed_fields, "location_match": location_match, "mutation": {"id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state, "diverged": bool(mutation.diverged), "backup_ref": mutation.backup_ref, "error": mutation.error} if mutation else None, "basswiesn": {"source": local_source, "source_account": "", "location": local_location, "title": local_station.name if local_station else "", "provider": local_station.provider if local_station else local_source, "stream_url": local_station.stream_url if local_station else "", "logo_mode": "station_logo" if _station_logo_enabled(db, device_id) else "radio_symbol", "logo": logo, "xml": local_xml}, "radio": {"source": radio_source, "source_account": radio_row.get("source_account", "") if radio_row else "", "location": radio_location, "title": radio_row.get("item_name", "") if radio_row else "", "provider": radio_source, "container_art": radio_row.get("container_art", "") if radio_row else "", "xml": radio_item_xml}, "local_location": local_location, "radio_location": radio_location, "local_source": local_source, "radio_source": radio_source})
+            checks.append(_preset_check("mutation", "BROKEN", "preset mutation is marked divergent", evidence={"mutation_id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state}))
+        verdict = _preset_verdict(checks)
+        message = next((item["message"] for item in checks if item["status"] == verdict), "preset checks complete")
+        slots.append({"button": button, "state": verdict.lower(), "verdict": verdict, "message": message, "checks": checks, "changed_fields": changed_fields, "location_match": location_match, "mutation": {"id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state, "diverged": bool(mutation.diverged), "backup_ref": mutation.backup_ref, "error": mutation.error} if mutation else None, "basswiesn": {"source": local_source, "source_account": local_account, "location": local_location, "title": local_station.name if local_station else "", "provider": local_station.provider if local_station else local_source, "stream_url": local_station.stream_url if local_station else "", "logo_mode": "station_logo" if _station_logo_enabled(db, device_id) else "radio_symbol", "logo": logo, "xml": local_xml}, "radio": {"source": radio_source, "source_account": radio_account, "location": radio_location, "title": radio_row.get("item_name", "") if radio_row else "", "provider": radio_source, "container_art": radio_row.get("container_art", "") if radio_row else "", "xml": radio_item_xml}, "local_location": local_location, "radio_location": radio_location, "local_source": local_source, "radio_source": radio_source})
     sync_row = db.query(RuntimeState).filter(RuntimeState.key == f"preset_sync:{device_id}").one_or_none()
     try:
         sync_state = json.loads(sync_row.value) if sync_row is not None else {}
@@ -1604,6 +1771,7 @@ async def set_preset(device_id: str, button: int, payload: dict, request: Reques
         button: {
             "station_id": station.id,
             "source": source,
+            "source_account": "",
             "location": location,
             "content_item_xml": xml,
         }
@@ -1655,9 +1823,13 @@ async def set_preset(device_id: str, button: int, payload: dict, request: Reques
         preset = Preset(device_id=device_id, button=button)
         db.add(preset)
     preset.station_id = station.id
-    preset.source = source
-    preset.location = location
-    preset.content_item_xml = xml
+    # The stable radio readback is authoritative.  In particular, never keep
+    # a sourceAccount from the previous slot contents when a local-internet
+    # preset has just been verified with an empty sourceAccount.
+    preset.source = normalize_source_name(verified_slot.get("source") or source)
+    preset.source_account = str(verified_slot.get("source_account") or "")
+    preset.location = str(verified_slot.get("location") or location)
+    preset.content_item_xml = str(verified_slot.get("content_item_xml") or xml)
     preset.updated_at = utc_now()
     transition_preset_mutation(db, mutation, "LOCAL_COMMIT", commit=False)
     db.commit()

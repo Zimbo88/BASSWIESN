@@ -50,12 +50,16 @@ button {
   border-radius: 8px;
   padding: 10px 12px;
 }
-.now-panel, .volume-panel, .station-panel, #remote-output {
+.now-panel, .volume-panel, .safe-start-panel, .station-panel, #remote-output {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   padding: 14px;
 }
+.safe-start-panel { display: grid; gap: 8px; }
+.safe-start-panel label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.safe-start-panel input[type="number"] { width: 76px; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: #121820; color: var(--text); padding: 6px 9px; }
+.safe-start-panel small { color: var(--muted); }
 #remote-now { color: var(--text); line-height: 1.45; overflow-wrap: anywhere; }
 #remote-battery { margin-top: 8px; color: var(--ok); }
 .volume-panel {
