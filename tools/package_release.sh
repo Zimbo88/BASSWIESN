@@ -40,7 +40,7 @@ summary = {}
 for key, label in (("passed", "passed"), ("failed", "failed"), ("skipped", "skipped"), ("xfailed", "xfailed"), ("xpassed", "xpassed")):
     match = re.search(rf"(\d+) {label}", text)
     summary[key] = int(match.group(1)) if match else 0
-summary["command"] = f"{Path(os.environ['BASSWIESN_EFFECTIVE_PYTHON']).as_posix()} -m pytest -m 'not hardware' -q"
+summary["command"] = "python -m pytest -m 'not hardware' -q"
 summary["software_only"] = True
 Path(os.environ["TEST_SUMMARY"]).write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 PY
