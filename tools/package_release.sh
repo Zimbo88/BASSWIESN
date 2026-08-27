@@ -84,7 +84,7 @@ NOTE_GLOB_C="re""sume"
 find "$STAGE/docs" -type f \( -iname "*${NOTE_GLOB_A}*" -o -iname "*${NOTE_GLOB_B}*" -o -iname "*${NOTE_GLOB_C}*" \) -delete
 rm -f "$STAGE/tools/package_private_rpi.sh"
 find "$STAGE" -type f \( -name '*.odt' -o -name '*.tar' -o -name '*.tar.gz' -o -name '*.tar.xz' -o -name '*.zip' -o -name '*.7z' \) -delete
-if grep -RIEq '192\.168\.[0-9]{1,3}\.[0-9]{1,3}|/home/[^/[:space:]]+' "$STAGE"; then
+if grep -RIEq '(^|[^0-9A-Fa-f])[0-9A-Fa-f]{12}([^0-9A-Fa-f]|$)|/home/[^/[:space:]]+' "$STAGE"; then
   echo "Release staging contains installation-specific hardware or filesystem data" >&2
   exit 1
 fi
