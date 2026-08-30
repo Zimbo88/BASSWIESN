@@ -283,14 +283,20 @@ def test_preset_checker_returns_both_sides_and_changed_fields(monkeypatch):
     with TestClient(create_web_app()) as client:
         # Radio access is explicit; passive status rendering is DB-only.
         response = client.get("/api/presets/CHECK/status?probe=true")
-        preview = client.post("/api/presets/CHECK/sync", json={"dry_run": True})
+        preview = client.post("/api/presets/CHECK/sync", json={"dry_run": True, "probe": True})
     slot = response.json()["slots"][0]
     assert slot["verdict"] == "BROKEN"
     assert slot["state"] == "broken"
     assert slot["radio"]["title"] == "Radio title"
     assert slot["basswiesn"]["title"] == "Local title"
     assert {"source", "location", "xml"} <= set(slot["changed_fields"])
-    assert preview.json()["expected_slots"]["1"].startswith(f"http://192.168.50.77:1516{ORION_STATION_PATH}?data=")
+    # Artwork synchronization is deliberately non-destructive. It uses the
+    # live radio preset as its source of truth and must not convert a TuneIn
+    # preset into a BASSWIESN/Orion preset as a side effect.
+    assert preview.json()["preview_readback_performed"] is True
+    assert preview.json()["expected_slots"] == {"1": "radio:1"}
+    assert "192.168.50.77" not in str(preview.json())
+    assert preview.json()["sync_scope"] == "containerArt only; live radio selection identity is preserved"
 
 
 def test_system_settings_expose_all_25_web_languages():

@@ -10,10 +10,12 @@ import subprocess
 import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
+from types import SimpleNamespace
 from urllib.parse import quote, urlparse
+from uuid import uuid4
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import HTMLResponse, JSONResponse, Response, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
 
@@ -22,7 +24,7 @@ from basswiesn.app.api_models import HealthCheckResponse, ReadinessResponse, Sta
 from basswiesn.app.config import BASSWIESN_TABOO_HOSTS, get_settings, is_safe_radio_host
 from basswiesn.app.core.setup_mode import is_yes_confirmation
 from basswiesn.app.adapters.ssh import build_legacy_ssh_command
-from basswiesn.app.models import ConfigBackup, Device, DeviceActionJournal, PlayHistory, Preset, PresetProfile, RequestLog, RuntimeState, SetupPlan, Station, TelemetryEvent, Setting, utc_now
+from basswiesn.app.models import ConfigBackup, Device, DeviceActionJournal, DiagnosticEvent, PlayHistory, Preset, PresetProfile, RequestLog, RuntimeState, SetupPlan, Station, TelemetryEvent, Setting, utc_now
 from basswiesn.app.services.catalogs import (
     DISPLAY_METADATA_MODES,
     KEY_COMMANDS,
@@ -54,7 +56,7 @@ from basswiesn.app.services.network_security import (
     validate_outbound_host,
     validate_outbound_http_url,
 )
-from basswiesn.app.services.protected_devices import is_protected_ip, reject_protected_device_access, reject_protected_write_ip
+from basswiesn.app.services.protected_devices import is_device_access_protected, is_protected_ip, reject_protected_device_access, reject_protected_write_ip
 from basswiesn.app.services.feature_status import build_feature_status
 from basswiesn.app.services.action_journal import record_transport_attempt
 from basswiesn.app.services.support_export import SupportBundleTooLarge, build_support_bundle as build_deterministic_support_bundle, redact_payload, redact_text, tail_text
@@ -64,12 +66,17 @@ from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
 from basswiesn.app.db.repositories import DeviceIdentityRepository
 from basswiesn.app.repositories.research_state_repository import ResearchStateRepository
 from basswiesn.app.services.playback_state import is_confirmed_playing
+from basswiesn.app.services.artwork import cache_artwork, choose_artwork
 from basswiesn.app.core.masterlog import write_masterlog
 from basswiesn.app.routers.shared import enforce_ip_write_guard
+from basswiesn.app.services.setup_rebuild.candidates import candidate_from_device
+from basswiesn.app.services.setup_rebuild.cli17000 import factory_reset as cli_factory_reset
+from basswiesn.app.services.setup_rebuild.radio_adapter import RadioSetupAdapter
 
 router = APIRouter(prefix="/api", tags=["api"])
 
 DEVICE_NAME_RE = re.compile(r"^[^<>\"&]{1,63}$")
+_ONLINE_ARTWORK_LOCKS = tuple(asyncio.Lock() for _ in range(32))
 
 
 def _station_location_or_409(descriptor: StationDescriptor, db: Session, request: Request | None = None) -> str:
@@ -1403,8 +1410,8 @@ async def apply_changed_device_settings(device_id: str, payload: dict, db: Sessi
         if setting == "name":
             _validate_device_name(value)
         elif setting == "station_art_mode":
-            if str(value) not in {"radio_symbol", "station_logo"}:
-                raise HTTPException(status_code=400, detail="station_art_mode must be radio_symbol or station_logo")
+            if str(value) not in {"radio_symbol", "station_logo", "no_station_logo"}:
+                raise HTTPException(status_code=400, detail="station_art_mode must be radio_symbol, station_logo or no_station_logo")
         else:
             _setting_payload(setting, value)
     client = SoundTouchClient(device.ip_address)
@@ -1415,8 +1422,8 @@ async def apply_changed_device_settings(device_id: str, payload: dict, db: Sessi
     for setting, value in requested.items():
         if setting == "station_art_mode":
             mode = str(value)
-            if mode not in {"radio_symbol", "station_logo"}:
-                raise HTTPException(status_code=400, detail="station_art_mode must be radio_symbol or station_logo")
+            if mode not in {"radio_symbol", "station_logo", "no_station_logo"}:
+                raise HTTPException(status_code=400, detail="station_art_mode must be radio_symbol, station_logo or no_station_logo")
             key = f"station_art_mode:{device.device_id}"
             row = db.query(Setting).filter(Setting.key == key).one_or_none()
             current_mode = row.value if row else "radio_symbol"
@@ -2199,6 +2206,49 @@ async def search_online_stations(q: str, limit: int = 20, db: Session = Depends(
     return rows[:requested_limit]
 
 
+@router.get("/stations/online-artwork")
+async def online_station_artwork(url: str, db: Session = Depends(get_db)) -> RedirectResponse:
+    """Fetch a Radio Browser logo through the guarded raster cache.
+
+    Search results are controlled by an external catalogue.  Returning their
+    favicon URL directly to the WebUI would let the browser bypass the central
+    protected/private-target policy.  This same-origin endpoint validates and
+    DNS-pins the target before a bounded fetch and never exposes failed URLs to
+    the browser.
+    """
+
+    candidate = str(url or "").strip()
+    if not candidate or len(candidate) > 4096:
+        raise HTTPException(status_code=404, detail="station artwork not available")
+    validation = validate_outbound_http_url(candidate, public_only=True)
+    if not validation.ok:
+        raise HTTPException(status_code=404, detail="station artwork not available")
+    decision = external_request_decision(
+        db,
+        service="station_artwork",
+        url_or_host=candidate,
+        reason="optional online station logo",
+        required=False,
+    )
+    if not decision.allowed:
+        raise HTTPException(status_code=404, detail="station artwork not available")
+    lock = _ONLINE_ARTWORK_LOCKS[sum(candidate.encode("utf-8")) % len(_ONLINE_ARTWORK_LOCKS)]
+    async with lock:
+        result = await cache_artwork(
+            db,
+            choose_artwork(station_logo_url=candidate),
+            media_dir=get_settings().data_dir / "media",
+            provider_id="RADIO_BROWSER",
+        )
+    if result.status == "FAILED" or not result.cache_key:
+        raise HTTPException(status_code=404, detail="station artwork not available")
+    return RedirectResponse(
+        f"/api/artwork-cache/{result.cache_key}",
+        status_code=307,
+        headers={"Cache-Control": "private, max-age=3600"},
+    )
+
+
 def _radio_browser_media_summary(url: str) -> dict:
     analysis = analyze_stream_url(url)
     if analysis.stream_format == "mp3":
@@ -2303,6 +2353,131 @@ async def device_power_action(device_id: str, action: str, payload: dict, db: Se
     response = await client.get_xml(path)
     write_masterlog("device_power_action_complete", device_id=device.device_id, radio_ip=device.ip_address, action=action)
     return {"dry_run": False, "device_id": device.device_id, "path": path, "http_method": "GET", "response": response}
+
+
+def _lab_mode_enabled(db: Session) -> bool:
+    row = db.query(Setting).filter(Setting.key == "ui_mode").one_or_none()
+    return bool(row and row.value == "lab")
+
+
+@router.post("/lab/devices/{device_id}/factory-reset")
+async def lab_factory_reset(device_id: str, payload: dict, db: Session = Depends(get_db)) -> dict:
+    """Profile-bound, backed-up GUI factory reset for the explicit LAB path."""
+
+    if not _lab_mode_enabled(db):
+        raise HTTPException(status_code=403, detail="Factory Reset Radio is available only while LAB mode is active.")
+    device = _device_or_404(db, device_id)
+    if is_device_access_protected(device.ip_address, device.device_id):
+        raise HTTPException(status_code=403, detail="Protected devices cannot be selected for factory reset.")
+    candidate = candidate_from_device(device, db)
+    if candidate is None:
+        raise HTTPException(status_code=409, detail="No confirmed model/build profile is available for this radio.")
+    preview = {
+        "dry_run": True,
+        "device": {
+            "device_id": candidate.device_id,
+            "ip_address": candidate.ip_address,
+            "name": candidate.name,
+            "model": candidate.model,
+            "firmware": candidate.firmware,
+            "product_id": candidate.product_id,
+            "variant": candidate.variant,
+            "platform": candidate.platform,
+        },
+        "profile": candidate.profile_key,
+        "eligible": candidate.eligible,
+        "blocking_reason": candidate.blocking_reason,
+        "confirmation_required": "FACTORY RESET RADIO",
+        "backup_required": True,
+        "operation": "sys factorydefault",
+        "expected_statuses": [
+            "FACTORY RESET SENT",
+            "WAITING FOR DEVICE RESTART",
+            "DEVICE NO LONGER REACHABLE / RESET EXPECTED",
+        ],
+        "warning": "This erases the radio configuration and returns the device to factory defaults.",
+    }
+    if payload.get("dry_run", True):
+        return preview
+    if not candidate.eligible:
+        raise HTTPException(status_code=409, detail={"error": "FACTORY_RESET_PROFILE_BLOCKED", "reason": candidate.blocking_reason})
+    if payload.get("acknowledged") is not True:
+        raise HTTPException(status_code=400, detail="You must acknowledge that this resets the radio.")
+    if str(payload.get("confirmation") or "").strip() != "FACTORY RESET RADIO":
+        raise HTTPException(status_code=400, detail="confirmation required: FACTORY RESET RADIO")
+    enforce_ip_write_guard(db, device)
+
+    adapter = RadioSetupAdapter()
+    adapter_row = SimpleNamespace(
+        device_id=device.device_id,
+        name=device.name,
+        expected_model=device.model,
+        ip_address=device.ip_address,
+        evidence_json="{}",
+    )
+    try:
+        identity = await adapter.identify(adapter_row)
+        if identity["device_id"] != str(device.device_id).strip().upper():
+            raise RuntimeError("Fresh identity readback does not match the selected radio.")
+        adapter_row.evidence_json = json.dumps(identity)
+        backup = await adapter.backup(adapter_row)
+        if not backup.get("verified"):
+            raise RuntimeError("The required pre-reset backup was not verified.")
+        result = await cli_factory_reset(device.ip_address, device.device_id)
+    except Exception as exc:
+        write_masterlog(
+            "lab_factory_reset_failed",
+            device_id=device.device_id,
+            radio_ip=device.ip_address,
+            error_type=exc.__class__.__name__,
+            error=str(exc)[:500],
+        )
+        db.add(DiagnosticEvent(
+            event_id=str(uuid4()),
+            device_id=device.device_id,
+            domain="SESSION",
+            severity="ERROR",
+            code="FACTORY_RESET_FAILED",
+            message="LAB factory reset was not sent.",
+            evidence_json=json.dumps([{"error_type": exc.__class__.__name__}], separators=(",", ":")),
+            redacted=True,
+        ))
+        db.commit()
+        raise HTTPException(status_code=502, detail={"error": "FACTORY_RESET_NOT_SENT", "message": str(exc)[:500]}) from exc
+
+    device.reachable = False
+    device.offline_reason = "factory reset sent; device restart/disappearance expected"
+    device.last_failed_at = utc_now()
+    db.add(DiagnosticEvent(
+        event_id=str(uuid4()),
+        device_id=device.device_id,
+        domain="SESSION",
+        severity="WARNING",
+        code="FACTORY_RESET_SENT",
+        message="LAB factory reset sent; restart and loss of reachability are expected.",
+        evidence_json=json.dumps([{"profile": candidate.profile_key, "backup_sha256": backup.get("sha256", {})}], separators=(",", ":")),
+        redacted=True,
+    ))
+    db.commit()
+    write_masterlog(
+        "lab_factory_reset_sent",
+        device_id=device.device_id,
+        radio_ip=device.ip_address,
+        profile=candidate.profile_key,
+        backup_path=backup.get("backup_path", ""),
+    )
+    return {
+        **preview,
+        "dry_run": False,
+        "eligible": True,
+        "identity": identity,
+        "backup": backup,
+        "cli": result.public_dict(),
+        "status": "FACTORY RESET SENT",
+        "next_status": "WAITING FOR DEVICE RESTART",
+        "reachability": "DEVICE NO LONGER REACHABLE / RESET EXPECTED",
+        "automatic_follow_up_probe": False,
+    }
 
 
 @router.post("/devices/{device_id}/recovery/{action}")
@@ -2892,7 +3067,7 @@ async def configure_maintenance_reboot(device_id: str, payload: dict, db: Sessio
             status_code=409,
             detail={
                 "error": "automatic_radio_reboot_disabled",
-                "message": "Automatische Radio-Reboots sind in BASSWIESN 2.5.0 deaktiviert. Ein Reboot ist nur manuell im LAB erlaubt.",
+                "message": "Automatische Radio-Reboots sind in BASSWIESN 2.5.1 deaktiviert. Ein Reboot ist nur manuell im LAB erlaubt.",
             },
         )
     device.maintenance_reboot_enabled = False

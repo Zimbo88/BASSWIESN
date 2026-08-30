@@ -156,5 +156,5 @@ directly to the public Internet. Use a separately managed authenticated reverse
 proxy if remote access is required.
 
 For release-specific behavior and known limitations, see
-`docs/releases/2.5.0/RELEASE_NOTES_2.5.0.md`. Advanced diagnostics and LAB
+`docs/releases/2.5.1/RELEASE_NOTES_2.5.1.md`. Advanced diagnostics and LAB
 features are documented directly in the corresponding Web UI sections.

@@ -43,7 +43,7 @@ from basswiesn.app.services.stream_compat import (
 )
 from basswiesn.app.services.logo_validation import probe_logo_reference, validate_logo_reference
 from basswiesn.app.services.offline_mode import external_request_decision
-from basswiesn.app.services.protected_devices import is_protected_ip
+from basswiesn.app.services.protected_devices import is_device_access_protected, is_protected_ip
 from basswiesn.app.services.device_policy import policy_for_device
 from basswiesn.app.services.safe_uploads import InvalidUpload, UploadError, UploadQuotaExceeded, UploadTooLarge, UnsupportedUploadType, store_upload
 from basswiesn.app.services.preset_transactions import (
@@ -346,15 +346,28 @@ def _station_location_or_409(descriptor: StationDescriptor, db: Session, request
 
 
 def _device_content_item_xml(db: Session, device_id: str, station: Station, location: str, source: str = "LOCAL_INTERNET_RADIO") -> str:
-    # radio_symbol deliberately omits custom art, allowing the firmware's
-    # native LOCAL_INTERNET_RADIO glyph. station_logo supplies containerArt.
-    include_art = _station_logo_enabled(db, device_id) and validate_logo_reference(station.image_url)["valid"]
-    return content_item_xml(station, location, include_container_art=include_art, source=normalize_source_name(source))
+    # radio_symbol omits the element and lets firmware choose its native
+    # source glyph. station_logo supplies a validated URL. no_station_logo
+    # sends an explicit empty standard containerArt field so only text remains.
+    mode = _station_art_mode(db, device_id)
+    include_art = mode == "station_logo" and validate_logo_reference(station.image_url)["valid"]
+    return content_item_xml(
+        station,
+        location,
+        include_container_art=include_art,
+        source=normalize_source_name(source),
+        empty_container_art=mode == "no_station_logo",
+    )
+
+
+def _station_art_mode(db: Session, device_id: str) -> str:
+    row = db.query(Setting).filter(Setting.key == f"station_art_mode:{device_id}").one_or_none()
+    value = str(row.value if row else "radio_symbol")
+    return value if value in {"radio_symbol", "station_logo", "no_station_logo"} else "radio_symbol"
 
 
 def _station_logo_enabled(db: Session, device_id: str) -> bool:
-    row = db.query(Setting).filter(Setting.key == f"station_art_mode:{device_id}").one_or_none()
-    return bool(row and row.value == "station_logo")
+    return _station_art_mode(db, device_id) == "station_logo"
 
 
 def _record_preset_sync_state(db: Session, device_id: str, state: dict) -> None:
@@ -498,6 +511,7 @@ def preset_summaries_from_xml(xml_text: str) -> list[dict]:
             "location": content.attrib.get("location", "") if content is not None else "",
             "item_name": _child_text(content, "itemName") if content is not None else "",
             "container_art": _child_text(content, "containerArt") if content is not None else "",
+            "container_art_present": bool(content is not None and any(_xml_local_name(child.tag) == "containerArt" for child in content)),
             "content_item_xml": ET.tostring(content, encoding="unicode") if content is not None else "",
         })
     return rows
@@ -520,7 +534,26 @@ def _decoded_orion_station(location: str) -> dict:
     return decoded if isinstance(decoded, dict) else {}
 
 
-def _preset_content_item_xml(item: dict, *, location: str, source: str, source_account: str, name: str, art: str, include_art: bool = True) -> str:
+def _canonical_preset_source_account(source: str, value: str) -> str:
+    """Return the firmware contract value, not a stale display-name import."""
+
+    if normalize_source_name(source) == "LOCAL_INTERNET_RADIO":
+        return ""
+    return str(value or "")
+
+
+def _preset_content_item_xml(
+    item: dict,
+    *,
+    location: str,
+    source: str,
+    source_account: str,
+    name: str,
+    art: str,
+    include_art: bool = True,
+    empty_art: bool = False,
+    canonicalize_source_account: bool = True,
+) -> str:
     try:
         root = ET.fromstring(item.get("content_item_xml") or "")
     except ET.ParseError:
@@ -528,7 +561,11 @@ def _preset_content_item_xml(item: dict, *, location: str, source: str, source_a
     root.attrib["source"] = normalize_source_name(source)
     root.attrib["type"] = item.get("type") or root.attrib.get("type") or "stationurl"
     root.attrib["location"] = location
-    root.attrib["sourceAccount"] = source_account or ""
+    root.attrib["sourceAccount"] = (
+        _canonical_preset_source_account(source, source_account)
+        if canonicalize_source_account
+        else str(source_account or "")
+    )
     root.attrib["isPresetable"] = "true"
     item_name = next((child for child in root if _xml_local_name(child.tag) == "itemName"), None)
     if item_name is None:
@@ -539,6 +576,10 @@ def _preset_content_item_xml(item: dict, *, location: str, source: str, source_a
         if container_art is None:
             container_art = ET.SubElement(root, "containerArt")
         container_art.text = art
+    elif empty_art:
+        if container_art is None:
+            container_art = ET.SubElement(root, "containerArt")
+        container_art.text = ""
     elif container_art is not None:
         root.remove(container_art)
     return ET.tostring(root, encoding="unicode")
@@ -586,7 +627,9 @@ def import_presets_from_radio_backup(db: Session, device_id: str, xml_text: str,
             skipped.append({"button": button, "reason": "button outside SoundTouch preset range"})
             continue
         source = normalize_source_name(item.get("source"))
-        source_account = item.get("source_account") or ""
+        source_account = _canonical_preset_source_account(
+            source, item.get("source_account") or ""
+        )
         location = item.get("location") or ""
         decoded = _decoded_orion_station(location)
         name = decoded.get("name") or item.get("item_name") or f"Preset {button}"
@@ -686,6 +729,27 @@ def _locations_match(left: str, right: str) -> bool:
     return bool(left_data and right_data and left_data == right_data)
 
 
+def _locations_select_same_station(left: str, right: str) -> bool:
+    """Compare selection identity while ignoring server origin/extra hints.
+
+    This deliberately does not replace the strict write/readback comparator.
+    It is used only by the read-only Preset Checker so a valid preset hosted
+    by another BASSWIESN endpoint is shown as a warning instead of falsely as
+    an unplayable station.
+    """
+
+    left_item = _decoded_orion_station(left)
+    right_item = _decoded_orion_station(right)
+    if not left_item or not right_item:
+        return False
+    for key in ("streamUrl", "stream_url", "tuneinId", "providerStationId"):
+        left_value = str(left_item.get(key) or "").strip()
+        right_value = str(right_item.get(key) or "").strip()
+        if left_value and right_value:
+            return left_value == right_value
+    return False
+
+
 def _canonical_xml(xml_text: str) -> str:
     try:
         return ET.tostring(ET.fromstring(xml_text or ""), encoding="unicode")
@@ -750,9 +814,113 @@ def _preset_projection(item: dict) -> dict:
         "location": item.get("location", ""),
         "item_name": item.get("item_name", ""),
         "container_art": item.get("container_art", ""),
+        "container_art_present": bool(item.get("container_art_present", False)),
         "orion_payload": _orion_data_key(item.get("location", "")),
         "content_item_xml": _canonical_xml(item.get("content_item_xml", "")),
     }
+
+
+def _preset_contract_matches(actual: dict | None, expected: dict | None) -> bool:
+    if not actual or not expected:
+        return False
+    if not _locations_match(actual.get("location", ""), expected.get("location", "")):
+        return False
+    return all(
+        actual.get(field, "") == expected.get(field, "")
+        for field in (
+            "source",
+            "source_account",
+            "type",
+            "item_name",
+            "container_art",
+            "container_art_present",
+        )
+    )
+
+
+def _prepare_artwork_only_sync(
+    db: Session,
+    device_id: str,
+    local_rows: list[Preset],
+    radio_rows: list[dict],
+) -> tuple[dict[int, dict], list[int], list[dict]]:
+    """Build writes from live radio XML while preserving selection identity."""
+
+    mode = _station_art_mode(db, device_id)
+    current = {int(item.get("button") or 0): item for item in radio_rows}
+    prepared: dict[int, dict] = {}
+    already_current: list[int] = []
+    skipped: list[dict] = []
+    for preset in local_rows:
+        actual = current.get(int(preset.button))
+        station = _preset_station(db, preset)
+        if actual is None:
+            skipped.append({"button": preset.button, "reason": "radio slot is absent; artwork-only sync will not recreate it"})
+            continue
+        if station is None:
+            skipped.append({"button": preset.button, "reason": "no local station mapping; artwork source is unknown"})
+            continue
+        logo = validate_logo_reference(station.image_url)
+        include_art = mode == "station_logo" and bool(logo.get("valid"))
+        empty_art = mode == "no_station_logo"
+        desired_xml = _preset_content_item_xml(
+            actual,
+            location=str(actual.get("location") or ""),
+            source=str(actual.get("source") or preset.source or ""),
+            source_account=str(actual.get("source_account") or ""),
+            name=str(actual.get("item_name") or station.name or ""),
+            art=str(station.image_url or "") if include_art else "",
+            include_art=include_art,
+            empty_art=empty_art,
+            canonicalize_source_account=False,
+        )
+        parsed = preset_summaries_from_xml(
+            f'<presets><preset id="{preset.button}">{desired_xml}</preset></presets>'
+        )
+        if not parsed:
+            skipped.append({"button": preset.button, "reason": "desired artwork projection could not be parsed"})
+            continue
+        desired = parsed[0]
+        if _preset_contract_matches(
+            _preset_projection(actual), _preset_projection(desired)
+        ):
+            already_current.append(preset.button)
+            continue
+        prepared[preset.button] = {
+            "button": preset.button,
+            "station_id": station.id,
+            "source": desired.get("source", ""),
+            "source_account": desired.get("source_account", ""),
+            "location": desired.get("location", ""),
+            "content_item_xml": desired_xml,
+            "change": "update only containerArt; preserve source, account, location and item name",
+        }
+    return prepared, already_current, skipped
+
+
+def _commit_radio_preset_projection(
+    db: Session,
+    device_id: str,
+    radio_rows: list[dict],
+) -> None:
+    """Commit only verified radio readback into existing local slot mappings."""
+
+    for item in radio_rows:
+        button = int(item.get("button") or 0)
+        preset = db.query(Preset).filter(
+            Preset.device_id == device_id,
+            Preset.button == button,
+        ).one_or_none()
+        if preset is None:
+            continue
+        source = normalize_source_name(item.get("source"))
+        preset.source = source
+        preset.source_account = _canonical_preset_source_account(
+            source, item.get("source_account") or ""
+        )
+        preset.location = str(item.get("location") or preset.location or "")
+        preset.content_item_xml = str(item.get("content_item_xml") or preset.content_item_xml or "")
+        preset.updated_at = utc_now()
 
 
 def _expected_preset_summary(db: Session, device_id: str, button: int, location: str) -> dict:
@@ -789,7 +957,7 @@ def compare_preset_snapshots(
         actual = after_rows.get(int(button))
         target_expected = (expected_items or {}).get(int(button), {"button": button, "location": location})
         target_ok = bool(actual and _locations_match(actual.get("location", ""), location))
-        for field in ("source", "source_account", "type", "item_name", "container_art"):
+        for field in ("source", "source_account", "type", "item_name", "container_art", "container_art_present"):
             expected_value = target_expected.get(field)
             if expected_value not in (None, "") and actual and actual.get(field, "") != expected_value:
                 target_ok = False
@@ -799,7 +967,7 @@ def compare_preset_snapshots(
             "button": int(button),
             "scope": "target",
             "status": "verified" if target_ok else "mismatch" if actual else "missing",
-            "expected": {"location": location, "source": target_expected.get("source", ""), "source_account": target_expected.get("source_account", ""), "type": target_expected.get("type", ""), "item_name": target_expected.get("item_name", ""), "container_art": target_expected.get("container_art", "")},
+            "expected": {"location": location, "source": target_expected.get("source", ""), "source_account": target_expected.get("source_account", ""), "type": target_expected.get("type", ""), "item_name": target_expected.get("item_name", ""), "container_art": target_expected.get("container_art", ""), "container_art_present": target_expected.get("container_art_present", False)},
             "actual": actual or {},
         })
 
@@ -816,7 +984,7 @@ def compare_preset_snapshots(
                 _locations_match(before.get("location", ""), after.get("location", ""))
                 and all(
                     before.get(field, "") == after.get(field, "")
-                    for field in ("source", "source_account", "type", "item_name", "container_art", "orion_payload")
+                    for field in ("source", "source_account", "type", "item_name", "container_art", "container_art_present", "orion_payload")
                 )
             )
             if same_contract and after_origin in (allowed_orion_origins or set()):
@@ -938,6 +1106,10 @@ async def sync_presets_to_radio(
                 db, device.device_id, button, location
             )
     last_xml = before_xml
+    before_items = {
+        int(item["button"]): _preset_projection(item)
+        for item in preset_summaries_from_xml(before_xml)
+    }
     notification_sequence = ["storePreset"]
     for button, location in expected.items():
         prepared = (prepared_presets or {}).get(button)
@@ -948,6 +1120,13 @@ async def sync_presets_to_radio(
                 db, device.device_id, preset, location_override=location
             )
         if not content_item:
+            continue
+        desired = _preset_projection(expected_items.get(button, {}))
+        if _preset_contract_matches(before_items.get(int(button)), desired):
+            next(item for item in slot_results if item["button"] == button).update({
+                "status": "unchanged",
+                "actual_location": before_items[int(button)].get("location", ""),
+            })
             continue
         body = f'<preset id="{button}">{content_item}</preset>'
         station_id = (prepared or {}).get("station_id") or (preset.station_id if preset else None)
@@ -1032,7 +1211,7 @@ async def sync_presets_to_radio(
         raise HTTPException(status_code=502, detail={"error": "preset integrity check failed during stability window", "device_id": device.device_id, "expected_slots": expected, "integrity": final_integrity, "radio_presets": final_xml, "local_saved": False})
     for item in slot_results:
         actual = next((row for row in radio_rows if row["button"] == item["button"]), {})
-        item.update({"status": "verified", "actual_location": actual.get("location", "")})
+        item.update({"status": "unchanged" if item.get("status") == "unchanged" else "verified", "actual_location": actual.get("location", "")})
     final_integrity["overall_status"] = "verified"
     for mutation in (mutations or {}).values():
         transition_preset_mutation(
@@ -1574,6 +1753,10 @@ async def preset_status(
             PresetMutation.button == button,
         ).order_by(PresetMutation.revision.desc()).first()
         location_match = _locations_match(local_location, radio_location)
+        same_station_selection = (
+            not location_match
+            and _locations_select_same_station(local_location, radio_location)
+        )
         checks: list[dict] = []
         checks.append(
             _preset_check(
@@ -1589,6 +1772,13 @@ async def preset_status(
             checks.append(_preset_check("local_mapping", "WARNING", "radio slot exists without a BASSWIESN mapping"))
         elif not radio_location:
             checks.append(_preset_check("radio_slot", "BROKEN", "BASSWIESN mapping exists but radio slot is empty"))
+        elif same_station_selection:
+            checks.append(_preset_check(
+                "location",
+                "WARNING",
+                "same station selection uses a different BASSWIESN origin or normalized payload",
+                evidence={"local": local_location, "radio": radio_location},
+            ))
         elif not location_match:
             checks.append(_preset_check("location", "BROKEN", "radio and BASSWIESN locations differ", evidence={"local": local_location, "radio": radio_location}))
         else:
@@ -1607,7 +1797,10 @@ async def preset_status(
         else:
             checks.append(_preset_check("source", "WARNING", "source contract is not confirmed for local preset playback", evidence={"source": normalized_source}))
 
-        local_account = str(local_row.source_account or "") if local_row else ""
+        stored_local_account = str(local_row.source_account or "") if local_row else ""
+        local_account = _canonical_preset_source_account(
+            local_source, stored_local_account
+        )
         radio_account = str(radio_row.get("source_account", "") or "") if radio_row else ""
         checks.append(
             _preset_check(
@@ -1617,6 +1810,13 @@ async def preset_status(
                 evidence={"local": local_account, "radio": radio_account},
             )
         )
+        if stored_local_account != local_account:
+            checks.append(_preset_check(
+                "local_source_account_storage",
+                "WARNING",
+                "stored legacy sourceAccount is ignored; LOCAL_INTERNET_RADIO requires an empty value",
+                evidence={"stored": stored_local_account, "effective": local_account},
+            ))
         if local_row and local_row.station_id and local_station is None:
             checks.append(_preset_check("station_mapping", "BROKEN", "referenced BASSWIESN station no longer exists"))
         elif local_row and local_station is None:
@@ -1675,7 +1875,7 @@ async def preset_status(
             checks.append(_preset_check("mutation", "BROKEN", "preset mutation is marked divergent", evidence={"mutation_id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state}))
         verdict = _preset_verdict(checks)
         message = next((item["message"] for item in checks if item["status"] == verdict), "preset checks complete")
-        slots.append({"button": button, "state": verdict.lower(), "verdict": verdict, "message": message, "checks": checks, "changed_fields": changed_fields, "location_match": location_match, "mutation": {"id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state, "diverged": bool(mutation.diverged), "backup_ref": mutation.backup_ref, "error": mutation.error} if mutation else None, "basswiesn": {"source": local_source, "source_account": local_account, "location": local_location, "title": local_station.name if local_station else "", "provider": local_station.provider if local_station else local_source, "stream_url": local_station.stream_url if local_station else "", "logo_mode": "station_logo" if _station_logo_enabled(db, device_id) else "radio_symbol", "logo": logo, "xml": local_xml}, "radio": {"source": radio_source, "source_account": radio_account, "location": radio_location, "title": radio_row.get("item_name", "") if radio_row else "", "provider": radio_source, "container_art": radio_row.get("container_art", "") if radio_row else "", "xml": radio_item_xml}, "local_location": local_location, "radio_location": radio_location, "local_source": local_source, "radio_source": radio_source})
+        slots.append({"button": button, "state": verdict.lower(), "verdict": verdict, "message": message, "checks": checks, "changed_fields": changed_fields, "location_match": location_match, "mutation": {"id": mutation.mutation_id, "revision": mutation.revision, "state": mutation.state, "diverged": bool(mutation.diverged), "backup_ref": mutation.backup_ref, "error": mutation.error} if mutation else None, "basswiesn": {"source": local_source, "source_account": local_account, "location": local_location, "title": local_station.name if local_station else "", "provider": local_station.provider if local_station else local_source, "stream_url": local_station.stream_url if local_station else "", "logo_mode": _station_art_mode(db, device_id), "logo": logo, "xml": local_xml}, "radio": {"source": radio_source, "source_account": radio_account, "location": radio_location, "title": radio_row.get("item_name", "") if radio_row else "", "provider": radio_source, "container_art": radio_row.get("container_art", "") if radio_row else "", "xml": radio_item_xml}, "local_location": local_location, "radio_location": radio_location, "local_source": local_source, "radio_source": radio_source})
     sync_row = db.query(RuntimeState).filter(RuntimeState.key == f"preset_sync:{device_id}").one_or_none()
     try:
         sync_state = json.loads(sync_row.value) if sync_row is not None else {}
@@ -1698,24 +1898,59 @@ async def preset_status(
 async def sync_local_presets(device_id: str, payload: dict, db: Session = Depends(get_db)) -> dict:
     device = device_or_404(db, device_id)
     rows = db.query(Preset).filter(Preset.device_id == device_id).order_by(Preset.button).all()
-    expected = {row.button: _effective_preset_location(db, device_id, row) for row in rows if row.location}
     logo_status = []
     for row in rows:
         station = _preset_station(db, row)
         if station is None:
             continue
         logo = validate_logo_reference(station.image_url)
-        logo_status.append({"button": row.button, "station_id": station.id, "mode": "station_logo" if _station_logo_enabled(db, device_id) else "radio_symbol", "configured": logo["configured"], "valid": logo["valid"], "verification": logo["verification"], "reason": logo["reason"], "fallback": logo["fallback"]})
-    expected_changes = [{"button": button, "location": location, "change": "lokales Preset synchronisieren und Readback prüfen"} for button, location in expected.items()]
+        logo_status.append({"button": row.button, "station_id": station.id, "mode": _station_art_mode(db, device_id), "configured": logo["configured"], "valid": logo["valid"], "verification": logo["verification"], "reason": logo["reason"], "fallback": logo["fallback"]})
+    expected: dict[int, str] = {}
+    prepared: dict[int, dict] = {}
+    current_rows: list[dict] = []
+    expected_changes: list[dict] = []
+    already_current_slots: list[int] = []
+    skipped_slots: list[dict] = []
+    preview_readback_error = ""
+    readback_requested = bool(payload.get("probe", False)) or not payload.get("dry_run", True)
+    if readback_requested:
+        try:
+            current_xml = await _soundtouch_client_for(
+                device,
+                purpose="preset_sync_preview",
+                trigger="device_settings_logo_preview",
+            ).get_xml("/presets")
+            current_rows = preset_summaries_from_xml(current_xml)
+            prepared, already_current_slots, skipped_slots = _prepare_artwork_only_sync(
+                db, device_id, rows, current_rows
+            )
+            expected = {
+                button: str(item.get("location") or "")
+                for button, item in prepared.items()
+            }
+            expected_changes = [
+                {
+                    "button": button,
+                    "location": item.get("location", ""),
+                    "change": item.get("change", "update only containerArt"),
+                    "preserves": ["source", "sourceAccount", "location", "itemName"],
+                }
+                for button, item in prepared.items()
+            ]
+        except Exception as exc:
+            preview_readback_error = str(exc)[:500]
+    elif payload.get("dry_run", True):
+        preview_readback_error = "Explicit radio readback is required for an artwork-only preview."
     setting_rows = {row.key: row.value for row in db.query(Setting).all()}
     guard_enabled = str(setting_rows.get("ip_write_guard", "false")).lower() in {"true", "1", "yes", "on"}
     allowed_ips = {item.strip() for item in (setting_rows.get("ip_write_allowed_ips", "").replace(";", ",").split(",")) if item.strip()}
     allowed_ips.update(get_settings().setup_write_radio_ips)
     write_allowed = not guard_enabled or device.ip_address in allowed_ips
     write_blocker = ""
-    if is_protected_ip(device.ip_address):
+    protected = is_device_access_protected(device.ip_address, device.device_id)
+    if protected:
         write_allowed = False
-        write_blocker = "Schutz-IP-Liste blockiert Schreibzugriffe."
+        write_blocker = "Protected-device policy blocks all radio access."
     elif not write_allowed:
         write_blocker = "IP Write Guard erlaubt dieses Ziel nicht."
     preview = {
@@ -1724,16 +1959,42 @@ async def sync_local_presets(device_id: str, payload: dict, db: Session = Depend
         "target": {"device_id": device.device_id, "ip_address": device.ip_address, "name": device.name},
         "expected_slots": expected,
         "expected_changes": expected_changes,
+        "already_current_slots": already_current_slots,
+        "skipped_slots": skipped_slots,
+        "preview_readback_performed": readback_requested and not preview_readback_error,
+        "preview_readback_error": preview_readback_error,
         "logo_status": logo_status,
-        "protection": {"protected_ip": is_protected_ip(device.ip_address), "write_guard_enabled": guard_enabled, "write_allowed": write_allowed, "write_blocker": write_blocker},
+        "protection": {"protected": protected, "protected_ip": is_protected_ip(device.ip_address), "write_guard_enabled": guard_enabled, "write_allowed": write_allowed, "write_blocker": write_blocker},
         "memory_check_required": True,
         "radio_action": "none",
+        "sync_scope": "containerArt only; live radio selection identity is preserved",
     }
     if payload.get("dry_run", True):
         return preview
     require_memory_checked(device, payload)
+    if preview_readback_error:
+        raise HTTPException(status_code=502, detail={"error": "radio preset readback failed before artwork sync", "message": preview_readback_error})
+    if not prepared:
+        _commit_radio_preset_projection(db, device_id, current_rows)
+        db.commit()
+        integrity = {
+            "overall_status": "verified",
+            "target_verified": True,
+            "untouched_slots_verified": True,
+            "unexpected_changes": [],
+            "slot_results": [],
+            "radio_write_count": 0,
+        }
+        _record_preset_sync_state(db, device_id, {"status": "verified", "verified": True, "last_error": "", "successful_slots": len(already_current_slots), "different_slots": 0, "radio_slots": current_rows, "integrity": integrity})
+        return {"dry_run": False, "device_id": device_id, "target": preview["target"], "verified": True, "radio_slots": current_rows, "expected_slots": {}, "integrity": integrity, "logo_status": logo_status, "protection": preview["protection"], "skipped_slots": skipped_slots}
     try:
-        radio_rows = await sync_presets_to_radio(device, expected, db, "preset-checker-sync")
+        radio_rows = await sync_presets_to_radio(
+            device,
+            expected,
+            db,
+            "preset-artwork-sync",
+            prepared_presets=prepared,
+        )
     except HTTPException as exc:
         detail = exc.detail if isinstance(exc.detail, dict) else {}
         integrity = detail.get("integrity", {})
@@ -1742,8 +2003,10 @@ async def sync_local_presets(device_id: str, payload: dict, db: Session = Depend
         _record_preset_sync_state(db, device_id, {"status": integrity.get("overall_status", "failed"), "verified": False, "last_error": str(exc.detail)[:500], "successful_slots": sum(1 for item in slot_results if item.get("status") in {"verified", "unchanged"}), "different_slots": failed_slots or len(detail.get("unexpected_changes", [])), "slot_results": slot_results, "integrity": integrity})
         raise
     integrity = _integrity_for_sync_result(radio_rows, expected)
+    _commit_radio_preset_projection(db, device_id, radio_rows)
+    db.commit()
     _record_preset_sync_state(db, device_id, {"status": integrity["overall_status"], "verified": integrity["overall_status"] == "verified", "last_error": "", "successful_slots": len(radio_rows), "different_slots": len(integrity.get("unexpected_changes", [])), "radio_slots": radio_rows, "integrity": integrity})
-    return {"dry_run": False, "device_id": device_id, "target": preview["target"], "verified": integrity["overall_status"] == "verified", "radio_slots": radio_rows, "expected_slots": expected, "integrity": integrity, "logo_status": logo_status, "protection": preview["protection"]}
+    return {"dry_run": False, "device_id": device_id, "target": preview["target"], "verified": integrity["overall_status"] == "verified", "radio_slots": radio_rows, "expected_slots": expected, "integrity": integrity, "logo_status": logo_status, "protection": preview["protection"], "skipped_slots": skipped_slots}
 
 
 @router.post("/presets/{device_id}/{button}")

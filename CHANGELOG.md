@@ -1,5 +1,42 @@
 # Changelog
 
+## 2.5.1 - 2026-08-29
+
+### Easy Mode and browser fixes
+
+- Unified Setup and Radios discovery on the same explicit, bounded scan path;
+  a visible Easy Mode click now discovers, identity-verifies and renders the
+  same radios as Standard and LAB mode.
+- Replaced the clipped desktop radio table with responsive cards so **Remove
+  from BASSWIESN** remains reachable at desktop and mobile widths.
+- Added About BASSWIESN to Easy Mode and completed English/German runtime
+  translation coverage across Easy, Standard and LAB workflows.
+- Restored Radio Browser station logos with a clean missing/broken fallback.
+  Remote catalogue artwork now passes through the guarded, DNS-pinned raster
+  cache instead of being requested directly by the browser.
+
+### Presets, display and Multiroom
+
+- Added **No station logo** as a third radio-display mode. Artwork sync takes a
+  live preset snapshot, previews affected slots, backs up the radio, changes
+  only `containerArt`, verifies read-back and preserves selection identity.
+- Canonicalized stale `sourceAccount` values for local Internet radio and made
+  the checker distinguish a matching station on another BASSWIESN origin from
+  a genuinely different preset.
+- Moved firmware-dependent single-member removal out of Easy and Standard into
+  LAB while retaining safe complete-zone start/stop controls.
+
+### LAB and release safety
+
+- Added an exact-profile, backup-first LAB Factory Reset workflow using the
+  confirmed CLI 17000 `sys factorydefault` command. It requires checkbox, typed
+  confirmation and final browser confirmation, excludes protected devices and
+  starts no automatic follow-up probe after the radio leaves the network.
+- Made the package source version authoritative so an older preserved `.env`
+  cannot make an upgraded server advertise an obsolete release number.
+- Retained the validated Radio Browser dual-stack IPv4 preference and all
+  protected-device, preset read-back and circuit-breaker recovery behavior.
+
 ## 2.5.0 - 2026-08-26
 
 ### Stability and recovery

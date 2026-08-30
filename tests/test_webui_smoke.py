@@ -172,7 +172,7 @@ def test_easy_mode_is_persisted_and_only_changes_ui_complexity():
     js = open("basswiesn/app/static/app.js", encoding="utf-8").read()
     assert 'data-view="setup" data-normal data-easy' in html
     assert '.easy-mode .topnav > :not([data-easy])' in css
-    assert 'new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"])' in js
+    assert 'new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings", "about"])' in js
 
 
 def test_diagnostics_service_health_reports_internal_online(monkeypatch):

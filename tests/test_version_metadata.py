@@ -8,7 +8,7 @@ from basswiesn.app.main import create_web_app
 
 
 def test_app_version_is_exposed_consistently():
-    assert __version__ == "2.5.0"
+    assert __version__ == "2.5.1"
     assert get_settings().version == __version__
 
     with TestClient(create_web_app()) as client:
@@ -27,6 +27,15 @@ def test_app_version_is_exposed_consistently():
     assert health["version"] == __version__
     assert health["ok"] is True
     assert settings["version"] == __version__
+
+
+def test_preserved_env_cannot_override_the_running_release_version(monkeypatch):
+    monkeypatch.setenv("BASSWIESN_VERSION", "1.6.0")
+    get_settings.cache_clear()
+    try:
+        assert get_settings().version == __version__
+    finally:
+        get_settings.cache_clear()
 
 
 def test_version_and_html_cache_policies_are_upgrade_safe():

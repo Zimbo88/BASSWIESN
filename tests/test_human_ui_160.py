@@ -450,7 +450,7 @@ def test_desktop_human_navigation_health_lab_and_evidence(human_ui_server):
             expect(page.locator("#metadata-artwork")).to_have_attribute("src", re.compile(r"^/api/artwork-cache/[0-9a-f]{64}$"))
             expect(page.locator("#metadata-artwork")).to_have_js_property("complete", True)
             expect(page.locator("#reporting-health-details")).to_contain_text("Queue 0/20")
-            expect(page.locator("#airplay-health-badge")).to_have_text("Bereit")
+            expect(page.locator("#airplay-health-badge")).to_have_text("Ready")
             expect(page.locator("#diagnostics-timeline")).to_contain_text("Report OK")
             _open_view(page, "stations")
             expect(page.locator("#stations-table .station-logo-small")).to_have_attribute(
@@ -536,7 +536,7 @@ def test_mobile_human_setup_navigation_modals_scroll_and_rollback(human_ui_serve
 def test_easy_mode_human_flow_is_reduced_and_usable_on_desktop_and_mobile(human_ui_server):
     artifact_root = Path("test-artifacts/2.5.0/easy-mode")
     artifact_root.mkdir(parents=True, exist_ok=True)
-    easy_views = {"setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"}
+    easy_views = {"setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings", "about"}
 
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
@@ -557,7 +557,7 @@ def test_easy_mode_human_flow_is_reduced_and_usable_on_desktop_and_mobile(human_
             assert visible_views == easy_views
             assert not page.locator(".advanced-nav:visible").count()
 
-            for view in ("setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"):
+            for view in ("setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings", "about"):
                 _open_view(page, view)
             _open_view(page, "devices")
             expect(page.locator("[data-remove-device]:visible").first).to_be_visible()

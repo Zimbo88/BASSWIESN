@@ -10,13 +10,15 @@ from basswiesn.app.services.protected_devices import is_protected_ip, reject_pro
 def lab_status() -> dict:
     return {
         "enabled": get_settings().lab_mode,
+        # LAB remains read-only by default; the factory-reset card is the one
+        # explicitly acknowledged, profile-bound destructive exception.
         "read_only": True,
-        "factory_reset_executable": False,
+        "factory_reset_executable": True,
         "ssh_activation": False,
         "telnet_activation": False,
         "warnings": [
             "LAB ist standardmäßig deaktiviert.",
-            "Diese lokale Testversion führt keinen True Factory Reset aus.",
+            "Factory Reset ist nur in LAB, exakt profilgebunden und nach vollständigem Backup ausführbar.",
             "SSH-/Telnet-Prüfungen sind read-only und ändern keine Geräte.",
         ],
     }

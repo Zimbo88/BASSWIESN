@@ -1359,7 +1359,7 @@
   },
   {
     "allowed_values": "freier Text gemaess Code",
-    "default": "__version__",
+    "default": "",
     "deprecated": false,
     "documented_in_env_example": true,
     "name": "BASSWIESN_VERSION",
@@ -1369,8 +1369,7 @@
     "security_relevance": "niedrig",
     "service": "Global Runtime",
     "sources": [
-      ".env.example",
-      "basswiesn/app/config.py"
+      ".env.example"
     ],
     "type": "string"
   },

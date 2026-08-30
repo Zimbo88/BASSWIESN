@@ -182,7 +182,7 @@ def test_release_packaging_includes_public_runtime_docs_and_excludes_private_fil
 
     assert "BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh" in script
     assert "PUBLIC_TOOLS=(tools/run_dev.py)" in script
-    assert "PUBLIC_DOCS=(docs/releases/2.5.0/RELEASE_NOTES_2.5.0.md)" in script
+    assert "PUBLIC_DOCS=(docs/releases/2.5.1/RELEASE_NOTES_2.5.1.md)" in script
     assert "installation-specific hardware or filesystem data" in script
     assert "__pycache__" in script
     assert "package_private_rpi.sh" in script

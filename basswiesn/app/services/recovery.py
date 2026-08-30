@@ -1,4 +1,4 @@
-"""Bounded, evidence-driven recovery ladder for BASSWIESN 2.5.0."""
+"""Bounded, evidence-driven recovery ladder for BASSWIESN 2.5.1."""
 
 from __future__ import annotations
 

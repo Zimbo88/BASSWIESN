@@ -1,4 +1,4 @@
-# BASSWIESN 2.5 Release Checklist
+# BASSWIESN 2.5.1 Release Checklist
 
 Do not push, tag or create a GitHub release while a critical gate is failed or
 unverified. A green unit suite alone is not a release gate.
@@ -6,7 +6,7 @@ unverified. A green unit suite alone is not a release gate.
 ## 1. Source and version
 
 - [ ] `git status` contains only reviewed release changes.
-- [ ] Backend, Web UI, package and documentation report `2.5.0`.
+- [ ] Backend, Web UI, package and documentation report `2.5.1`.
 - [ ] `git diff --check` passes.
 - [ ] No runtime database, logs, `.env`, secrets, private keys, hardware
       backups, research source material or test artifacts are publishable.
@@ -123,7 +123,7 @@ tools/package_release.sh
 
 Expected public assets:
 
-- `dist/basswiesn-docker-release-2.5.0.tar.gz`
+- `dist/basswiesn-docker-release-2.5.1.tar.gz`
 - `dist/SHA256SUMS`
 
 - [ ] Archive ownership, order and timestamps are reproducible.
@@ -142,7 +142,7 @@ Extract the archive into an empty temporary directory and act as a new user:
 - [ ] Compose configuration validates.
 - [ ] Container runs non-root and becomes healthy.
 - [ ] Database and migrations initialize from empty state.
-- [ ] Web UI reports version `2.5.0`.
+- [ ] Web UI reports version `2.5.1`.
 - [ ] Setup entry is visible on desktop and mobile.
 - [ ] Page load performs no discovery or radio probe.
 - [ ] Discovery starts only after visible user action.
@@ -158,8 +158,8 @@ gate above passes.
 - [ ] Final assets and checksums are stored separately.
 - [ ] A publishable-source staging tree contains no private/internal artifacts.
 - [ ] The new public repository starts with one reviewed commit:
-      `BASSWIESN 2.5.0` on `main`.
-- [ ] Tag `v2.5.0` points to that commit.
+      `BASSWIESN 2.5.1` on `main`.
+- [ ] Tag `v2.5.1` points to that commit.
 - [ ] English release notes use no unsupported claim.
 
 ## 10. Validation from GitHub

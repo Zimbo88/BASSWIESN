@@ -136,7 +136,7 @@ function ensureIntegratedPanels() {
   if (!document.getElementById("preset-checker-grid")) {
     const panel = document.createElement("section");
     panel.className = "panel preset-checker easy-hidden";
-    panel.innerHTML = `<div class="panel-title-row"><div><h3 data-i18n="preset_checker">Preset Checker</h3><p class="muted-copy">Radio-Slots und BASSWIESN-Daten read-only vergleichen.</p></div><button class="command" id="preset-checker-refresh" type="button" data-i18n="refresh">Aktualisieren</button></div><p class="form-message" id="preset-checker-message"></p><div class="preset-checker-grid" id="preset-checker-grid"></div>`;
+    panel.innerHTML = `<div class="panel-title-row"><div><h3 data-i18n="preset_checker">Preset Checker</h3><p class="muted-copy">Radio-Slots und BASSWIESN-Daten nur lesend vergleichen.</p></div><button class="command" id="preset-checker-refresh" type="button" data-i18n="refresh">Aktualisieren</button></div><p class="form-message" id="preset-checker-message"></p><div class="preset-checker-grid" id="preset-checker-grid"></div>`;
     const lastResult = document.getElementById("preset-result")?.closest(".panel");
     if (lastResult) lastResult.after(panel);
     else document.querySelector("#view-presets .preset-builder")?.after(panel);
@@ -623,9 +623,10 @@ function renderDevices() {
   const batteryPatchDeviceSelect = document.getElementById("battery-patch-device-select");
   const standbyClockDeviceSelect = document.getElementById("standby-clock-device-select");
   const maintenanceRebootDevice = document.getElementById("maintenance-reboot-device");
+  const factoryResetDevice = document.getElementById("factory-reset-device-select");
   const scenarioMaster = document.getElementById("scenario-master");
   const scenarioTriggerDevice = document.getElementById("scenario-trigger-device");
-  [presetSelect, masterSelect, settingsSelect, keyDeviceSelect, displayDeviceSelect, displayRecoveryDeviceSelect, scheduleDeviceSelect, renameSelect, telemetrySelect, radioLogDeviceSelect, sshLogDeviceSelect, setupLiveTestDevice, cloneSourceSelect, cloneTargetSelect, deviceInfoSelect, guidedSetupSelect, profileApplyDevice, recoveryDeviceSelect, recoveryResetDeviceSelect, mediaDeviceSelect, stationPlayDevice, nativeStationDevice, nativeStationAddDevice, bassCapabilitiesDevice, sourceNameDevice, wirelessProfileDevice, zoneStatusDevice, cloudRouteDevice, setupWizardDevice, backupDeviceSelect, referenceSourceDevice, referenceTargetDevice, telnetDeviceSelect, batteryPatchDeviceSelect, standbyClockDeviceSelect, maintenanceRebootDevice, scenarioMaster, scenarioTriggerDevice].forEach((select) => {
+  [presetSelect, masterSelect, settingsSelect, keyDeviceSelect, displayDeviceSelect, displayRecoveryDeviceSelect, scheduleDeviceSelect, renameSelect, telemetrySelect, radioLogDeviceSelect, sshLogDeviceSelect, setupLiveTestDevice, cloneSourceSelect, cloneTargetSelect, deviceInfoSelect, guidedSetupSelect, profileApplyDevice, recoveryDeviceSelect, recoveryResetDeviceSelect, mediaDeviceSelect, stationPlayDevice, nativeStationDevice, nativeStationAddDevice, bassCapabilitiesDevice, sourceNameDevice, wirelessProfileDevice, zoneStatusDevice, cloudRouteDevice, setupWizardDevice, backupDeviceSelect, referenceSourceDevice, referenceTargetDevice, telnetDeviceSelect, batteryPatchDeviceSelect, standbyClockDeviceSelect, maintenanceRebootDevice, factoryResetDevice, scenarioMaster, scenarioTriggerDevice].forEach((select) => {
     if (!select) return;
     const previous = select.value;
     select.innerHTML = networkDevices.length
@@ -652,6 +653,17 @@ function renderDevices() {
   syncResearchHealthDeviceSelect();
   renderAllRadioButtons();
   syncSafeStartControl();
+  renderFactoryResetIdentity();
+}
+
+function renderFactoryResetIdentity() {
+  const select = document.getElementById("factory-reset-device-select");
+  const box = document.getElementById("factory-reset-identity");
+  if (!select || !box) return;
+  const device = state.devices.find((item) => item.device_id === select.value && !item.protected);
+  box.innerHTML = device
+    ? `<div class="event-row"><span>${escapeHtml(text(device.ip_address))}</span><strong>${escapeHtml(text(device.name, device.device_id))}</strong><small>${escapeHtml(text(device.model))} · ${escapeHtml(text(device.firmware))}<br>Device ID ${escapeHtml(device.device_id)}</small></div>`
+    : `<div class="empty">No eligible radio selected.</div>`;
 }
 
 function syncResearchHealthDeviceSelect() {
@@ -1038,7 +1050,7 @@ function renderPlayback() {
     const devices = state.playStats?.by_device || [];
     const stations = state.playStats?.by_station || [];
     const active = state.playStats?.active || [];
-    const todayHtml = `<div class="event-row"><span>Heute</span><strong>${escapeHtml(text(today.starts, 0))} Starts · ${escapeHtml(text(today.stops, 0))} Stops/Pauses</strong><small>${escapeHtml(text(today.errors, 0))} Playback-Fehler</small></div>`;
+    const todayHtml = `<div class="event-row"><span>Heute</span><strong>${escapeHtml(text(today.starts, 0))} Starts · ${escapeHtml(text(today.stops, 0))} Stops/Pauses</strong><small>${escapeHtml(text(today.errors, 0))} Wiedergabefehler</small></div>`;
     const activeHtml = active.length ? active.map((item) => `<div class="event-row status-ready"><span>Jetzt aktiv</span><strong>${escapeHtml(text(item.device_name, item.device_id))} · ${escapeHtml(text(item.station_display_name, item.station))}</strong><small>${escapeHtml(formatDuration(item.seconds))}</small></div>`).join("") : "";
     const lifetime = state.playStats?.lifetime || {};
     const aggregate = state.playStats?.aggregate || {};
@@ -1295,6 +1307,10 @@ function renderSystemSettings() {
 function i18nT(key) { return window.BasswiesnI18n?.t(key) || key; }
 function i18nPhraseT(value) { return window.BasswiesnI18n?.phrase(value) || value; }
 function i18nLangT(language, key) { return window.BasswiesnI18n?.catalogs?.[language]?.[key] || window.BasswiesnI18n?.catalogs?.en?.[key] || key; }
+function uiCopy(de, en) {
+  const language = state.systemSettings?.web_language || document.documentElement.lang || "en";
+  return language === "de" ? de : en;
+}
 
 const ABOUT_COPY = {
   de: {
@@ -1316,7 +1332,7 @@ const ABOUT_COPY = {
     facts: ["Version", "", "Firmware", "27.0.x", "Verifizierte Geräte", "Arbeitsgrundsätze"],
     principles: ["sichere Abläufe", "niedrige Testlautstärke", "Rücklesen vor Erfolgsmeldungen", "kein Blindvertrauen in Befehle"],
     backups: "Backup und Restore sind verfügbar; die Oberfläche zeigt den jeweils nachgewiesenen Umfang.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
+    disclaimer: "Markenhinweis: SoundTouch und Bose sind eingetragene Marken ihrer jeweiligen Eigentümer. BASSWIESN ist ein unabhängiges, inoffizielles Projekt und steht nicht in Verbindung mit der Bose Corporation."
   },
   en: {
     kicker: "Development",
@@ -1937,6 +1953,10 @@ function translateCoreUi() {
     "#download-support-bundle": "support_bundle", "#setup-finish": "complete", "[data-setup-flow-action='verify']": "verify", "[data-setup-flow-action='apply']": "apply",
   };
   for (const [selector, key] of Object.entries(textMap)) document.querySelectorAll(selector).forEach((element) => { element.textContent = i18nT(key); });
+  document.querySelectorAll("[data-i18n-static]").forEach((element) => {
+    const translated = i18nPhraseT(element.textContent);
+    if (translated !== element.textContent) element.textContent = translated;
+  });
   const navMap = {
     dashboard: "start",
     setup: "setup",
@@ -1978,7 +1998,7 @@ function translateCoreUi() {
 }
 
 function translateExactUiPhrases(root = document.body) {
-  if (!window.BasswiesnI18n?.phrase || !root) return;
+  if (!window.BasswiesnI18n?.dynamic || !root) return;
   const skipSelector = "script,style,code,pre,textarea";
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
@@ -1986,7 +2006,8 @@ function translateExactUiPhrases(root = document.body) {
       if (!parent || parent.closest(skipSelector)) return NodeFilter.FILTER_REJECT;
       const raw = node.nodeValue.trim();
       if (!raw || /^[\d\s%:./<>()+-]+$/.test(raw)) return NodeFilter.FILTER_REJECT;
-      return i18nPhraseT(raw) !== raw ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+      if (/^[A-Z][A-Z0-9_:-]*$/.test(raw)) return NodeFilter.FILTER_REJECT;
+      return window.BasswiesnI18n.dynamic(raw) !== raw ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
     },
   });
   const nodes = [];
@@ -1994,7 +2015,7 @@ function translateExactUiPhrases(root = document.body) {
   while ((node = walker.nextNode())) nodes.push(node);
   nodes.forEach((item) => {
     const raw = item.nodeValue.trim();
-    const translated = i18nPhraseT(raw);
+    const translated = window.BasswiesnI18n.dynamic(raw);
     if (translated !== raw) item.nodeValue = item.nodeValue.replace(raw, translated);
   });
   document.querySelectorAll("[placeholder],[aria-label],input[value]").forEach((element) => {
@@ -2002,11 +2023,22 @@ function translateExactUiPhrases(root = document.body) {
       if (!element.hasAttribute(attribute)) continue;
       if (element.tagName === "INPUT" && attribute === "value" && !["button", "submit", "reset"].includes((element.type || "").toLowerCase())) continue;
       const value = element.getAttribute(attribute);
-      const translated = i18nPhraseT(value);
+      const translated = window.BasswiesnI18n.dynamic(value);
       if (translated !== value) element.setAttribute(attribute, translated);
     }
   });
 }
+
+let translationRefreshQueued = false;
+const translationObserver = new MutationObserver((mutations) => {
+  if (translationRefreshQueued || !mutations.some((item) => item.addedNodes.length || item.type === "characterData")) return;
+  translationRefreshQueued = true;
+  window.queueMicrotask(() => {
+    translationRefreshQueued = false;
+    translateExactUiPhrases(document.body);
+  });
+});
+translationObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
 
 function applyUiPreferences() {
   if (!state.systemSettings) return;
@@ -2026,7 +2058,7 @@ function applyUiPreferences() {
   if (mode === "easy") {
     document.querySelector(".advanced-nav")?.removeAttribute("open");
     const active = document.querySelector(".nav-button.is-active")?.dataset.view;
-    const easyViews = new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings"]);
+    const easyViews = new Set(["setup", "devices", "controls", "presets", "multiroom", "schedules", "device-settings", "about"]);
     if (!easyViews.has(active)) document.querySelector('.nav-button[data-view="setup"]')?.click();
   }
   document.documentElement.lang = state.systemSettings.web_language || "de";
@@ -2309,17 +2341,26 @@ function renderSetupRebuildDiscovery() {
   if (!container) return;
   const result = state.setupRebuildDiscovery;
   if (!result) {
-    container.innerHTML = `<div class="empty">Noch keine ausdrückliche LAN-Suche in dieser Sitzung ausgeführt.</div>`;
+    container.innerHTML = `<div class="empty">${escapeHtml(uiCopy("Noch keine ausdrückliche LAN-Suche in dieser Sitzung ausgeführt.", "No explicit LAN scan has been run in this session."))}</div>`;
     return;
   }
   if (result.running) {
-    container.innerHTML = `<div class="setup-rebuild-discovery-result"><strong>Verbundene Radios werden gesucht …</strong><span>Nur SSDP-Multicast und anschließend /info für genau die neu gefundenen, ungeschützten Radios.</span></div>`;
+    container.innerHTML = `<div class="setup-rebuild-discovery-result"><strong>${escapeHtml(uiCopy("Verbundene Radios werden gesucht …", "Searching for connected radios…"))}</strong><span>${escapeHtml(uiCopy("Begrenzte LAN-Suche; geschützte Ziele werden vor jedem direkten Transport ausgeschlossen.", "Bounded LAN scan; protected targets are excluded before every direct transport."))}</span></div>`;
     return;
   }
-  const failures = (result.failures || []).map((item) => `<div class="setup-rebuild-error"><strong>${escapeHtml(item.device_id || "Nicht auswählbar")}</strong>: ${escapeHtml(item.reason || "Identitätsprüfung fehlgeschlagen")}</div>`).join("");
+  const failures = (result.failures || []).map((item) => `<div class="setup-rebuild-error"><strong>${escapeHtml(item.device_id || uiCopy("Nicht auswählbar", "Not selectable"))}</strong>: ${escapeHtml(item.reason || uiCopy("Identitätsprüfung fehlgeschlagen", "Identity verification failed"))}</div>`).join("");
   const verified = Number(result.verified || 0);
   const found = Number(result.found || 0);
-  container.innerHTML = `<div class="setup-rebuild-discovery-result"><strong>${escapeHtml(String(verified))} von ${escapeHtml(String(found))} gefundenen Radios sicher bestätigt</strong><span>WLAN-Einstellungen wurden nicht verändert.${result.descriptor_failures ? ` ${escapeHtml(String(result.descriptor_failures))} SSDP-Antwort(en) konnten nicht als SoundTouch-Gerät bestätigt werden.` : ""}</span>${found === 0 ? `<small>Prüfe, ob die Radios vom Benutzer bereits mit demselben Heimnetz wie BASSWIESN verbunden wurden.</small>` : ""}</div>${failures ? `<details open><summary>Geräte mit Fehlern</summary>${failures}</details>` : ""}`;
+  const summary = uiCopy(
+    `${verified} von ${found} gefundenen Radios sicher bestätigt`,
+    `${verified} of ${found} discovered radios safely verified`,
+  );
+  const unchanged = uiCopy("WLAN-Einstellungen wurden nicht verändert.", "Wi-Fi settings were not changed.");
+  const descriptors = result.descriptor_failures
+    ? uiCopy(` ${result.descriptor_failures} SSDP-Antwort(en) konnten nicht als SoundTouch-Gerät bestätigt werden.`, ` ${result.descriptor_failures} SSDP response(s) could not be verified as SoundTouch devices.`)
+    : "";
+  const emptyHint = uiCopy("Prüfe, ob die Radios vom Benutzer bereits mit demselben Heimnetz wie BASSWIESN verbunden wurden.", "Check that the user has already connected the radios to the same home network as BASSWIESN.");
+  container.innerHTML = `<div class="setup-rebuild-discovery-result"><strong>${escapeHtml(summary)}</strong><span>${escapeHtml(unchanged + descriptors)}</span>${found === 0 ? `<small>${escapeHtml(emptyHint)}</small>` : ""}</div>${failures ? `<details open><summary>${escapeHtml(uiCopy("Geräte mit Fehlern", "Devices with errors"))}</summary>${failures}</details>` : ""}`;
 }
 
 function renderSetupRebuild() {
@@ -2628,9 +2669,26 @@ function renderOnlineStations() {
       const format = station.is_hls ? "HLS Warnung" : highAac ? "AAC hohe Bitrate / eingeschränkt" : station.stream_format ? `${String(station.stream_format).toUpperCase()} geeignet` : "Unbekannt";
       const badges = [format, station.country, ...tags].filter(Boolean).map((tag) => `<span class="station-badge">${escapeHtml(tag)}</span>`).join("");
       const warning = station.compatibility_warning ? `<small class="form-message">${escapeHtml(station.compatibility_warning)}</small>` : "";
-      return `<article class="station-result-card"><img src="/static/bmx-icons/orion/monochrome.svg" alt="Lokales Quellen-Symbol" loading="lazy"><div class="station-result-copy"><div class="station-badges">${badges}</div><strong>${escapeHtml(text(station.name))}</strong><small title="${escapeHtml(text(station.stream_url))}">${escapeHtml(stationHost(station.stream_url))}</small>${warning}</div><button class="command primary" data-online-station="${index}" type="button">Add &amp; select</button></article>`;
+      let logo = "";
+      try {
+        const parsed = new URL(String(station.image_url || ""));
+        if (["http:", "https:"].includes(parsed.protocol)) {
+          logo = `/api/stations/online-artwork?url=${encodeURIComponent(parsed.href)}`;
+        }
+      } catch { logo = ""; }
+      const artwork = logo
+        ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(text(station.name))} station logo" loading="lazy" referrerpolicy="no-referrer" data-online-station-logo>`
+        : `<div class="station-logo-placeholder" aria-label="No station logo">♪</div>`;
+      return `<article class="station-result-card">${artwork}<div class="station-result-copy"><div class="station-badges">${badges}</div><strong>${escapeHtml(text(station.name))}</strong><small title="${escapeHtml(text(station.stream_url))}">${escapeHtml(stationHost(station.stream_url))}</small>${warning}</div><button class="command primary" data-online-station="${index}" type="button">Add &amp; select</button></article>`;
     }).join("")
     : `<div class="empty">No online search results loaded.</div>`;
+  box.querySelectorAll("[data-online-station-logo]").forEach((image) => image.addEventListener("error", () => {
+    const fallback = document.createElement("div");
+    fallback.className = "station-logo-placeholder";
+    fallback.setAttribute("aria-label", "No station logo");
+    fallback.textContent = "♪";
+    image.replaceWith(fallback);
+  }, { once: true }));
 }
 
 function renderRequests() {
@@ -2935,24 +2993,26 @@ async function saveDeviceForm(event) {
 async function performRadioScan(button = null) {
   const scanForm = document.getElementById("network-scan-form");
   const form = scanForm ? new FormData(scanForm) : new FormData();
-  const box = document.getElementById("scan-results") || document.getElementById("device-form-output");
+  const box = document.getElementById("device-scan-results") || document.getElementById("scan-results") || document.getElementById("device-form-output");
   const original = button?.textContent;
   if (button) {
     button.disabled = true;
-    button.textContent = "Suche läuft…";
+    button.textContent = uiCopy("Suche läuft…", "Searching…");
   }
-  if (box) box.innerHTML = `<div class="event-row"><strong>Radios werden gesucht…</strong><small>${escapeHtml(form.get("cidr") || "LAN")}</small></div>`;
+  if (box) box.innerHTML = `<div class="event-row"><strong>${escapeHtml(uiCopy("Radios werden gesucht…", "Searching for radios…"))}</strong><small>${escapeHtml(form.get("cidr") || "LAN")}</small></div>`;
   try {
     const result = await postJson("/api/devices/scan", { cidr: form.get("cidr") || "", host: currentSetupHost(), timeout: Number(form.get("timeout") || 0.7), save: true });
     if (box) box.innerHTML = result.found.length
       ? result.found.map((device) => `<button class="event-row scan-result" data-scan-ip="${escapeHtml(device.ip_address)}" data-scan-name="${escapeHtml(device.name)}" data-scan-model="${escapeHtml(device.model)}" type="button"><span>${escapeHtml(device.ip_address)}</span><strong>${escapeHtml(device.name)}</strong><small>${escapeHtml(device.model)} · ${escapeHtml(text(device.firmware))}</small></button>`).join("")
-      : `<div class="empty">Keine SoundTouch-Radios gefunden.</div>`;
+      : `<div class="empty">${escapeHtml(uiCopy("Keine SoundTouch-Radios gefunden.", "No SoundTouch radios found."))}</div>`;
     await refreshDeviceState({ live: true });
     await refreshSetupRebuildDevices();
-    showToast(`${result.found.length} Radio(s) gefunden.`);
+    showToast(uiCopy(`${result.found.length} Radio(s) gefunden.`, `${result.found.length} radio(s) found.`));
+    return result;
   } catch (error) {
     if (box) box.innerHTML = `<div class="empty">${escapeHtml(String(error))}</div>`;
-    showApiError(error, "Gerätescan fehlgeschlagen");
+    showApiError(error, uiCopy("Gerätescan fehlgeschlagen", "Radio scan failed"));
+    throw error;
   } finally {
     if (button) {
       button.disabled = false;
@@ -3127,21 +3187,65 @@ document.getElementById("ui-mode-switch")?.addEventListener("change", async (eve
   }
 });
 
+document.getElementById("factory-reset-device-select")?.addEventListener("change", renderFactoryResetIdentity);
+
+document.getElementById("lab-factory-reset-form")?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const submitter = event.submitter;
+  const execute = submitter?.dataset.factoryResetAction === "execute";
+  const form = new FormData(event.currentTarget);
+  const deviceId = String(form.get("device_id") || "");
+  const output = document.getElementById("factory-reset-output");
+  const status = document.getElementById("factory-reset-status");
+  if (!deviceId) {
+    showToast(uiCopy("Wähle zuerst ein Radio aus.", "Select a radio first."), "error");
+    return;
+  }
+  const payload = {
+    dry_run: !execute,
+    acknowledged: form.get("acknowledged") === "on",
+    confirmation: String(form.get("confirmation") || ""),
+  };
+  if (execute && (!payload.acknowledged || payload.confirmation !== "FACTORY RESET RADIO")) {
+    showToast(uiCopy("Bestätige die Warnung und gib FACTORY RESET RADIO exakt ein.", "Acknowledge the warning and type FACTORY RESET RADIO exactly."), "error");
+    return;
+  }
+  if (execute && !window.confirm(uiCopy("Das ausgewählte Radio jetzt auf Werkseinstellungen zurücksetzen? BASSWIESN kann dies nicht rückgängig machen.", "Factory-reset the selected radio now? This cannot be undone by BASSWIESN."))) return;
+  if (submitter) submitter.disabled = true;
+  if (status) status.innerHTML = `<div class="event-row"><strong>${escapeHtml(execute ? uiCopy("Sicherung wird erstellt und Factory Reset gesendet…", "Creating backup and sending factory reset…") : uiCopy("Exaktes Profil und Reset-Plan werden geprüft…", "Reviewing exact profile and reset plan…"))}</strong></div>`;
+  try {
+    const result = await postJson(`/api/lab/devices/${encodeURIComponent(deviceId)}/factory-reset`, payload);
+    if (output) output.textContent = JSON.stringify(result, null, 2);
+    if (status) status.innerHTML = execute
+      ? `<div class="event-row"><span>${escapeHtml(uiCopy("FACTORY RESET GESENDET", "FACTORY RESET SENT"))}</span><strong>${escapeHtml(uiCopy("WARTE AUF GERÄTENEUSTART", "WAITING FOR DEVICE RESTART"))}</strong><small>${escapeHtml(uiCopy("GERÄT NICHT MEHR ERREICHBAR / RESET ERWARTET. Es wird keine automatische Nachprüfung gestartet.", "DEVICE NO LONGER REACHABLE / RESET EXPECTED. No automatic follow-up probe will run."))}</small></div>`
+      : `<div class="event-row"><span>${result.eligible ? escapeHtml(uiCopy("PROFIL BESTÄTIGT", "PROFILE VERIFIED")) : escapeHtml(uiCopy("BLOCKIERT", "BLOCKED"))}</span><strong>${escapeHtml(result.device?.name || deviceId)}</strong><small>${escapeHtml(result.blocking_reason || uiCopy("Die Sicherung wird unmittelbar vor dem Reset-Befehl erstellt.", "Backup will be created immediately before the reset command."))}</small></div>`;
+    if (execute) {
+      await refreshDeviceState({ live: false });
+      event.currentTarget.reset();
+      renderFactoryResetIdentity();
+    }
+  } catch (error) {
+    if (output) output.textContent = String(error);
+    if (status) status.innerHTML = `<div class="empty">${escapeHtml(uiCopy("FACTORY RESET NICHT GESENDET", "FACTORY RESET NOT SENT"))} · ${escapeHtml(String(error))}</div>`;
+    showApiError(error, uiCopy("Factory Reset wurde nicht gesendet", "Factory reset was not sent"));
+  } finally { if (submitter) submitter.disabled = false; }
+});
+
 document.getElementById("online-search-form").addEventListener("submit", async (event) => {
   event.preventDefault();
   const q = new FormData(event.currentTarget).get("q");
   const message = document.getElementById("online-station-message");
-  message.textContent = "Searching…";
+  message.textContent = uiCopy("Suche läuft…", "Searching…");
   try {
     state.onlineStations = await getJson(`/api/stations/search-online?q=${encodeURIComponent(q)}`);
   } catch (error) {
     state.onlineStations = [];
     document.getElementById("online-station-results").innerHTML = `<div class="empty">${escapeHtml(String(error))}</div>`;
-    message.textContent = "Search failed.";
+    message.textContent = uiCopy("Suche fehlgeschlagen.", "Search failed.");
     return;
   }
   renderOnlineStations();
-  message.textContent = `${state.onlineStations.length} station${state.onlineStations.length === 1 ? "" : "s"} found.`;
+  message.textContent = uiCopy(`${state.onlineStations.length} Sender gefunden.`, `${state.onlineStations.length} station${state.onlineStations.length === 1 ? "" : "s"} found.`);
   if (state.guidedPreset.active) {
     state.guidedPreset.step = "add";
     renderGuidedPresetSetup();
@@ -3547,6 +3651,7 @@ document.getElementById("device-settings-form").addEventListener("submit", async
     // action targets one radio; it must not fan out into live probes of every
     // saved device while the form remains blocked.
     if (result.applied && changedDeviceSettings.has("name")) await refreshDeviceState({ live: false });
+    if (result.preset_sync_required) await previewDevicePresetSync();
     await loadDeviceSettings();
   } catch (error) {
     document.getElementById("device-settings-output").textContent = `Einstellungen nicht geschrieben: ${error.message}`;
@@ -3564,20 +3669,21 @@ async function previewDevicePresetSync() {
   const confirmButton = document.getElementById("device-settings-preset-sync-confirm");
   const previewButton = document.getElementById("sync-device-presets");
   if (!deviceId) return showToast("Bitte zuerst ein Radio auswählen.", "error");
-  if (!memoryChecked) return showToast("Bitte zuerst den Backup-/Memory-Hinweis bestätigen.", "error");
   previewButton.disabled = true;
   if (status) status.textContent = "Read-only-Vorschau wird erstellt …";
   try {
-    const result = await postJson(`/api/presets/${encodeURIComponent(deviceId)}/sync`, { dry_run: true, memory_checked: true });
+    const result = await postJson(`/api/presets/${encodeURIComponent(deviceId)}/sync`, { dry_run: true, probe: true, memory_checked: true });
     const target = result.target || {};
     const changes = result.expected_changes || [];
     const logoWarnings = (result.logo_status || []).filter((item) => item.mode === "station_logo" && (!item.valid || item.verification === "syntax_only"));
     if (previewBox) {
       previewBox.hidden = false;
-      previewBox.innerHTML = `<strong>Zielradio</strong><span>${escapeHtml(text(target.name, deviceId))} · ${escapeHtml(text(target.ip_address))} · ID ${escapeHtml(text(target.device_id, deviceId))}</span><strong>Betroffene Slots</strong><span>${escapeHtml(changes.map((item) => `Slot ${item.button}`).join(", ") || "keine lokalen Presets")}</span><strong>Schutzstatus</strong><span>${result.protection?.protected_ip ? "Geschütztes Radio: Write wird blockiert." : result.protection?.write_allowed === false ? escapeHtml(text(result.protection?.write_blocker, "Write-Guard blockiert")) : "Write-Gates werden serverseitig erneut geprüft."}</span><strong>Memory-Check</strong><span>Backup und Readback sind vor dem Write erforderlich.</span>${logoWarnings.length ? `<strong>Logo-Prüfung</strong><span>${logoWarnings.length} Slot(s) haben keinen vollständigen Bildprobe-Nachweis; ungültige Quellen fallen auf das Bose-Radiosymbol zurück.</span>` : ""}`;
+      previewBox.innerHTML = `<strong>Zielradio</strong><span>${escapeHtml(text(target.name, deviceId))} · ${escapeHtml(text(target.ip_address))} · ID ${escapeHtml(text(target.device_id, deviceId))}</span><strong>Betroffene Slots</strong><span>${escapeHtml(changes.map((item) => `Slot ${item.button}`).join(", ") || "keine — Radio-Readback ist bereits aktuell")}</span><strong>Bereits aktuell</strong><span>${escapeHtml((result.already_current_slots || []).map((button) => `Slot ${button}`).join(", ") || "keine")}</span><strong>Schutzstatus</strong><span>${result.protection?.protected_ip ? "Geschütztes Radio: Write wird blockiert." : result.protection?.write_allowed === false ? escapeHtml(text(result.protection?.write_blocker, "Write-Guard blockiert")) : "Write-Gates werden serverseitig erneut geprüft."}</span><strong>Memory-Check</strong><span>Backup und Readback sind vor dem Write erforderlich.</span>${result.preview_readback_error ? `<strong>Readback</strong><span>${escapeHtml(result.preview_readback_error)}</span>` : ""}${logoWarnings.length ? `<strong>Logo-Prüfung</strong><span>${logoWarnings.length} Slot(s) haben keinen vollständigen Bildprobe-Nachweis; ungültige Quellen fallen auf das Bose-Radiosymbol zurück.</span>` : ""}`;
     }
-    if (confirmButton) confirmButton.hidden = Boolean(result.protection?.write_allowed === false || !changes.length);
-    if (status) status.textContent = "Vorschau erstellt. Erst die Bestätigung startet den geschützten Write.";
+    if (confirmButton) confirmButton.hidden = Boolean(result.protection?.write_allowed === false || !changes.length || !memoryChecked);
+    if (status) status.textContent = memoryChecked
+      ? "Vorschau erstellt. Erst die Bestätigung startet den geschützten Write."
+      : "Vorschau erstellt. Bestätige den Backup-/Memory-Hinweis, um den verifizierten Write freizugeben.";
     document.getElementById("device-settings-output").textContent = JSON.stringify(result, null, 2);
   } catch (error) {
     if (status) status.textContent = `Vorschau fehlgeschlagen: ${error.message}`;
@@ -3588,9 +3694,11 @@ async function previewDevicePresetSync() {
 }
 
 document.getElementById("sync-device-presets")?.addEventListener("click", () => previewDevicePresetSync());
+document.getElementById("device-settings-memory-check")?.addEventListener("change", () => previewDevicePresetSync());
 document.getElementById("device-settings-preset-sync-confirm")?.addEventListener("click", async (event) => {
   const deviceId = document.getElementById("settings-device-select")?.value;
   const status = document.getElementById("device-settings-preset-sync-status");
+  if (!document.getElementById("device-settings-memory-check")?.checked) return showToast("Bitte zuerst den Backup-/Memory-Hinweis bestätigen.", "error");
   if (!deviceId || !window.confirm("Die angezeigten lokalen Presets jetzt schreiben und jeden Slot per Readback bestätigen?")) return;
   const confirmButton = event.currentTarget;
   confirmButton.disabled = true;
@@ -4522,7 +4630,8 @@ function updateClock() {
   const now = new Date();
   const date = document.getElementById("clock-date");
   const time = document.getElementById("clock-time");
-  if (date) date.textContent = now.toLocaleDateString("de-DE", { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+  const locale = (state.systemSettings?.web_language || document.documentElement.lang) === "de" ? "de-DE" : "en-GB";
+  if (date) date.textContent = now.toLocaleDateString(locale, { weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
   if (time) time.textContent = now.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   updateServerIdentity();
 }
@@ -4665,8 +4774,18 @@ document.getElementById("setup-rebuild-discover")?.addEventListener("click", asy
   state.setupRebuildDiscovery = { running: true };
   renderSetupRebuildDiscovery();
   try {
-    state.setupRebuildDiscovery = await postJson("/api/setup/rebuild/discover", { timeout_seconds: 3 });
-    await refreshSetupRebuildDevices();
+    // Setup and Radios share this explicit, bounded and protected-device-aware
+    // discovery service. Opening either page never starts a network scan.
+    const result = await performRadioScan(button);
+    const found = Array.isArray(result?.found) ? result.found : [];
+    state.setupRebuildDiscovery = {
+      found: found.length,
+      verified: found.filter((item) => item.identity_verified !== false).length,
+      devices: found,
+      failures: Array.isArray(result?.failures) ? result.failures : [],
+      network_configuration_changed: false,
+      discovery_method: "bounded_lan_scan",
+    };
     renderSetupRebuildDiscovery();
     const count = Number(state.setupRebuildDiscovery.verified || 0);
     showToast(count ? `${count} verbundene Radio(s) sicher bestätigt.` : "Keine bereits mit dem Heimnetz verbundenen Radios gefunden.", count ? "ok" : "warning");
@@ -4817,7 +4936,10 @@ document.addEventListener("click", (event) => {
     event.preventDefault();
     const deviceId = remove.dataset.removeDevice;
     const device = state.devices.find((item) => item.device_id === deviceId);
-    const confirmation = window.prompt(`${text(device?.name, deviceId)} nur lokal aus BASSWIESN entfernen? Am Radio wird nichts geändert.\n\nZum Bestätigen YES eingeben.`);
+    const confirmation = window.prompt(uiCopy(
+      `${text(device?.name, deviceId)} nur lokal aus BASSWIESN entfernen? Am Radio wird nichts geändert.\n\nZum Bestätigen YES eingeben.`,
+      `Remove ${text(device?.name, deviceId)} only from BASSWIESN? Nothing will be changed on the radio.\n\nEnter YES to confirm.`,
+    ));
     if (!confirmation || confirmation.toLowerCase() !== "yes") return;
     fetch(`/api/devices/${encodeURIComponent(deviceId)}`, {
       method: "DELETE",
@@ -4830,9 +4952,9 @@ document.addEventListener("click", (event) => {
       })
       .then(async () => {
         await refreshDeviceState({ live: false });
-        showToast("Radio wurde lokal entfernt.");
+        showToast(uiCopy("Radio wurde lokal entfernt.", "Radio was removed locally."));
       })
-      .catch((error) => showApiError(error, "Radio konnte nicht entfernt werden"));
+      .catch((error) => showApiError(error, uiCopy("Radio konnte nicht entfernt werden", "Radio could not be removed")));
     return;
   }
   const view = event.target?.dataset?.viewJump;

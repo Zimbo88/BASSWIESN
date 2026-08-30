@@ -21,7 +21,7 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-BASSWIESN `2.5.0` is the current release. Its release gate covers software,
+BASSWIESN `2.5.1` is the current release. Its release gate covers software,
 real Chromium workflows, clean installation and supported real-hardware
 read-back. Easy Mode is the default UI, while experimental functions are kept
 out of the normal user path or marked LAB. Long-playback evidence and
@@ -70,6 +70,7 @@ profile. Unknown combinations remain read-only.
   reselection or stream restart;
 - Web UI artwork caching with provider image, station logo, source icon and
   fallback handling;
+- consistent English and German end-user text in Easy, Standard and LAB mode;
 - Multiroom topology, source, clock, output latency and volume observation,
   including an option that sends no BASSWIESN volume alignment;
 - AirPlayReadiness diagnostics for product, authentication hardware, STS,
@@ -110,12 +111,12 @@ addresses or hardware backups.
 Download and verify the versioned release asset:
 
 ```bash
-mkdir -p "$HOME/basswiesn-2.5.0"
-cd "$HOME/basswiesn-2.5.0"
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.0/basswiesn-docker-release-2.5.0.tar.gz
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.0/SHA256SUMS
+mkdir -p "$HOME/basswiesn-2.5.1"
+cd "$HOME/basswiesn-2.5.1"
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.1/basswiesn-docker-release-2.5.1.tar.gz
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.1/SHA256SUMS
 sha256sum -c SHA256SUMS
-tar -xzf basswiesn-docker-release-2.5.0.tar.gz
+tar -xzf basswiesn-docker-release-2.5.1.tar.gz
 cd basswiesn-release
 ./install.sh
 ```
@@ -227,7 +228,8 @@ made by radio firmware is reported rather than silently corrected.
 Optional per-radio start volumes are written and read back before zone
 creation. SoundTouch firmware can still resume the last source, clear mute or
 normalize volume while forming a zone; BASSWIESN reports that observed change.
-Removing one member requires read-back from both the master and removed radio.
+Stopping a complete zone remains a normal feature. Removing one member is
+firmware-dependent and is therefore exposed only as an experimental LAB tool.
 
 ## Remote control, alarms and device settings
 
@@ -247,6 +249,13 @@ called a full device restore.
 Track, artist, album and image URL can update during playback without
 reselecting the source, calling `SetURL` or forcing a rebuffer. Artwork shown in
 the browser is separate from model-dependent radio display capabilities.
+Radio Browser logos are fetched through BASSWIESN's guarded, DNS-pinned raster
+cache; the browser never follows an untrusted catalogue URL directly.
+
+Radio Display offers the firmware's normal source symbol, a station logo, or
+an explicit **No station logo** mode. Changing this setting previews the
+affected slots and updates only `containerArt` after backup and live radio
+read-back; source, account, location and item identity are preserved.
 
 Clock-as-metadata is a LAB option, disabled by default and limited to a
 60-second update interval. It is not a display firmware patch.
@@ -294,7 +303,9 @@ storing secrets.
 - Physical preset-button validation may require a person.
 - DLNA, local media, announcements/TTS, battery patching, Telnet reboot and
   standby-clock recovery remain experimental or LAB features.
-- Factory reset is documented but is not a normal BASSWIESN product function.
+- Factory reset is an exact-profile, explicitly confirmed LAB function. It
+  erases radio configuration and can require the user to reconnect Wi-Fi; it
+  is never part of automatic recovery.
 
 ## Development and tests
 

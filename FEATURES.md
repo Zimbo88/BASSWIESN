@@ -1,4 +1,4 @@
-# BASSWIESN 2.5 Feature Status
+# BASSWIESN 2.5.1 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
@@ -86,6 +86,7 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - radio write followed by radio read-back before local commit
 - divergence marker, reconciliation and rollback states
 - station logo/source icon data where supported by the normal preset contract
+- explicit no-station-logo mode with artwork-only preview, backup and read-back
 - distinct BASSWIESN Multiroom presets
 - per-slot checker states `VALID`, `WARNING`, `BROKEN` and `UNKNOWN`, based on
   radio read-back, source/account, provider, stream and local mapping evidence
@@ -108,7 +109,6 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - preserve-volume option sends no BASSWIESN `SetVolume`
 - volumes recorded before and after so firmware changes remain visible
 - optional per-radio start volumes, verified before zone creation
-- bounded Master and member read-back when removing a single live member
 - BASSWIESN Multiroom preset reconstruction
 
 ### Diagnostics and persistence
@@ -162,6 +162,10 @@ Unknown. It does not implement MFi bypasses or firmware patches.
 - announcements/TTS experiments
 - advanced SSH/profile diagnostics
 - manual recovery stages above stream re-resolution
+- firmware-dependent single-member Multiroom removal with bounded distributed
+  read-back
+- exact-profile, backup-first Factory Reset with explicit typed confirmation;
+  manual Wi-Fi reconnection may be required afterward
 
 LAB functions are never silently promoted into normal setup or automatic
 recovery.

@@ -76,9 +76,14 @@ def _credential_response(source: str, credential_type: str, payload: dict) -> di
         "displayName": payload.get("displayName") or payload.get("username") or payload.get("user") or "BASSWIESN",
     }
 
-def _station_logo_enabled(db: Session, device_id: str) -> bool:
+def _station_art_mode(db: Session, device_id: str) -> str:
     row = db.query(Setting).filter(Setting.key == f"station_art_mode:{device_id}").one_or_none()
-    return bool(row and row.value == "station_logo")
+    value = str(row.value if row else "radio_symbol")
+    return value if value in {"radio_symbol", "station_logo", "no_station_logo"} else "radio_symbol"
+
+
+def _station_logo_enabled(db: Session, device_id: str) -> bool:
+    return _station_art_mode(db, device_id) == "station_logo"
 
 
 def _preset_values(preset: Preset, station: Station | None, *, include_art: bool = True) -> dict[str, str]:
@@ -155,7 +160,7 @@ def marge_presets_xml(db: Session, device_id: str) -> str:
     return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><presets>' + "".join(parts) + "</presets>"
 
 
-def _content_item_xml_for_preset(preset: Preset, station: Station | None, *, include_art: bool, location: str = "") -> str:
+def _content_item_xml_for_preset(preset: Preset, station: Station | None, *, include_art: bool, empty_art: bool = False, location: str = "") -> str:
     existing_root = None
     try:
         existing_root = ET.fromstring(preset.content_item_xml or "")
@@ -183,6 +188,8 @@ def _content_item_xml_for_preset(preset: Preset, station: Station | None, *, inc
             art = existing_root.findtext("containerArt", "") or ""
         if art:
             ET.SubElement(root, "containerArt").text = art
+    elif empty_art:
+        ET.SubElement(root, "containerArt").text = ""
     return ET.tostring(root, encoding="unicode")
 
 
@@ -190,6 +197,7 @@ def _content_presets_xml(db: Session, device_id: str) -> str:
     rows = db.query(Preset).filter(Preset.device_id == device_id).order_by(Preset.button).all()
     staged_deletes = active_delete_buttons(db, device_id)
     include_art = _station_logo_enabled(db, device_id)
+    empty_art = _station_art_mode(db, device_id) == "no_station_logo"
     parts = []
     for preset in rows:
         if preset.button in staged_deletes:
@@ -198,7 +206,7 @@ def _content_presets_xml(db: Session, device_id: str) -> str:
         location = _effective_station_location(db, station, preset.location, include_art=include_art)
         parts.append(
             f'<preset id="{preset.button}" createdOn="" updatedOn="">'
-            f"{_content_item_xml_for_preset(preset, station, include_art=include_art, location=location)}"
+            f"{_content_item_xml_for_preset(preset, station, include_art=include_art, empty_art=empty_art, location=location)}"
             f"</preset>"
         )
     return '<?xml version="1.0" encoding="UTF-8"?><presets>' + "".join(parts) + "</presets>"
@@ -791,7 +799,7 @@ async def _unsupported_provider_contract(
             "status": 501,
             "detail": (
                 f"{provider_id} {contract} is not backed by a confirmed product "
-                "contract and is disabled in BASSWIESN 2.5.0."
+                "contract and is disabled in BASSWIESN 2.5.1."
             ),
             "provider": provider_id,
             "contract": contract,

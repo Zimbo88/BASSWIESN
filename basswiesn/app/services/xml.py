@@ -4,10 +4,23 @@ from basswiesn.app.models import Preset, Station
 from basswiesn.app.services.provider_registry import persistence_sources_xml
 
 
-def content_item_xml(station: Station, location: str, include_container_art: bool = True, source: str = "LOCAL_INTERNET_RADIO") -> str:
+def content_item_xml(
+    station: Station,
+    location: str,
+    include_container_art: bool = True,
+    source: str = "LOCAL_INTERNET_RADIO",
+    *,
+    empty_container_art: bool = False,
+) -> str:
     if (location or "").startswith("/core02/svc-bmx-adapter-orion/"):
         raise ValueError("BASSWIESN Host IP setzen: Orion ContentItem location darf nicht relativ sein.")
-    art = f"<containerArt>{escape(station.image_url)}</containerArt>" if include_container_art and station.image_url else ""
+    art = (
+        "<containerArt></containerArt>"
+        if empty_container_art
+        else f"<containerArt>{escape(station.image_url)}</containerArt>"
+        if include_container_art and station.image_url
+        else ""
+    )
     source = source or "LOCAL_INTERNET_RADIO"
     return (
         f'<ContentItem source="{escape(source, quote=True)}" type="stationurl" '

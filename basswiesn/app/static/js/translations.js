@@ -336,6 +336,357 @@
   };
   for (const [lang, values] of Object.entries(firstRunRows)) for (const [index, key] of firstRunKeys.entries()) catalogs[lang][key] = values[index] || firstRunRows.en[index];
   keys.push(...firstRunKeys);
+  // Exact end-user phrases that are rendered by legacy HTML or by dynamic
+  // cards. English and German are release-gated as complete UI languages;
+  // other catalogues retain English fallback until their native copy exists.
+  const bilingualPairs = [
+    ["Geführte Einrichtung", "Guided setup"],
+    ["Geräteschutz ist serverseitig aktiv", "Device protection is enforced by the server"],
+    ["Erreichbare BASSWIESN-Adresse", "Reachable BASSWIESN address"],
+    ["Erreichbare Radios", "Reachable radios"],
+    ["LAN-Adressen werden ermittelt …", "Detecting LAN addresses…"],
+    ["Sicherer Ablauf", "Safe workflow"],
+    ["Optionale Wiedergabeprüfung ausführen", "Run optional playback verification"],
+    ["Setup-Schritte", "Setup steps"],
+    ["Identität", "Identity"],
+    ["Serverziel", "Server target"],
+    ["Abschluss", "Complete"],
+    ["Über BASSWIESN", "About BASSWIESN"],
+    ["Radios aktualisieren", "Refresh radios"],
+    ["Jetzt verbundene Radios suchen", "Search connected radios now"],
+    ["Noch keine ausdrückliche LAN-Suche in dieser Sitzung ausgeführt.", "No explicit LAN search has been run in this session."],
+    ["Gespeicherte Liste neu laden", "Reload saved list"],
+    ["Änderungen prüfen", "Review changes"],
+    ["Setup starten", "Start setup"],
+    ["Abbrechen", "Cancel"],
+    ["Gesicherte Serverziele wiederherstellen", "Restore backed-up server targets"],
+    ["Noch kein Setup-Rebuild gestartet.", "No setup job has been started."],
+    ["Vorschau und Fehlerdetails", "Preview and error details"],
+    ["Radios werden gesucht…", "Searching for radios…"],
+    ["Keine SoundTouch-Radios gefunden.", "No SoundTouch radios found."],
+    ["Radio gespeichert.", "Radio saved."],
+    ["Radio konnte nicht hinzugefügt werden", "Radio could not be added"],
+    ["Radios suchen", "Search radios"],
+    ["Entfernen", "Remove"],
+    ["Fernbedienung öffnen", "Open remote control"],
+    ["erneut prüfen", "Check again"],
+    ["Setup reparieren", "Repair setup"],
+    ["Bereit", "Ready"],
+    ["prüfen", "check"],
+    ["Nicht ausgelesen", "Not read"],
+    ["Seriennummer", "Serial number"],
+    ["Aktion", "Action"],
+    ["Radio wurde lokal entfernt.", "Radio was removed locally."],
+    ["Radio konnte nicht entfernt werden", "Radio could not be removed"],
+    ["Kein Multiroom", "No multiroom"],
+    ["Keine Änderung nötig.", "No change required."],
+    ["Einstellungen werden geprüft …", "Checking settings…"],
+    ["Änderungen noch nicht gespeichert – bitte Anwenden klicken.", "Changes are not saved yet — select Apply."],
+    ["Alle angezeigten Werte entsprechen dem Radio.", "All displayed values match the radio."],
+    ["Anzeige am Radio", "Radio display"],
+    ["Bose-Standardsymbol über Sendernamen anzeigen", "Show the Bose default symbol above the station name"],
+    ["Senderlogo über Sendernamen anzeigen", "Show the station logo above the station name"],
+    ["Kein Senderlogo", "No station logo"],
+    ["Geräteeinstellungen konnten nicht sicher geschrieben werden", "Device settings could not be written safely"],
+    ["Vorschau erstellt. Erst die Bestätigung startet den geschützten Write.", "Preview created. Confirmation starts the protected write."],
+    ["Bitte zuerst den Backup-/Memory-Hinweis bestätigen.", "Confirm the backup/memory notice first."],
+    ["Presets synchronisiert und Readback bestätigt.", "Presets synchronized and readback verified."],
+    ["Online-Sendersuche", "Online station search"],
+    ["Keine Online-Suchergebnisse geladen.", "No online search results loaded."],
+    ["Hinzufügen und auswählen", "Add and select"],
+    ["Suche läuft…", "Searching…"],
+    ["Suche fehlgeschlagen.", "Search failed."],
+    ["Unbekannt", "Unknown"],
+    ["Wiedergabe", "Playback"],
+    ["Unbekanntes Format", "Unknown format"],
+    ["Lokales Quellen-Symbol", "Local source symbol"],
+    ["Mitglied aus laufender Gruppe entfernen", "Remove member from active group"],
+    ["Experimental: Mitglied aus laufender Gruppe entfernen", "Experimental: remove member from active group"],
+    ["Mitglied entfernen", "Remove member"],
+    ["Firmwareabhängige LAB-Funktion.", "Firmware-dependent LAB function."],
+    ["Ausgewählte Gruppe auflösen", "Dissolve selected group"],
+    ["Einfache Erklärung", "Simple explanation"],
+    ["Diese Seite erklären", "Explain this page"],
+    ["Hilfe", "Help"],
+    ["Hilfe schließen", "Close help"],
+    ["Was kommt wo hinein?", "What goes where?"],
+    ["Zurück", "Back"],
+    ["Weiter", "Continue"],
+    ["Factory Reset Radio", "Factory Reset Radio"],
+    ["LAB · zerstörerisch", "LAB · destructive"],
+    ["Nur LAB", "LAB only"],
+    ["Radio auswählen, um seine Identität zu prüfen.", "Select a radio to review its identity."],
+    ["Ich verstehe, dass dies das Radio zurücksetzt", "I understand that this resets the radio"],
+    ["FACTORY RESET RADIO zur Bestätigung eingeben", "Type FACTORY RESET RADIO to confirm"],
+    ["Backup- und Reset-Plan prüfen", "Review backup and reset plan"],
+    ["Noch kein Factory Reset gestartet.", "No factory reset started."],
+    ["Backup und technische Evidence", "Backup and technical evidence"],
+    ["Noch keine Vorschau geladen.", "No preview loaded."],
+    ["Wähle zuerst ein Radio.", "Select a radio first."],
+    ["Werkseinstellung wurde nicht gesendet", "Factory reset was not sent"],
+    ["Power / Standby", "Power / Standby"],
+    ["Nur Vorschau", "Preview only"],
+    ["Bestätigung", "Confirmation"],
+    ["Exakte Bestätigung", "Exact confirmation"],
+    ["Status lesen", "Read status"],
+    ["Aktualisieren", "Refresh"],
+    ["Einstellungen", "Settings"],
+    ["Fernbedienung", "Remote Control"],
+    ["Sender", "Stations"],
+    ["Wecker Timer", "Alarm & Timer"],
+    ["Mehr", "More"],
+    ["Sicherung", "Backup"],
+    ["Technik", "Technical"],
+    ["Diagnose", "Diagnostics"],
+    ["Labor", "Lab"],
+    ["Aktuelle Zeit und Server", "Current time and server"],
+    ["Hauptnavigation", "Main navigation"]
+    ,["Auf ausgewählte Radios anwenden", "Apply to selected radios"]
+    ,["Das Hauptradio liefert Musik und Synchronisation. Alle weiteren Radios folgen ihm.", "The main radio provides music and synchronization. All other radios follow it."]
+    ,["Die Auswahl wird lokal gespeichert. Bestehende Presets brauchen danach eine Synchronisierung mit Backup, Vorschau und Readback.", "The selection is saved locally. Existing presets must then be synchronized with backup, preview, and readback."]
+    ,["Hier startest du später Sender, Presets und Lautstärke.", "This is where you start stations, presets, and volume control."]
+    ,["Live-Werte werden beim Auswählen geladen. Geschrieben werden nur Änderungen.", "Live values are loaded when selected. Only changes are written."]
+    ,["Noch kein Radio geprüft.", "No radio has been checked yet."]
+    ,["Noch kein geeignetes Radio vorhanden.", "No eligible radio is available yet."]
+    ,["Sequenziell · Backup vor Write · optionale Audio-Prüfung ausschließlich bei Lautstärke 1 · SSH im normalen Setup nicht erforderlich", "Sequential · backup before write · optional audio check only at volume 1 · SSH is not required for normal setup"]
+    ,["SoundTouch kann beim Gruppieren die zuletzt verwendete Quelle fortsetzen sowie Mute und Lautstärke selbst ändern. Die Vorschau zeigt deshalb alle aktuellen Werte.", "When grouping, SoundTouch may continue the last source and change mute or volume itself. The preview therefore shows all current values."]
+    ,["Verbinde jedes Radio zuerst selbst mit dem Heimnetz und klicke anschließend oben auf „Jetzt verbundene Radios suchen“.", "Connect each radio to the home network yourself, then select “Search connected radios now” above."]
+    ,["Vorschau für Multiroom", "Multiroom preview"]
+    ,["Vorschau für Preset-Sync", "Preset sync preview"]
+    ,["Wähle ein Hauptradio und die gewünschten Räume.", "Select a main radio and the desired rooms."]
+    ,["Änderungen anwenden", "Apply changes"]
+    ,["Keine Geräte konfiguriert.", "No devices configured."]
+    ,["Keine nutzbaren Geräte", "No usable devices"]
+    ,["1 · Hauptradio wählen", "1 · Select main radio"]
+    ,["Geräte-Allowlist fehlt", "Device allowlist is missing"]
+    ,["Live-Metadaten aktualisieren", "Update live metadata"]
+    ,["Noch kein 6er Preset-Profil gespeichert.", "No six-slot preset profile has been saved."]
+    ,["Noch kein Radio angelegt.", "No radio has been added."]
+    ,["Noch kein Radio vorhanden", "No radio available"]
+    ,["Noch kein Reporting-Vertrag beobachtet.", "No reporting contract has been observed."]
+    ,["Noch kein autoritativer Radio-Readback", "No authoritative radio readback"]
+    ,["Noch kein lokaler Sender angelegt", "No local station has been added"]
+    ,["Noch keine Wiedergabe erfasst. Starte einen Stream oder ein Preset.", "No playback has been recorded. Start a stream or preset."]
+    ,["Persistiert Radios, Sender, Presets, Einstellungen, Jobs und Backups.", "Persists radios, stations, presets, settings, jobs, and backups."]
+    ,["Preview- und Jobinfrastruktur für begrenzte Ansagen; keine bestätigte Wiedergabe.", "Preview and job infrastructure for bounded announcements; playback is not confirmed."]
+    ,["Senderlogo", "Station logo"]
+    ,["Separater POST-Vertrag; ein Fehler stoppt weder Wiedergabe noch Quelle.", "Separate POST contract; an error stops neither playback nor source."]
+    ,["Sicherung und Diagnose", "Backup and diagnostics"]
+    ,["Status aktualisieren", "Refresh status"]
+    ,["Verwendet /searchStation und /addStation. Der ausgewählte Dienst muss auf dem Radio als READY registriert sein.", "Uses /searchStation and /addStation. The selected service must be registered as READY on the radio."]
+    ,["Radio wählen; danach erscheinen aktuelle Werte.", "Select a radio to load its current values."]
+    ,["Verbinde jedes zurückgesetzte Radio zuerst selbst mit deinem Heim-WLAN. BASSWIESN verändert weder das WLAN dieses Computers noch WLAN-Zugangsdaten eines Radios.", "First connect each reset radio to your home Wi-Fi yourself. BASSWIESN changes neither this computer's Wi-Fi nor a radio's Wi-Fi credentials."]
+    ,["Aktion erforderlich", "Action required"]
+    ,["Das ist keine Multiroom-Methode. Es verhindert lediglich, dass eine ungeeignete Quelle wie AirPlay mit multiroomallowed=false angeboten wird.", "This is not a multiroom method. It only prevents an unsuitable source such as AirPlay with multiroomallowed=false from being offered."]
+    ,["Keine flüchtige Runtime-Evidence gespeichert", "No transient runtime evidence stored"]
+    ,["Liest nur, was Modell und aktuelle Quelle erlauben.", "Reads only what the model and current source allow."]
+    ,["Mehrere Radios spielen dieselbe Quelle synchron.", "Multiple radios play the same source in sync."]
+    ,["Noch keine BASSWIESN-Szene gespeichert", "No BASSWIESN scene has been saved"]
+    ,["Noch keine Live-Captures gespeichert.", "No live captures have been stored."]
+    ,["Noch keine Provider-Beobachtung gespeichert.", "No provider observation has been stored."]
+    ,["Noch keine korrelierten Diagnoseereignisse gespeichert.", "No correlated diagnostic events have been stored."]
+    ,["Persistierte Beobachtungen anzeigen, ohne beim Öffnen das Radio zu kontaktieren.", "Show persisted observations without contacting the radio when opening the page."]
+    ,["Quelle gültig", "Source valid"]
+    ,["Radio wählen, um die gespeicherten Zustände zu laden.", "Select a radio to load its stored states."]
+    ,["Status, Requests und Diagnose-Endpunkte öffnen", "Open status, requests, and diagnostic endpoints"]
+    ,["Voraussetzungen und technische Details", "Requirements and technical details"]
+    ,["Zuständige Ansicht öffnen", "Open relevant view"]
+    ,["BASSWIESN zeigt aktive SSID und Anzahl gespeicherter Profile. Passwörter werden nicht lokal gespeichert.", "BASSWIESN shows the active SSID and number of stored profiles. Passwords are not stored locally."]
+    ,["Darstellung", "Display style"]
+    ,["Hardwarevalidierung offen.", "Hardware validation pending."]
+    ,["Begrenzte LAN-Suche; geschützte Ziele werden vor jedem direkten Transport ausgeschlossen.", "Bounded LAN scan; protected targets are excluded before every direct transport."]
+    ,["Dies löscht die Radiokonfiguration und setzt das Gerät auf Werkseinstellungen zurück. BASSWIESN prüft zuerst die aktuelle Identität, das exakte Firmwareprofil und eine vollständig lesbare Sicherung.", "This erases the radio configuration and returns the device to factory defaults. BASSWIESN first verifies the current identity, exact firmware profile, and a complete readable backup."]
+    ,["1. Radios manuell mit dem Heimnetz verbinden", "1. Connect radios to the home network manually"]
+    ,["BASSWIESN sendet dabei kein SetVolume. Falls die Bose-Firmware selbst einen Wert ändert, zeigt der Readback die Abweichung an und korrigiert sie nicht heimlich.", "BASSWIESN does not send SetVolume. If the Bose firmware changes a value itself, the readback shows the difference and does not silently correct it."]
+    ,["Bereits mit dem Heimnetz verbundene Radios einrichten", "Set up radios already connected to the home network"]
+    ,["Das Radio bestätigt jede Änderung per Readback.", "The radio confirms every change by readback."]
+    ,["Die Presets werden kopiert und anschließend auf dem Zielradio geprüft.", "Presets are copied and then verified on the target radio."]
+    ,["Diese LAN-Adresse wird dem Radio als BASSWIESN-Serverziel angezeigt.", "This LAN address is shown to the radio as the BASSWIESN server target."]
+    ,["Ein Radio gibt den Takt vor, die ausgewählten Räume spielen mit.", "One radio provides the clock and the selected rooms play along."]
+    ,["Empfehlung für Multiroom: Zone.", "Recommended for multiroom: Zone."]
+    ,["Mit der Multiroom-Zone synchronisieren", "Synchronize with the multiroom zone"]
+    ,["Noch keine Synchronisierung gestartet.", "No synchronization started yet."]
+    ,["Noch keine Wecker Timer.", "No alarms or timers yet."]
+    ,["Nur Radios verbinden", "Connect radios only"]
+    ,["Nur wenn aktiviert: vor Audio setzen und per Radio-Readback bestätigen.", "Only when enabled: set before audio and verify by radio readback."]
+    ,["Nutze dafür den vorgesehenen Bose-/Geräteablauf. Sobald alle Radios im selben LAN wie BASSWIESN sind, starte hier einmal die Suche.", "Use the intended Bose/device flow. Once all radios are on the same LAN as BASSWIESN, start the scan here once."]
+    ,["Radio auswählen", "Select radio"]
+    ,["Sender finden und direkt für den Preset Builder auswählen.", "Find stations and select them directly for the Preset Builder."]
+    ,["Technische Unterschiede: Capabilities, Zone, Group und Room", "Technical differences: capabilities, zone, group, and room"]
+    ,["Vollständig geschützte Radios werden bereits vor der Auswahl entfernt und vor jedem Netzwerktransport erneut blockiert.", "Fully protected radios are removed before selection and blocked again before every network transport."]
+    ,["Wird nach dem Start auf jedem Radio nochmals geprüft.", "Verified again on every radio after starting."]
+    ,["Wähle ein Radio und eine Taste.", "Select a radio and a button."]
+    ,["Zone ist für gemeinsames SoundTouch-Audio. Raum optimiert ein einzelnes Radio und erstellt keine Gruppe.", "Zone is for shared SoundTouch audio. Room optimizes one radio and does not create a group."]
+    ,["ist für gemeinsames SoundTouch-Audio.", "is for shared SoundTouch audio."]
+    ,["optimiert ein einzelnes Radio und erstellt keine Gruppe.", "optimizes one radio and does not create a group."]
+    ,["Füge zuerst mindestens zwei Radios hinzu.", "Add at least two devices first."]
+    ,["Füge zuerst Radios hinzu.", "Add devices first."]
+    ,["Stream-Sender hier erstellen", "Create stream station here"]
+    ,["2 · Räume hinzufügen", "2 · Add rooms"]
+    ,["Abhängigkeiten prüfen", "Check dependencies"]
+    ,["Aktiv und verfügbar", "Active and available"]
+    ,["Ausgewähltes Radio read-only prüfen", "Check selected radio read-only"]
+    ,["Liest Info, Sources, Capabilities und Unicast-mDNS nur am ausgewählten Radio. Kein Subnetz-/Multicast-Scan, SSH oder CLI.", "Reads info, sources, capabilities, and unicast mDNS only from the selected radio. No subnet/multicast scan, SSH, or CLI."]
+    ,["Backup-Preview und Restore-Vorbereitung sind vorhanden; vollständiger sicherer UI-Restore fehlt.", "Backup preview and restore preparation are available; a complete safe UI restore is missing."]
+    ,["Baut eine Zone mit preserve_volumes auf und prüft Lautstärkeabweichungen.", "Builds a zone with preserve_volumes and verifies volume differences."]
+    ,["Blockiert serverseitig automatische und manuelle Netzwerkzugriffe auf geschützten Radio-IPs.", "Blocks automatic and manual network access to protected radio IPs on the server."]
+    ,["Der auf allen vorhandenen Geräten live bestätigte, lokale Hauptweg. Funktioniert ohne Bose-Cloud und ist für normale Nutzer die beste Wahl.", "The primary local path verified live on all available devices. It works without the Bose cloud and is the best choice for regular users."]
+    ,["Diagnose-Port prüfen", "Check diagnostics port"]
+    ,["Die ID-Sperre bleibt auch bei einem DHCP-IP-Wechsel wirksam.", "ID protection remains effective after a DHCP IP change."]
+    ,["Diese Radios werden vor jedem Netzwerktransport blockiert.", "These radios are blocked before every network transport."]
+    ,["Ein lesender Überblick aus Laufzeitkonfiguration, lokaler Datenbank und dokumentiertem Hardwarestatus.", "A read-only overview of runtime configuration, local database, and documented hardware status."]
+    ,["Erstellt redigierte Systembackups mit Manifest, SHA256 und Journal.", "Creates redacted system backups with a manifest, SHA256, and journal."]
+    ,["Erstellt und liest Multiroom-Zonen über die vorhandenen Router und Safety-Gates.", "Creates and reads multiroom zones through the existing routers and safety gates."]
+    ,["Erzeugt ein redigiertes Diagnosepaket ohne bekannte Secrets.", "Creates a redacted diagnostics bundle without known secrets."]
+    ,["Health prüfen", "Check health"]
+    ,["Health, Discovery, Events, Webhooks, Medien, Diagnose und LAB-Status ohne blockierende Geräteabfragen.", "Health, discovery, events, webhooks, media, diagnostics, and LAB status without blocking device queries."]
+    ,["Interne Ereignisse, Zustellstatus und deaktivierte Webhook-Konfiguration.", "Internal events, delivery status, and disabled webhook configuration."]
+    ,["Kein lokaler 21600-Sekunden-Default. Fehlend oder 0 bedeutet deaktiviert.", "No local 21600-second default. Missing or 0 means disabled."]
+    ,["Keine Restriction empfangen; Inaktivitätstimer ist nicht aktiv.", "No restriction received; the inactivity timer is not active."]
+    ,["Keine aktuell gemeldete Blockade.", "No blocker is currently reported."]
+    ,["Keine entfernten Radios.", "No removed radios."]
+    ,["Keine lokalen Presets zum Synchronisieren", "No local presets to synchronize"]
+    ,["Keine verknüpften Radios.", "No linked radios."]
+    ,["Konfidenz 0% · noch nicht beobachtet", "Confidence 0% · not observed yet"]
+    ,["Lesender System-, Service- und Healthcheck-Überblick.", "Read-only system, service, and health-check overview."]
+    ,["Liest Radio-Presets zurück und vergleicht sie mit der lokalen Definition.", "Reads radio presets back and compares them with the local definition."]
+    ,["Lokale Benutzeroberfläche und HTTP-API für BASSWIESN.", "Local user interface and HTTP API for BASSWIESN."]
+    ,["Lokale Medienroots, Bibliothek und Playlist-Infrastruktur.", "Local media roots, library, and playlist infrastructure."]
+    ,["Lokaler Senderkatalog mit Streamanalyse und explizitem Playback.", "Local station catalog with stream analysis and explicit playback."]
+    ,["Manuelle Clock-Recovery mit Profil, Confirmation und Readback.", "Manual clock recovery with profile, confirmation, and readback."]
+    ,["Manuelle, experimentelle Renderer-Erkennung ohne Hintergrundscan.", "Manual experimental renderer detection without background scanning."]
+    ,["Modernere interne Gruppen-Zustandsmaschine der Bose-App.", "Newer internal group state machine used by the Bose app."]
+    ,["Multiroom ohne Lautstärkeänderung", "Multiroom without volume changes"]
+    ,["Noch keine Jahresdaten.", "No yearly data yet."]
+    ,["Noch keine Profile", "No profiles yet"]
+    ,["Nur Diagnose – keine Firmware-, MFi- oder Authentifizierungsumgehung.", "Diagnostics only—no firmware, MFi, or authentication bypass."]
+    ,["Nur Klassifizierung und optionale Serverprüfung. Keine Radioaktion und kein Hardwarebeweis.", "Classification and optional server check only. No radio action and no hardware evidence."]
+    ,["Nur aktiv, wenn IP Write Guard eingeschaltet ist.", "Active only when IP Write Guard is enabled."]
+    ,["Optionale TLS-WebGUI mit Self-Signed- oder eigener Zertifikatskonfiguration.", "Optional TLS Web UI with a self-signed or custom certificate configuration."]
+    ,["Preflight, Backup, Cloud-Route, Apply, Verify und Rollback für ein Radio.", "Preflight, backup, cloud route, apply, verify, and rollback for one radio."]
+    ,["Profilbasierter Reboot; kein freies Telnet-Kommando.", "Profile-based reboot; no arbitrary Telnet command."]
+    ,["Provider, Stream, Metadaten und Reporting bleiben davon unabhängige Signale.", "Provider, stream, metadata, and reporting remain independent signals."]
+    ,["Prüft lokale Archive und bereitet ein Update vor; vollständige UI-Ausführung fehlt.", "Checks local archives and prepares an update; complete UI execution is missing."]
+    ,["Radio Info ohne SSH", "Radio information without SSH"]
+    ,["Radio und Preset wählen, danach den Preflight starten.", "Select a radio and preset, then start the preflight."]
+    ,["Radio-Slots und BASSWIESN-Daten read-only vergleichen.", "Compare radio slots and BASSWIESN data read-only."]
+    ,["Real in der Firmware vorhanden, aber komplexer und von Account-/Versionszustand abhängig. BASSWIESN nutzt für Endnutzer die stabilere Zone und hält Group als Kompatibilitäts-/Diagnoseweg bereit.", "Present in the firmware, but more complex and dependent on account/version state. BASSWIESN uses the more stable zone for end users and retains Group as a compatibility/diagnostics path."]
+    ,["Recovery-Stufe 7 als ausschliesslich manuelle LAB-Aktion; kein Scheduler und keine automatische Ausfuehrung.", "Recovery stage 7 is an exclusively manual LAB action; no scheduler and no automatic execution."]
+    ,["Registry, Quellen und Radio-Anfragen ansehen", "View registry, sources, and radio requests"]
+    ,["Release-Check für API, Datenbank, Storage, Emulator und Ports.", "Release check for API, database, storage, emulator, and ports."]
+    ,["SSDP und begrenzter IP-Fallback finden Radios im lokalen Netz.", "SSDP and a bounded IP fallback find radios on the local network."]
+    ,["SYNC_TO_ZONE ist für eine SoundTouch-Zone optimiert. SYNC_TO_ROOM richtet die Ausgabe auf den einzelnen Raum aus. Dieser Schalter bildet selbst keine Gruppe.", "SYNC_TO_ZONE is optimized for a SoundTouch zone. SYNC_TO_ROOM aligns output for one room. This switch does not create a group."]
+    ,["Schreibt ein einzelnes lokales Preset mit Backup, Guards und Readback.", "Writes one local preset with backup, guards, and readback."]
+    ,["Sender und Presets", "Stations and presets"]
+    ,["Serverseitige Szenen mit Master, Mitgliedern, Sender und Lautstärkeoptionen; kein natives Bose-Preset.", "Server-side scenes with master, members, station, and volume options; not a native Bose preset."]
+    ,["Setup und Redirect", "Setup and redirect"]
+    ,["Steuert BASSWIESN-eigene optionale externe Requests; nicht die Internetverbindung des Radios.", "Controls BASSWIESN's optional external requests, not the radio's internet connection."]
+    ,["Synchronisiert lokale Presets und bestätigt die Slots durch Radio-Readback.", "Synchronizes local presets and verifies the slots through radio readback."]
+    ,["Telemetry, Request-Logs, Emulation Gaps und technische Exporte ohne Radioaktion.", "Telemetry, request logs, emulation gaps, and technical exports without radio action."]
+    ,["Verbunden", "Connected"]
+    ,["Vollständiger UI-Ablauf mit Neustart und Rollback fehlt", "Complete UI flow with restart and rollback is missing"]
+    ,["Vollständiger staged UI-Restore mit Rollback fehlt", "Complete staged UI restore with rollback is missing"]
+    ,["WebGUI und API", "Web UI and API"]
+    ,["Zeigt vorbereitete, nicht produktionsreife Diagnose- und Schreibpläne.", "Shows prepared diagnostics and write plans that are not production-ready."]
+    ,["nur sekundär / unbekannt", "secondary only / unknown"]
+    ,["strict blockiert optionale externe BASSWIESN-Dienste. Das Radio und lokale Streams bleiben davon getrennt.", "Strict mode blocks optional external BASSWIESN services. The radio and local streams remain separate."]
+    ,["Ausgewähltes Radio nur lesend prüfen", "Check selected radio read-only"]
+    ,["Backup-Vorschau und Restore-Vorbereitung sind vorhanden; vollständiger sicherer UI-Restore fehlt.", "Backup preview and restore preparation are available; a complete safe UI restore is missing."]
+    ,["Lokaler Senderkatalog mit Streamanalyse und expliziter Wiedergabe.", "Local station catalog with stream analysis and explicit playback."]
+    ,["Vorschau- und Jobinfrastruktur für begrenzte Ansagen; keine bestätigte Wiedergabe.", "Preview and job infrastructure for bounded announcements; playback is not confirmed."]
+    ,["Radio-Slots und BASSWIESN-Daten nur lesend vergleichen.", "Compare radio slots and BASSWIESN data read-only."]
+    ,["Wiedergabe stammt vom Radio-Readback", "Playback comes from radio readback"]
+    ,["Wiedergabezustand", "Playback Health"]
+    ,["Wiedergabefehler", "playback errors"]
+    ,["Wähle ein Radio und einen Sender, um die Wiedergabe zu testen.", "Choose a radio and station to test playback."]
+    ,["Kandidat, bis die modellspezifische Wiedergabe live getestet wurde.", "Candidate only until model-specific playback is live-tested."]
+    ,["Durch Mathias-Captures bestätigt: LOCAL_INTERNET_RADIO stationurl mit direkten .mp3-URLs.", "Confirmed by Mathias captures: LOCAL_INTERNET_RADIO stationurl with direct .mp3 URLs."]
+    ,["Easy Mode ändert nur die Oberfläche; alle stabilen Backendfunktionen bleiben verfügbar.", "Easy Mode changes only the interface; all stable backend functions remain available."]
+    ,["Zuerst MP3 verwenden. Alte SoundTouch-Firmware arbeitet am sichersten mit einfachem HTTP-MP3 statt modernen Codecs.", "Use MP3 first. Old SoundTouch firmware is safest with simple HTTP MP3, not modern codecs."]
+    ,["Archivprüfung vor Prepare; kein automatischer Neustart", "Archive check before prepare; no automatic restart"]
+    ,["BASSWIESN-Server erforderlich", "BASSWIESN server required"]
+    ,["Backup und Reboot-Readback", "Backup and reboot readback"]
+    ,["Backup und Write-Guard vor Live-Write", "Backup and write guard before live write"]
+    ,["Backup, Confirmation und serverseitige Write-Gates", "Backup, confirmation, and server-side write gates"]
+    ,["Eine Szene merkt sich Radios, Sender und Lautstärke und kann direkt gestartet werden.", "A scene remembers radios, station, and volume and can be started directly."]
+    ,["IP Write Guard und Schutz-IP beachten", "Observe IP Write Guard and protected IP"]
+    ,["Keine Hardwaretaste-Automatik: Dieses BASSWIESN-Preset wird ausschließlich über die WebUI gestartet.", "No automatic hardware button: this BASSWIESN preset is started exclusively through the Web UI."]
+    ,["Keine sensiblen Werte erforderlich", "No sensitive values required"]
+    ,["Keine zusätzlichen Angaben.", "No additional information."]
+    ,["Küche und Wohnzimmer", "Kitchen and living room"]
+    ,["LAB; Preview und Confirmation vor Live-Action", "LAB; preview and confirmation before live action"]
+    ,["Logoabruf nur nach URL- und Größenprüfung; Readback erforderlich", "Fetch logos only after URL and size checks; readback required"]
+    ,["Manuelle Confirmation und Write-Guard", "Manual confirmation and write guard"]
+    ,["Master und Teilnehmer", "Master and members"]
+    ,["Nur erlaubte Hosts; Secretwerte redigiert", "Allowed hosts only; secret values redacted"]
+    ,["Nur gespeicherte Zuordnung – Radio", "Stored mapping only—radio"]
+    ,["Nur gespeicherte Zuordnung – Taste", "Stored mapping only—button"]
+    ,["PROTECTED_DEVICE_IPS oder geschützte IP in Einstellungen", "PROTECTED_DEVICE_IPS or protected IP in settings"]
+    ,["Preview read-only; Live-Write nur mit bestehenden Guards", "Read-only preview; live write only with existing guards"]
+    ,["Preview und Schutz-IP vor Live-Write", "Preview and protected IP before live write"]
+    ,["Read-only; kein Radio-Write im Statuszentrum", "Read-only; no radio write in the status center"]
+    ,["Restore bleibt Preview/Prepare; kein stiller Web-Restore", "Restore remains preview/prepare; no silent Web restore"]
+    ,["Schreibaktion nur mit Bestätigung und serverseitigen Guards", "Write action only with confirmation and server-side guards"]
+    ,["Schutz-IP und Volume-Readback", "Protected IP and volume readback"]
+    ,["Secret bleibt außerhalb der Anzeige", "Secret remains outside the display"]
+    ,["Serverseitig wirksam; Liste wird nicht als Geheimnis behandelt", "Effective server-side; the list is not treated as a secret"]
+    ,["Serverseitige Szene; Teilnehmer- und Schutzprüfung vor Aktivierung", "Server-side scene; member and protection checks before activation"]
+    ,["Serverseitige Szenen, keine nativen Bose-Presets. Der BASSWIESN-Server muss laufen; Aktivierung prüft Teilnehmer, Schutzstatus, Lautstärke und Readback.", "Server-side scenes, not native Bose presets. The BASSWIESN server must be running; activation verifies members, protection status, volume, and readback."]
+    ,["Settings werden im Backup redigiert", "Settings are redacted in the backup"]
+    ,["Strict Offline kann externe Prüfung blockieren", "Strict Offline can block external checks"]
+    ,["Strict kontrolliert BASSWIESN-Requests, nicht das Radio", "Strict controls BASSWIESN requests, not the radio"]
+    ,["Unverschlüsseltes Protokoll; Secretwerte werden nie angezeigt", "Unencrypted protocol; secret values are never displayed"]
+    ,["Voraussetzungen", "Requirements"]
+    ,["Write-Guard, Schutz-IP und explizite Nutzerbestätigung", "Write guard, protected IP, and explicit user confirmation"]
+    ,["Zertifikatspfade und private Schlüssel werden nicht ausgegeben", "Certificate paths and private keys are not exposed"]
+    ,["Zuerst einen BASSWIESN-Sender starten.", "Start a BASSWIESN station first."]
+    ,["erforderlich", "required"]
+    ,["erkennt nur Funktionen – es gruppiert nichts.", "detects capabilities only—it does not create a group."]
+    ,["ist der bestätigte lokale Hauptweg und wird von BASSWIESN verwendet.", "is the confirmed primary local path used by BASSWIESN."]
+    ,["ist die modernere interne Bose-Zustandsmaschine, aber account- und versionsabhängiger.", "is the newer internal Bose state machine, but is more account- and version-dependent."]
+    ,["ist für gemeinsames Audio gedacht.", "is intended for shared audio."]
+    ,["ist nur ein Latenzmodus;", "is only a latency mode;"]
+    ,["keine", "none"]
+    ,["nicht erforderlich", "not required"]
+    ,["vollständig erkannt", "fully detected"]
+    ,["Ändert nur Track, Interpret, Album und imageUrl des laufenden BASSWIESN-Senders. Kein Sourcewechsel, SetURL, Stop oder Rebuffer.", "Changes only track, artist, album, and imageUrl of the running BASSWIESN station. No source change, SetURL, stop, or rebuffer."]
+    ,["Erstellen und auswählen", "Create and select"]
+    ,["Geräte-ID, weitere Geräte-ID", "Device ID, another device ID"]
+    ,["Geräte-Allowlist", "Device allowlist"]
+    ,["LAB; Vorschau und Bestätigung vor Live-Aktion", "LAB; preview and confirmation before live action"]
+    ,["Nur-lesend-Vorschau; Live-Write nur mit bestehenden Guards", "Read-only preview; live write only with existing guards"]
+    ,["Vorschau und Schutz-IP vor Live-Write", "Preview and protected IP before live write"]
+    ,["Nur-lesend-/presets-Readback", "Read-only /presets readback"]
+    ,["Nur lesend; kein Radio-Write im Statuszentrum", "Read-only; no radio write in the status center"]
+    ,["Restore bleibt Vorschau/Prepare; kein stiller Web-Restore", "Restore remains preview/prepare; no silent Web restore"]
+    ,["Sender suchen", "Search stations"]
+    ,["Einstellungen werden im Backup redigiert", "Settings are redacted in the backup"]
+    ,["Sendername", "Station Name"]
+    ,["Direkt verifiziert sind nur SoundTouch 10, 20, 30 und Portable.", "Only SoundTouch 10, 20, 30, and Portable are directly verified."]
+    ,["Experimentell, pro Radio und standardmäßig aus. Keine Display-Binary-Patches.", "Experimental, per radio, and off by default. No display binary patches."]
+    ,["Firmwareabhängige LAB-Funktion. Entfernt nur dieses Radio aus der aktuellen Zone. Das Radio bleibt in BASSWIESN gespeichert.", "Firmware-dependent LAB function. Removes only this radio from the current zone. The radio remains stored in BASSWIESN."]
+    ,["Ich verstehe, dass das Radio danach vorübergehend aus diesem Netz verschwinden kann.", "I understand that the radio may temporarily disappear from this network afterward."]
+    ,["SoundTouch kann mehrere persistente WLAN-Profile speichern. Beim Hinzufügen kann das Radio sofort das Netz wechseln.", "SoundTouch can store multiple persistent Wi-Fi profiles. Adding one may make the radio switch networks immediately."]
+    ,["Uhrzeit in Live-Metadaten anzeigen", "Show clock in live metadata"]
+    ,["WLAN-Profil hinzufügen", "Add Wi-Fi profile"]
+    ,["⚠ Firmware update und unterstützte Modelle", "⚠ Firmware update and supported models"]
+    ,["Nativen Sender hinzufügen", "Add native station"]
+    ,["Nativer Sender hinzufügen", "Native add station"]
+    ,["Native Radiosendersuche", "Native radio station search"]
+    ,["Natives Senderergebnis", "Native station result"]
+    ,["Über das Radio suchen", "Search via radio"]
+    ,["Sender-Token", "station token"]
+  ];
+  const releasePhraseIndex = {};
+  for (const [index, pair] of bilingualPairs.entries()) {
+    const key = `release_251_phrase_${index}`;
+    catalogs.de[key] = pair[0];
+    catalogs.en[key] = pair[1];
+    for (const lang of Object.keys(catalogs)) catalogs[lang][key] = catalogs[lang][key] || pair[1];
+    releasePhraseIndex[normalizePhrase(pair[0])] = key;
+    releasePhraseIndex[normalizePhrase(pair[1])] = key;
+    keys.push(key);
+  }
   const phraseIndex = {};
   function normalizePhrase(value) { return String(value || "").replace(/\s+/g, " ").trim().toLowerCase(); }
   const sourceAliases = {
@@ -360,13 +711,75 @@
       if (typeof value === "string" && value.trim()) phraseIndex[normalizePhrase(value)] = key;
     }
   }
+  // Runtime cards combine persisted/API evidence with labels, so exact
+  // phrase lookup alone cannot localize them. Keep the replacements narrow:
+  // protocol tokens (PLAYBACK_FAILED, LOCAL_INTERNET_RADIO, endpoint names)
+  // and user-controlled station/device names are deliberately untouched.
+  const dynamicPairs = [
+    ["Identität", "Identity"],
+    ["Serverziel", "Server target"],
+    ["Abschluss", "Complete"],
+    ["Bereit", "Ready"],
+    ["Wiedergabe gesperrt", "playback blocked"],
+    ["Lautstärkegrenze", "volume limit"],
+    ["letzte Quelle:", "last source:"],
+    ["Backend vorhanden, UI unvollständig", "Backend available, UI incomplete"],
+    ["Secretquelle fehlt", "secret source missing"],
+    ["Host Redirect unbekannt / noch nicht geprüft", "Host Redirect unknown / not checked yet"],
+    ["Persistent SSH unbekannt / noch nicht geprüft", "Persistent SSH unknown / not checked yet"],
+    ["SSH noch nicht geprüft", "SSH not checked yet"],
+    ["remote_services unbekannt / noch nicht geprüft", "remote_services unknown / not checked yet"],
+    ["Readback vorhanden", "Readback available"],
+    ["Readback fehlt", "Readback missing"],
+    ["Letzter Sync:", "Last sync:"],
+    ["Quelle:", "Source:"],
+    ["Vorschau und Details", "Preview and details"],
+    ["Zuerst Vorschau öffnen", "Open the preview first"],
+    ["Nicht im Radio gespeichert", "Not stored on the radio"],
+    ["BASSWIESN-Server erforderlich", "BASSWIESN server required"],
+    ["manuelle WebUI-Aktivierung", "manual Web UI activation"],
+    ["Eine gespeicherte Tasten-Zuordnung löst derzeit nichts automatisch aus.", "A saved button assignment does not currently trigger anything automatically."],
+    ["Hauptradio", "main radio"],
+    ["Räume", "rooms"],
+    ["mit Lautstärkelogik", "with volume handling"],
+    ["Das Radio meldet laufende Wiedergabe.", "The radio reports active playback."],
+    ["Der Wiedergabestatus ist noch nicht durch das Radio belegt.", "The playback state has not yet been confirmed by the radio."],
+    ["Statusberichte sind gestört; die Wiedergabe wird nicht unterbrochen.", "Reporting is degraded; playback is not interrupted."],
+    ["Unbekannt / noch nicht geprüft", "Unknown / not checked yet"],
+    ["unbekannt", "unknown"],
+    ["Radio ließ Mute während der Quellenauswahl aktiviert", "radio left mute state during source select"],
+    ["BASSWIESN-Senderzuordnung ist vorhanden", "BASSWIESN station mapping exists"],
+    ["Wiedergabe über die physische Presettaste erfordert einen manuellen Schritt", "physical preset-button playback requires a manual step"],
+    ["gespeicherter Radio-Snapshot wird verwendet", "using persisted radio snapshot"],
+    ["Prüfer ausdrücklich aktualisieren, um den Stream zu testen", "run an explicit checker refresh to test the stream"],
+    ["Provider-Verfügbarkeit wurde nicht beobachtet", "provider availability was not observed"],
+    ["Live-Metadatenfelder wurden aktualisiert, ohne die Wiedergabe zu ändern.", "Live metadata fields updated without changing playback."],
+    ["Provider-Bericht angenommen; der Wiedergabezustand wurde nicht geändert.", "Provider report accepted; playback state was not changed."],
+    ["Senderzuordnung ist vorhanden", "station mapping exists"],
+    ["Radio auswählen", "Select a radio"],
+    ["Kein Radio", "No radio"],
+  ];
   let current = "en";
   function setLanguage(language) { current = catalogs[language] ? language : "en"; if (!catalogs[language]) console.warn(`[i18n] Unsupported language ${language}; using English`); }
   function t(key) { const value = catalogs[current]?.[key]; if (value) return value; console.warn(`[i18n] Missing ${current}.${key}; using English`); return catalogs.en[key] || key; }
   function phrase(value) {
     const trimmed = String(value || "").trim();
-    const key = phraseIndex[normalizePhrase(trimmed)];
+    const normalized = normalizePhrase(trimmed);
+    const key = releasePhraseIndex[normalized] || phraseIndex[normalized];
     return key ? t(key) : value;
   }
-  window.BasswiesnI18n = { catalogs, keys, setLanguage, t, phrase, languages: Object.keys(catalogs) };
+  function dynamic(value) {
+    const original = String(value ?? "");
+    const exact = phrase(original);
+    if (exact !== original) return exact;
+    const targetGerman = current === "de";
+    let result = original;
+    for (const [german, english] of dynamicPairs) {
+      const source = targetGerman ? english : german;
+      const target = targetGerman ? german : english;
+      if (source && result.includes(source)) result = result.split(source).join(target);
+    }
+    return result;
+  }
+  window.BasswiesnI18n = { catalogs, keys, setLanguage, t, phrase, dynamic, languages: Object.keys(catalogs) };
 }());

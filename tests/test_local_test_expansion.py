@@ -298,6 +298,6 @@ def test_fulltest_router_smoke():
         assert client.get("/api/webhooks").json()["enabled_globally"] is False
         assert client.get("/api/dlna/status").json()["enabled"] is False
         assert client.get("/api/announcements/status").json()["enabled"] is False
-        assert client.get("/api/lab/status").json()["factory_reset_executable"] is False
+        assert client.get("/api/lab/status").json()["factory_reset_executable"] is True
 import pytest as _pytest_marker
 pytestmark = _pytest_marker.mark.integration

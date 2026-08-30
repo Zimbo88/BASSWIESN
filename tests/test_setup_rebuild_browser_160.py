@@ -9,8 +9,8 @@ import uvicorn
 from playwright.sync_api import expect, sync_playwright
 
 from basswiesn.app import config
+from basswiesn.app.adapters.discovery import DiscoveryScanResult
 from basswiesn.app.main import create_web_app
-from basswiesn.app.models import Device
 
 
 pytestmark = [
@@ -83,6 +83,11 @@ def test_human_setup_preview_start_progress_readback_and_rollback(
     coordinator_module._COORDINATOR = None
     try:
         with LiveServer() as server, sync_playwright() as playwright:
+            httpx.post(
+                f"{server.url}/api/system/settings",
+                json={"web_language": "de", "show_startup_warning": "false", "first_run_warning_required": "false"},
+                timeout=3,
+            ).raise_for_status()
             browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
             page = browser.new_page(viewport={"width": width, "height": height})
             page.goto(server.url, wait_until="networkidle")
@@ -152,6 +157,7 @@ def test_fresh_database_discovery_requires_visible_user_action_before_setup_popu
 ):
     """Fresh Setup stays passive until the human explicitly starts discovery."""
 
+    from basswiesn.app.api import routes_devices
     from basswiesn.app.routers import setup_rebuild as setup_rebuild_router
     from basswiesn.app.services.setup_rebuild import coordinator as coordinator_module
 
@@ -165,20 +171,19 @@ def test_fresh_database_discovery_requires_visible_user_action_before_setup_popu
 
     discovery_calls = []
 
-    async def fake_discovery(db, *, timeout_seconds):
-        discovery_calls.append(timeout_seconds)
-        db.add(Device(
-            device_id=device_id,
-            ip_address="192.0.2.31",
-            name="Frisch erkanntes Radio",
-            model="SoundTouch 20",
-            discovery_method="ssdp",
-            identity_verified=True,
-        ))
-        return {
-            "devices": [{"device_id": device_id, "ip_address": "192.0.2.31"}],
-            "errors": [],
-        }
+    async def fake_discovery(cidr, *, limit, timeout, concurrency):
+        discovery_calls.append({"cidr": cidr, "limit": limit, "timeout": timeout, "concurrency": concurrency})
+        return DiscoveryScanResult(
+            scanned=1,
+            devices=[{
+                "device_id": device_id,
+                "ip_address": "192.0.2.31",
+                "name": "Frisch erkanntes Radio",
+                "model": "SoundTouch 20",
+                "raw": info_xml,
+            }],
+            failures=[],
+        )
 
     class FakeInfoClient:
         def __init__(self, _host, _device_id="", **_kwargs):
@@ -195,11 +200,16 @@ def test_fresh_database_discovery_requires_visible_user_action_before_setup_popu
         "_ensure_test_mode_simulation_device",
         lambda _db: None,
     )
-    monkeypatch.setattr(setup_rebuild_router, "manual_discovery_test", fake_discovery)
-    monkeypatch.setattr(setup_rebuild_router, "_explicit_identity_client", FakeInfoClient)
+    monkeypatch.setattr(routes_devices, "scan_subnet_detailed", fake_discovery)
+    monkeypatch.setattr(routes_devices, "SoundTouchClient", FakeInfoClient)
     coordinator_module._COORDINATOR = None
     try:
         with LiveServer() as server, sync_playwright() as playwright:
+            httpx.post(
+                f"{server.url}/api/system/settings",
+                json={"web_language": "de", "show_startup_warning": "false", "first_run_warning_required": "false"},
+                timeout=3,
+            ).raise_for_status()
             browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
             page = browser.new_page(viewport={"width": 1440, "height": 900})
             page.goto(server.url, wait_until="networkidle")
@@ -223,7 +233,9 @@ def test_fresh_database_discovery_requires_visible_user_action_before_setup_popu
                 "1 von 1",
                 timeout=10_000,
             )
-            assert discovery_calls == [3]
+            assert len(discovery_calls) == 1
+            assert discovery_calls[0]["timeout"] == 0.7
+            assert discovery_calls[0]["concurrency"] == 64
 
             expect(radio).to_be_visible(timeout=10_000)
             expect(radio.locator("xpath=ancestor::article")).to_contain_text(

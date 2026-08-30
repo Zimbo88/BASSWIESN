@@ -77,7 +77,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:328",
+      "source": "basswiesn/app/routers/cloud.py:336",
       "test_evidence": [],
       "write_operation": false
     },
@@ -105,7 +105,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/routers/cloud.py:334",
+      "source": "basswiesn/app/routers/cloud.py:342",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -140,7 +140,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/cloud.py:1395",
+      "source": "basswiesn/app/routers/cloud.py:1403",
       "test_evidence": [],
       "write_operation": false
     },
@@ -181,7 +181,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:993",
+      "source": "basswiesn/app/routers/cloud.py:1001",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
@@ -241,7 +241,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:993",
+      "source": "basswiesn/app/routers/cloud.py:1001",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
@@ -301,7 +301,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1096",
+      "source": "basswiesn/app/routers/cloud.py:1104",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
@@ -354,7 +354,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1096",
+      "source": "basswiesn/app/routers/cloud.py:1104",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
@@ -407,7 +407,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1251",
+      "source": "basswiesn/app/routers/cloud.py:1259",
       "test_evidence": [],
       "write_operation": false
     },
@@ -448,7 +448,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1251",
+      "source": "basswiesn/app/routers/cloud.py:1259",
       "test_evidence": [],
       "write_operation": false
     },
@@ -489,7 +489,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1251",
+      "source": "basswiesn/app/routers/cloud.py:1259",
       "test_evidence": [],
       "write_operation": true
     },
@@ -526,7 +526,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:686",
+      "source": "basswiesn/app/routers/cloud.py:694",
       "test_evidence": [],
       "write_operation": false
     },
@@ -563,7 +563,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:350",
+      "source": "basswiesn/app/routers/cloud.py:358",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -602,7 +602,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:661",
+      "source": "basswiesn/app/routers/cloud.py:669",
       "test_evidence": [
         "tests/test_config_rewrite.py",
         "tests/test_high_impact_architecture.py",
@@ -645,7 +645,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:686",
+      "source": "basswiesn/app/routers/cloud.py:694",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -684,7 +684,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1261",
+      "source": "basswiesn/app/routers/cloud.py:1269",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -723,7 +723,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1261",
+      "source": "basswiesn/app/routers/cloud.py:1269",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -766,7 +766,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1224",
+      "source": "basswiesn/app/routers/cloud.py:1232",
       "test_evidence": [],
       "write_operation": false
     },
@@ -807,7 +807,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1224",
+      "source": "basswiesn/app/routers/cloud.py:1232",
       "test_evidence": [],
       "write_operation": true
     },
@@ -848,7 +848,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1242",
+      "source": "basswiesn/app/routers/cloud.py:1250",
       "test_evidence": [],
       "write_operation": false
     },
@@ -889,7 +889,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1242",
+      "source": "basswiesn/app/routers/cloud.py:1250",
       "test_evidence": [],
       "write_operation": false
     },
@@ -930,7 +930,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1224",
+      "source": "basswiesn/app/routers/cloud.py:1232",
       "test_evidence": [],
       "write_operation": false
     },
@@ -971,7 +971,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1224",
+      "source": "basswiesn/app/routers/cloud.py:1232",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1012,7 +1012,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1224",
+      "source": "basswiesn/app/routers/cloud.py:1232",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1049,7 +1049,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1234",
+      "source": "basswiesn/app/routers/cloud.py:1242",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1086,7 +1086,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1234",
+      "source": "basswiesn/app/routers/cloud.py:1242",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1123,8 +1123,9 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:693",
+      "source": "basswiesn/app/routers/cloud.py:701",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -1167,8 +1168,9 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:913",
+      "source": "basswiesn/app/routers/cloud.py:921",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -1209,7 +1211,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:605",
+      "source": "basswiesn/app/routers/cloud.py:613",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1246,7 +1248,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:397",
+      "source": "basswiesn/app/routers/cloud.py:405",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1283,7 +1285,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:397",
+      "source": "basswiesn/app/routers/cloud.py:405",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1320,7 +1322,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:436",
+      "source": "basswiesn/app/routers/cloud.py:444",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1359,7 +1361,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:442",
+      "source": "basswiesn/app/routers/cloud.py:450",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1398,7 +1400,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:473",
+      "source": "basswiesn/app/routers/cloud.py:481",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1437,7 +1439,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:459",
+      "source": "basswiesn/app/routers/cloud.py:467",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1476,7 +1478,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:397",
+      "source": "basswiesn/app/routers/cloud.py:405",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1515,7 +1517,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:397",
+      "source": "basswiesn/app/routers/cloud.py:405",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1554,7 +1556,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:418",
+      "source": "basswiesn/app/routers/cloud.py:426",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1593,7 +1595,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:427",
+      "source": "basswiesn/app/routers/cloud.py:435",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1632,7 +1634,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:404",
+      "source": "basswiesn/app/routers/cloud.py:412",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1676,7 +1678,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:482",
+      "source": "basswiesn/app/routers/cloud.py:490",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1721,7 +1723,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:545",
+      "source": "basswiesn/app/routers/cloud.py:553",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1766,7 +1768,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:526",
+      "source": "basswiesn/app/routers/cloud.py:534",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1811,7 +1813,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:538",
+      "source": "basswiesn/app/routers/cloud.py:546",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1856,7 +1858,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:552",
+      "source": "basswiesn/app/routers/cloud.py:560",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1901,7 +1903,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:552",
+      "source": "basswiesn/app/routers/cloud.py:560",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1951,7 +1953,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1338",
+      "source": "basswiesn/app/routers/cloud.py:1346",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2001,7 +2003,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1290",
+      "source": "basswiesn/app/routers/cloud.py:1298",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2046,7 +2048,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:569",
+      "source": "basswiesn/app/routers/cloud.py:577",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2096,7 +2098,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1338",
+      "source": "basswiesn/app/routers/cloud.py:1346",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2146,7 +2148,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1290",
+      "source": "basswiesn/app/routers/cloud.py:1298",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2196,7 +2198,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1290",
+      "source": "basswiesn/app/routers/cloud.py:1298",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2241,7 +2243,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:589",
+      "source": "basswiesn/app/routers/cloud.py:597",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2286,7 +2288,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:579",
+      "source": "basswiesn/app/routers/cloud.py:587",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2327,7 +2329,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:381",
+      "source": "basswiesn/app/routers/cloud.py:389",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2368,7 +2370,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:596",
+      "source": "basswiesn/app/routers/cloud.py:604",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2409,7 +2411,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:389",
+      "source": "basswiesn/app/routers/cloud.py:397",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2450,7 +2452,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:559",
+      "source": "basswiesn/app/routers/cloud.py:567",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2491,7 +2493,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:364",
+      "source": "basswiesn/app/routers/cloud.py:372",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -2530,7 +2532,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:350",
+      "source": "basswiesn/app/routers/cloud.py:358",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2567,7 +2569,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:341",
+      "source": "basswiesn/app/routers/cloud.py:349",
       "test_evidence": [
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py"
@@ -2607,7 +2609,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:357",
+      "source": "basswiesn/app/routers/cloud.py:365",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -2650,7 +2652,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:374",
+      "source": "basswiesn/app/routers/cloud.py:382",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2691,7 +2693,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:374",
+      "source": "basswiesn/app/routers/cloud.py:382",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2732,7 +2734,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1281",
+      "source": "basswiesn/app/routers/cloud.py:1289",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2773,7 +2775,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1268",
+      "source": "basswiesn/app/routers/cloud.py:1276",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -2816,7 +2818,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1275",
+      "source": "basswiesn/app/routers/cloud.py:1283",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2858,7 +2860,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2900,7 +2902,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2942,7 +2944,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2984,7 +2986,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": false
     },
@@ -3026,7 +3028,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": true
     },
@@ -3068,7 +3070,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1406",
+      "source": "basswiesn/app/routers/cloud.py:1414",
       "test_evidence": [],
       "write_operation": true
     },
@@ -3948,6 +3950,8 @@
       "source": "basswiesn/app/api/routes_devices.py:142",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_contract_quality_audit_160.py",
         "tests/test_device_crud_api.py",
         "tests/test_device_repository_service.py",
@@ -4008,6 +4012,8 @@
       "source": "basswiesn/app/api/routes_devices.py:198",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_contract_quality_audit_160.py",
         "tests/test_device_crud_api.py",
         "tests/test_device_scan_api.py",
@@ -4018,7 +4024,6 @@
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
-        "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
@@ -4186,6 +4191,8 @@
       "response_type": "dict",
       "source": "basswiesn/app/api/routes_devices.py:270",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_device_scan_api.py",
         "tests/test_webui_smoke.py"
       ],
@@ -4220,7 +4227,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:159",
+      "source": "basswiesn/app/routers/api.py:166",
       "test_evidence": [
         "tests/test_safety_fixes_160.py"
       ],
@@ -4255,7 +4262,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:183",
+      "source": "basswiesn/app/routers/api.py:190",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -4344,7 +4351,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2923",
+      "source": "basswiesn/app/routers/api.py:3098",
       "test_evidence": [
         "tests/test_database_package.py"
       ],
@@ -4428,7 +4435,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1769",
+      "source": "basswiesn/app/routers/api.py:1776",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4590,7 +4597,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2822",
+      "source": "basswiesn/app/routers/api.py:2997",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4636,7 +4643,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2565",
+      "source": "basswiesn/app/routers/api.py:2740",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4682,7 +4689,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2509",
+      "source": "basswiesn/app/routers/api.py:2684",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4724,7 +4731,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2804",
+      "source": "basswiesn/app/routers/api.py:2979",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4808,7 +4815,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2258",
+      "source": "basswiesn/app/routers/api.py:2308",
       "test_evidence": [],
       "write_operation": false
     },
@@ -4852,7 +4859,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2580",
+      "source": "basswiesn/app/routers/api.py:2755",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4932,7 +4939,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2883",
+      "source": "basswiesn/app/routers/api.py:3058",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4975,7 +4982,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2907",
+      "source": "basswiesn/app/routers/api.py:3082",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5185,7 +5192,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2279",
+      "source": "basswiesn/app/routers/api.py:2329",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5230,7 +5237,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1198",
+      "source": "basswiesn/app/routers/stations_presets.py:1377",
       "test_evidence": [
         "tests/test_preset_transactions_200.py"
       ],
@@ -5273,7 +5280,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2222",
+      "source": "basswiesn/app/routers/api.py:2272",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5310,7 +5317,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:197",
+      "source": "basswiesn/app/routers/api.py:204",
       "test_evidence": [],
       "write_operation": false
     },
@@ -5435,7 +5442,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2309",
+      "source": "basswiesn/app/routers/api.py:2484",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5476,7 +5483,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1193",
+      "source": "basswiesn/app/routers/api.py:1200",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5517,8 +5524,9 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1314",
+      "source": "basswiesn/app/routers/api.py:1321",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_mobile_release.py"
       ],
       "write_operation": false
@@ -5561,7 +5569,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1392",
+      "source": "basswiesn/app/routers/api.py:1399",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5606,7 +5614,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1366",
+      "source": "basswiesn/app/routers/api.py:1373",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5693,7 +5701,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1762",
+      "source": "basswiesn/app/routers/api.py:1769",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5894,7 +5902,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:192",
+      "source": "basswiesn/app/routers/api.py:199",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_database_package.py",
@@ -5943,7 +5951,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1752",
+      "source": "basswiesn/app/routers/api.py:1759",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5984,7 +5992,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1742",
+      "source": "basswiesn/app/routers/api.py:1749",
       "test_evidence": [
         "tests/test_device_settings.py"
       ],
@@ -6039,7 +6047,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1254",
+      "source": "basswiesn/app/routers/stations_presets.py:1433",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
@@ -6081,7 +6089,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:449",
+      "source": "basswiesn/app/routers/api.py:456",
       "test_evidence": [
         "tests/test_high_impact_architecture.py",
         "tests/test_phase4b_hardening.py",
@@ -6248,7 +6256,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2848",
+      "source": "basswiesn/app/routers/api.py:3023",
       "test_evidence": [],
       "write_operation": true
     },
@@ -6331,7 +6339,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1778",
+      "source": "basswiesn/app/routers/api.py:1785",
       "test_evidence": [],
       "write_operation": false
     },
@@ -6374,7 +6382,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1789",
+      "source": "basswiesn/app/routers/api.py:1796",
       "test_evidence": [],
       "write_operation": true
     },
@@ -6415,7 +6423,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1815",
+      "source": "basswiesn/app/routers/api.py:1822",
       "test_evidence": [],
       "write_operation": true
     },
@@ -6448,7 +6456,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:232",
+      "source": "basswiesn/app/routers/api.py:239",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -6488,7 +6496,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:460",
+      "source": "basswiesn/app/routers/api.py:467",
       "test_evidence": [],
       "write_operation": false
     },
@@ -6611,7 +6619,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/api.py:220",
+      "source": "basswiesn/app/routers/api.py:227",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -6650,7 +6658,7 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/routers/api.py:227",
+      "source": "basswiesn/app/routers/api.py:234",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -6689,7 +6697,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:215",
+      "source": "basswiesn/app/routers/api.py:222",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -6763,8 +6771,7 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/fulltest.py:160",
       "test_evidence": [
-        "tests/test_setup_rebuild_160.py",
-        "tests/test_setup_rebuild_browser_160.py"
+        "tests/test_setup_rebuild_160.py"
       ],
       "write_operation": false
     },
@@ -6970,7 +6977,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/api.py:120",
+      "source": "basswiesn/app/routers/api.py:127",
       "test_evidence": [
         "tests/test_phase2_activation.py",
         "tests/test_release_candidate.py"
@@ -7006,7 +7013,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:95",
+      "source": "basswiesn/app/routers/api.py:102",
       "test_evidence": [
         "tests/test_phase2_activation.py"
       ],
@@ -7036,7 +7043,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict[str, str | bool]",
-      "source": "basswiesn/app/routers/api.py:83",
+      "source": "basswiesn/app/routers/api.py:90",
       "test_evidence": [
         "tests/test_contract_quality_audit_160.py",
         "tests/test_database_package.py",
@@ -7164,6 +7171,51 @@
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": true,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        400,
+        403,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "lab_factory_reset",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "POST",
+      "module": "basswiesn.app.routers.api",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/lab/devices/{device_id}/factory-reset",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "dict",
+          "name": "payload"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/api.py:2364",
+      "test_evidence": [],
+      "write_operation": true
     },
     {
       "application": "https-webgui",
@@ -8599,7 +8651,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:1825",
+      "source": "basswiesn/app/routers/api.py:1832",
       "test_evidence": [
         "tests/test_confirmed_playback_state.py",
         "tests/test_database_migrations.py",
@@ -8643,7 +8695,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1909",
+      "source": "basswiesn/app/routers/api.py:1916",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8681,7 +8733,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1873",
+      "source": "basswiesn/app/routers/api.py:1880",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
@@ -8721,7 +8773,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1898",
+      "source": "basswiesn/app/routers/api.py:1905",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8754,7 +8806,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2936",
+      "source": "basswiesn/app/routers/api.py:3111",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_webui_smoke.py"
@@ -8795,7 +8847,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2942",
+      "source": "basswiesn/app/routers/api.py:3117",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -8847,7 +8899,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2965",
+      "source": "basswiesn/app/routers/api.py:3140",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8886,7 +8938,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1970",
+      "source": "basswiesn/app/routers/stations_presets.py:2233",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -8925,7 +8977,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/stations_presets.py:1176",
+      "source": "basswiesn/app/routers/stations_presets.py:1355",
       "test_evidence": [],
       "write_operation": false
     },
@@ -9008,7 +9060,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1475",
+      "source": "basswiesn/app/routers/stations_presets.py:1654",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -9018,15 +9070,16 @@
       "application": "https-webgui",
       "application_title": "basswiesn WebGUI over optional HTTPS",
       "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
-      "database_change_possible": false,
-      "device_policy_required": false,
+      "database_change_possible": true,
+      "device_policy_required": true,
       "documented_duplicate_reason": "",
       "expected_status_codes": [
-        200
+        200,
+        502
       ],
       "future_authentication_required": true,
       "handler": "sync_local_presets",
-      "hardware_contact_possible": false,
+      "hardware_contact_possible": true,
       "legacy_bose_compatibility_route": false,
       "legacy_manual_mount": false,
       "method": "POST",
@@ -9035,7 +9088,7 @@
       "path": "/api/presets/{device_id}/sync",
       "port": 1329,
       "publicity": "internal-management",
-      "purpose": "Management-Mutation oder vorbereitender Ablauf",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
       "request_type": [
         {
           "annotation": "str",
@@ -9051,7 +9104,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1698",
+      "source": "basswiesn/app/routers/stations_presets.py:1898",
       "test_evidence": [],
       "write_operation": true
     },
@@ -9094,7 +9147,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1841",
+      "source": "basswiesn/app/routers/stations_presets.py:2104",
       "test_evidence": [],
       "write_operation": true
     },
@@ -9146,7 +9199,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1750",
+      "source": "basswiesn/app/routers/stations_presets.py:2013",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -9296,7 +9349,7 @@
         }
       ],
       "response_type": "dict[str, str | bool | dict]",
-      "source": "basswiesn/app/routers/api.py:132",
+      "source": "basswiesn/app/routers/api.py:139",
       "test_evidence": [
         "tests/test_contract_quality_audit_160.py",
         "tests/test_database_package.py",
@@ -10733,9 +10786,11 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/stations_presets.py:1072",
+      "source": "basswiesn/app/routers/stations_presets.py:1251",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_database_package.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
@@ -10789,9 +10844,11 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1106",
+      "source": "basswiesn/app/routers/stations_presets.py:1285",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_device_settings.py",
         "tests/test_human_ui_160.py",
         "tests/test_internal_activation_streams.py",
@@ -10802,6 +10859,47 @@
         "tests/test_webui_smoke.py"
       ],
       "write_operation": true
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": false,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        404
+      ],
+      "future_authentication_required": true,
+      "handler": "online_station_artwork",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.api",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/stations/online-artwork",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Management-Abfrage oder Statusdarstellung",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "url"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "RedirectResponse",
+      "source": "basswiesn/app/routers/api.py:2210",
+      "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py"
+      ],
+      "write_operation": false
     },
     {
       "application": "https-webgui",
@@ -10842,8 +10940,9 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2112",
+      "source": "basswiesn/app/routers/api.py:2119",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
         "tests/test_offline_mode.py"
       ],
       "write_operation": false
@@ -10887,7 +10986,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1149",
+      "source": "basswiesn/app/routers/stations_presets.py:1328",
       "test_evidence": [
         "tests/test_phase4b_hardening.py"
       ],
@@ -10931,7 +11030,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1083",
+      "source": "basswiesn/app/routers/stations_presets.py:1262",
       "test_evidence": [],
       "write_operation": false
     },
@@ -10964,7 +11063,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1946",
+      "source": "basswiesn/app/routers/api.py:1953",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_play_history_robustness.py",
@@ -11033,7 +11132,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:420",
+      "source": "basswiesn/app/routers/api.py:427",
       "test_evidence": [
         "tests/test_release_hardening.py"
       ],
@@ -11068,7 +11167,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:415",
+      "source": "basswiesn/app/routers/api.py:422",
       "test_evidence": [
         "tests/test_release_hardening.py",
         "tests/test_release_polish.py"
@@ -11099,7 +11198,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:345",
+      "source": "basswiesn/app/routers/api.py:352",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -11140,10 +11239,14 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/media.py:466",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
+        "tests/test_translation_coverage_251.py",
         "tests/test_version_metadata.py",
         "tests/test_webui_smoke.py"
       ],
@@ -11189,10 +11292,14 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/media.py:523",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
+        "tests/test_translation_coverage_251.py",
         "tests/test_version_metadata.py",
         "tests/test_webui_smoke.py"
       ],
@@ -11542,7 +11649,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict[str, str]",
-      "source": "basswiesn/app/routers/api.py:88",
+      "source": "basswiesn/app/routers/api.py:95",
       "test_evidence": [
         "tests/test_phase4b_hardening.py",
         "tests/test_release_candidate.py",
@@ -12384,6 +12491,7 @@
       "response_type": "handler-defined JSON",
       "source": "basswiesn/app/main.py:215",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -12624,7 +12732,7 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/main.py:711",
+      "source": "basswiesn/app/main.py:725",
       "test_evidence": [
         "tests/test_artwork_cache_160.py",
         "tests/test_connectivity_recovery_250.py",
@@ -14213,6 +14321,8 @@
       "source": "basswiesn/app/api/routes_devices.py:142",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_contract_quality_audit_160.py",
         "tests/test_device_crud_api.py",
         "tests/test_device_repository_service.py",
@@ -14273,6 +14383,8 @@
       "source": "basswiesn/app/api/routes_devices.py:198",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_contract_quality_audit_160.py",
         "tests/test_device_crud_api.py",
         "tests/test_device_scan_api.py",
@@ -14283,7 +14395,6 @@
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
-        "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
@@ -14451,6 +14562,8 @@
       "response_type": "dict",
       "source": "basswiesn/app/api/routes_devices.py:270",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_device_scan_api.py",
         "tests/test_webui_smoke.py"
       ],
@@ -14485,7 +14598,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:159",
+      "source": "basswiesn/app/routers/api.py:166",
       "test_evidence": [
         "tests/test_safety_fixes_160.py"
       ],
@@ -14520,7 +14633,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:183",
+      "source": "basswiesn/app/routers/api.py:190",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -14609,7 +14722,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2923",
+      "source": "basswiesn/app/routers/api.py:3098",
       "test_evidence": [
         "tests/test_database_package.py"
       ],
@@ -14693,7 +14806,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1769",
+      "source": "basswiesn/app/routers/api.py:1776",
       "test_evidence": [],
       "write_operation": true
     },
@@ -14855,7 +14968,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2822",
+      "source": "basswiesn/app/routers/api.py:2997",
       "test_evidence": [],
       "write_operation": true
     },
@@ -14901,7 +15014,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2565",
+      "source": "basswiesn/app/routers/api.py:2740",
       "test_evidence": [],
       "write_operation": true
     },
@@ -14947,7 +15060,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2509",
+      "source": "basswiesn/app/routers/api.py:2684",
       "test_evidence": [],
       "write_operation": true
     },
@@ -14989,7 +15102,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2804",
+      "source": "basswiesn/app/routers/api.py:2979",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15073,7 +15186,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2258",
+      "source": "basswiesn/app/routers/api.py:2308",
       "test_evidence": [],
       "write_operation": false
     },
@@ -15117,7 +15230,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2580",
+      "source": "basswiesn/app/routers/api.py:2755",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15197,7 +15310,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2883",
+      "source": "basswiesn/app/routers/api.py:3058",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15240,7 +15353,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2907",
+      "source": "basswiesn/app/routers/api.py:3082",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15450,7 +15563,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2279",
+      "source": "basswiesn/app/routers/api.py:2329",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15495,7 +15608,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1198",
+      "source": "basswiesn/app/routers/stations_presets.py:1377",
       "test_evidence": [
         "tests/test_preset_transactions_200.py"
       ],
@@ -15538,7 +15651,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2222",
+      "source": "basswiesn/app/routers/api.py:2272",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15575,7 +15688,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:197",
+      "source": "basswiesn/app/routers/api.py:204",
       "test_evidence": [],
       "write_operation": false
     },
@@ -15700,7 +15813,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2309",
+      "source": "basswiesn/app/routers/api.py:2484",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15741,7 +15854,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1193",
+      "source": "basswiesn/app/routers/api.py:1200",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15782,8 +15895,9 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1314",
+      "source": "basswiesn/app/routers/api.py:1321",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_mobile_release.py"
       ],
       "write_operation": false
@@ -15826,7 +15940,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1392",
+      "source": "basswiesn/app/routers/api.py:1399",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15871,7 +15985,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1366",
+      "source": "basswiesn/app/routers/api.py:1373",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15958,7 +16072,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1762",
+      "source": "basswiesn/app/routers/api.py:1769",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16159,7 +16273,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:192",
+      "source": "basswiesn/app/routers/api.py:199",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_database_package.py",
@@ -16208,7 +16322,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1752",
+      "source": "basswiesn/app/routers/api.py:1759",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16249,7 +16363,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1742",
+      "source": "basswiesn/app/routers/api.py:1749",
       "test_evidence": [
         "tests/test_device_settings.py"
       ],
@@ -16304,7 +16418,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1254",
+      "source": "basswiesn/app/routers/stations_presets.py:1433",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
@@ -16346,7 +16460,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:449",
+      "source": "basswiesn/app/routers/api.py:456",
       "test_evidence": [
         "tests/test_high_impact_architecture.py",
         "tests/test_phase4b_hardening.py",
@@ -16513,7 +16627,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2848",
+      "source": "basswiesn/app/routers/api.py:3023",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16596,7 +16710,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1778",
+      "source": "basswiesn/app/routers/api.py:1785",
       "test_evidence": [],
       "write_operation": false
     },
@@ -16639,7 +16753,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1789",
+      "source": "basswiesn/app/routers/api.py:1796",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16680,7 +16794,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1815",
+      "source": "basswiesn/app/routers/api.py:1822",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16713,7 +16827,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:232",
+      "source": "basswiesn/app/routers/api.py:239",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -16753,7 +16867,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:460",
+      "source": "basswiesn/app/routers/api.py:467",
       "test_evidence": [],
       "write_operation": false
     },
@@ -16876,7 +16990,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/api.py:220",
+      "source": "basswiesn/app/routers/api.py:227",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -16915,7 +17029,7 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/routers/api.py:227",
+      "source": "basswiesn/app/routers/api.py:234",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -16954,7 +17068,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:215",
+      "source": "basswiesn/app/routers/api.py:222",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -17028,8 +17142,7 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/fulltest.py:160",
       "test_evidence": [
-        "tests/test_setup_rebuild_160.py",
-        "tests/test_setup_rebuild_browser_160.py"
+        "tests/test_setup_rebuild_160.py"
       ],
       "write_operation": false
     },
@@ -17235,7 +17348,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/api.py:120",
+      "source": "basswiesn/app/routers/api.py:127",
       "test_evidence": [
         "tests/test_phase2_activation.py",
         "tests/test_release_candidate.py"
@@ -17271,7 +17384,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:95",
+      "source": "basswiesn/app/routers/api.py:102",
       "test_evidence": [
         "tests/test_phase2_activation.py"
       ],
@@ -17301,7 +17414,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict[str, str | bool]",
-      "source": "basswiesn/app/routers/api.py:83",
+      "source": "basswiesn/app/routers/api.py:90",
       "test_evidence": [
         "tests/test_contract_quality_audit_160.py",
         "tests/test_database_package.py",
@@ -17429,6 +17542,51 @@
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": true,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        400,
+        403,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "lab_factory_reset",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "POST",
+      "module": "basswiesn.app.routers.api",
+      "notes": "",
+      "path": "/api/lab/devices/{device_id}/factory-reset",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "dict",
+          "name": "payload"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/api.py:2364",
+      "test_evidence": [],
+      "write_operation": true
     },
     {
       "application": "webgui",
@@ -18864,7 +19022,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:1825",
+      "source": "basswiesn/app/routers/api.py:1832",
       "test_evidence": [
         "tests/test_confirmed_playback_state.py",
         "tests/test_database_migrations.py",
@@ -18908,7 +19066,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1909",
+      "source": "basswiesn/app/routers/api.py:1916",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18946,7 +19104,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1873",
+      "source": "basswiesn/app/routers/api.py:1880",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
@@ -18986,7 +19144,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1898",
+      "source": "basswiesn/app/routers/api.py:1905",
       "test_evidence": [],
       "write_operation": true
     },
@@ -19019,7 +19177,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2936",
+      "source": "basswiesn/app/routers/api.py:3111",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_webui_smoke.py"
@@ -19060,7 +19218,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2942",
+      "source": "basswiesn/app/routers/api.py:3117",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -19112,7 +19270,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:2965",
+      "source": "basswiesn/app/routers/api.py:3140",
       "test_evidence": [],
       "write_operation": true
     },
@@ -19151,7 +19309,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1970",
+      "source": "basswiesn/app/routers/stations_presets.py:2233",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -19190,7 +19348,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/stations_presets.py:1176",
+      "source": "basswiesn/app/routers/stations_presets.py:1355",
       "test_evidence": [],
       "write_operation": false
     },
@@ -19273,7 +19431,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1475",
+      "source": "basswiesn/app/routers/stations_presets.py:1654",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -19283,15 +19441,16 @@
       "application": "webgui",
       "application_title": "basswiesn WebGUI",
       "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
-      "database_change_possible": false,
-      "device_policy_required": false,
+      "database_change_possible": true,
+      "device_policy_required": true,
       "documented_duplicate_reason": "",
       "expected_status_codes": [
-        200
+        200,
+        502
       ],
       "future_authentication_required": true,
       "handler": "sync_local_presets",
-      "hardware_contact_possible": false,
+      "hardware_contact_possible": true,
       "legacy_bose_compatibility_route": false,
       "legacy_manual_mount": false,
       "method": "POST",
@@ -19300,7 +19459,7 @@
       "path": "/api/presets/{device_id}/sync",
       "port": 1328,
       "publicity": "internal-management",
-      "purpose": "Management-Mutation oder vorbereitender Ablauf",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
       "request_type": [
         {
           "annotation": "str",
@@ -19316,7 +19475,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1698",
+      "source": "basswiesn/app/routers/stations_presets.py:1898",
       "test_evidence": [],
       "write_operation": true
     },
@@ -19359,7 +19518,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1841",
+      "source": "basswiesn/app/routers/stations_presets.py:2104",
       "test_evidence": [],
       "write_operation": true
     },
@@ -19411,7 +19570,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1750",
+      "source": "basswiesn/app/routers/stations_presets.py:2013",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -19561,7 +19720,7 @@
         }
       ],
       "response_type": "dict[str, str | bool | dict]",
-      "source": "basswiesn/app/routers/api.py:132",
+      "source": "basswiesn/app/routers/api.py:139",
       "test_evidence": [
         "tests/test_contract_quality_audit_160.py",
         "tests/test_database_package.py",
@@ -20998,9 +21157,11 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/stations_presets.py:1072",
+      "source": "basswiesn/app/routers/stations_presets.py:1251",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_database_package.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
@@ -21054,9 +21215,11 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1106",
+      "source": "basswiesn/app/routers/stations_presets.py:1285",
       "test_evidence": [
         "tests/test_artwork_webui_160.py",
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_device_settings.py",
         "tests/test_human_ui_160.py",
         "tests/test_internal_activation_streams.py",
@@ -21067,6 +21230,47 @@
         "tests/test_webui_smoke.py"
       ],
       "write_operation": true
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": false,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        404
+      ],
+      "future_authentication_required": true,
+      "handler": "online_station_artwork",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.api",
+      "notes": "",
+      "path": "/api/stations/online-artwork",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Management-Abfrage oder Statusdarstellung",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "url"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "RedirectResponse",
+      "source": "basswiesn/app/routers/api.py:2210",
+      "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py"
+      ],
+      "write_operation": false
     },
     {
       "application": "webgui",
@@ -21107,8 +21311,9 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/api.py:2112",
+      "source": "basswiesn/app/routers/api.py:2119",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
         "tests/test_offline_mode.py"
       ],
       "write_operation": false
@@ -21152,7 +21357,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1149",
+      "source": "basswiesn/app/routers/stations_presets.py:1328",
       "test_evidence": [
         "tests/test_phase4b_hardening.py"
       ],
@@ -21196,7 +21401,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/stations_presets.py:1083",
+      "source": "basswiesn/app/routers/stations_presets.py:1262",
       "test_evidence": [],
       "write_operation": false
     },
@@ -21229,7 +21434,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:1946",
+      "source": "basswiesn/app/routers/api.py:1953",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_play_history_robustness.py",
@@ -21298,7 +21503,7 @@
         }
       ],
       "response_type": "StreamingResponse",
-      "source": "basswiesn/app/routers/api.py:420",
+      "source": "basswiesn/app/routers/api.py:427",
       "test_evidence": [
         "tests/test_release_hardening.py"
       ],
@@ -21333,7 +21538,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:415",
+      "source": "basswiesn/app/routers/api.py:422",
       "test_evidence": [
         "tests/test_release_hardening.py",
         "tests/test_release_polish.py"
@@ -21364,7 +21569,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/api.py:345",
+      "source": "basswiesn/app/routers/api.py:352",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -21405,10 +21610,14 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/media.py:466",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
+        "tests/test_translation_coverage_251.py",
         "tests/test_version_metadata.py",
         "tests/test_webui_smoke.py"
       ],
@@ -21454,10 +21663,14 @@
       "response_type": "dict",
       "source": "basswiesn/app/routers/media.py:523",
       "test_evidence": [
+        "tests/test_browser_regressions_251.py",
+        "tests/test_bugfix_251.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
+        "tests/test_translation_coverage_251.py",
         "tests/test_version_metadata.py",
         "tests/test_webui_smoke.py"
       ],
@@ -21807,7 +22020,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "dict[str, str]",
-      "source": "basswiesn/app/routers/api.py:88",
+      "source": "basswiesn/app/routers/api.py:95",
       "test_evidence": [
         "tests/test_phase4b_hardening.py",
         "tests/test_release_candidate.py",
@@ -22649,6 +22862,7 @@
       "response_type": "handler-defined JSON",
       "source": "basswiesn/app/main.py:215",
       "test_evidence": [
+        "tests/test_bugfix_251.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -22889,7 +23103,7 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/main.py:711",
+      "source": "basswiesn/app/main.py:725",
       "test_evidence": [
         "tests/test_artwork_cache_160.py",
         "tests/test_connectivity_recovery_250.py",

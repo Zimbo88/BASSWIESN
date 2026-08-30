@@ -437,7 +437,7 @@ body.modal-open { overflow: hidden; }
 
 .scan-form { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, .6fr) auto; gap: 10px; margin-top: 16px; }
 .device-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; width: 100%; min-width: 0; }
-.device-card-grid { display: none; gap: 10px; margin-bottom: 12px; }
+.device-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 10px; margin-bottom: 12px; }
 .device-card { display: grid; gap: 7px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); }
 .protected-device { border-color: rgba(255, 107, 107, .72); box-shadow: inset 4px 0 0 var(--bad); }
 .protected-label { color: var(--bad); font-weight: 700; }
@@ -449,6 +449,7 @@ body.modal-open { overflow: hidden; }
 .device-status-badges .status-pill { font-size: 10px; }
 .table-scroll { overflow-x: visible; max-width: 100%; }
 #view-devices .panel { min-width: 0; overflow: hidden; }
+#view-devices .table-scroll { display: none; }
 #view-devices .table-scroll table { min-width: 0; width: 100%; table-layout: auto; }
 #view-devices #devices-table td { vertical-align: top; }
 #view-devices #devices-table td:last-child,
@@ -469,7 +470,7 @@ body.modal-open { overflow: hidden; }
   .page-head { align-items: flex-start; flex-direction: column; }
   .page-head h2 { font-size: 24px; }
   .device-layout, .scan-form, .media-grid { grid-template-columns: 1fr; }
-  .device-card-grid { display: grid; }
+  .device-card-grid { display: grid; grid-template-columns: 1fr; }
   .table-scroll { overflow-x: auto; }
   .table-scroll table { min-width: 760px; }
   .command, input, select { min-height: 44px; }

@@ -18,6 +18,7 @@ from basswiesn.app.services.setup_rebuild.server_target import ServerTarget
 
 READ_CONFIG_COMMAND = "getpdo CurrentSystemConfiguration"
 REBOOT_COMMAND = "sys reboot"
+FACTORY_RESET_COMMAND = "sys factorydefault"
 
 
 @dataclass(frozen=True)
@@ -120,7 +121,7 @@ async def _send_fixed(
     *,
     timeout: float = 8.0,
 ) -> str:
-    allowed = {READ_CONFIG_COMMAND, REBOOT_COMMAND}
+    allowed = {READ_CONFIG_COMMAND, REBOOT_COMMAND, FACTORY_RESET_COMMAND}
     if command not in allowed and not any(command == item for item in _active_route_commands):
         raise ValueError("CLI command is not an internal allowlisted operation")
     target = assert_transport_allowed(
@@ -161,7 +162,7 @@ _active_route_commands: set[str] = set()
 
 
 def _validate_internal_command(command: str) -> None:
-    allowed = {READ_CONFIG_COMMAND, REBOOT_COMMAND}
+    allowed = {READ_CONFIG_COMMAND, REBOOT_COMMAND, FACTORY_RESET_COMMAND}
     if command not in allowed and command not in _active_route_commands:
         raise ValueError("CLI command is not an internal allowlisted operation")
 
@@ -232,6 +233,58 @@ async def _send_fixed_batch(
 async def read_current_config(ip_address: str, device_id: str) -> CliResult:
     output = await _send_fixed(ip_address, device_id, READ_CONFIG_COMMAND)
     return CliResult("read_current_config", (READ_CONFIG_COMMAND,), output)
+
+
+async def factory_reset(ip_address: str, device_id: str) -> CliResult:
+    """Send the confirmed CLI-17000 factory-default operation exactly once.
+
+    Firmware normally closes the socket while beginning the reset. EOF is
+    therefore an expected outcome after the command was drained; an explicit
+    CLI rejection is not.
+    """
+
+    started = time.monotonic()
+    try:
+        output = await _send_fixed(
+            ip_address,
+            device_id,
+            FACTORY_RESET_COMMAND,
+            timeout=8.0,
+        )
+        normalized = " ".join(output.lower().split())
+        if any(marker in normalized for marker in (
+            "unknown command",
+            "invalid command",
+            "command not found",
+            "error:",
+        )):
+            raise RuntimeError("CLI factory-default command was rejected")
+        result = CliResult("factory_reset", (FACTORY_RESET_COMMAND,), output)
+        record_transport_attempt(
+            ip_address=ip_address,
+            device_id=device_id,
+            action="CLI17000 factory_reset",
+            trigger="lab_factory_reset",
+            phase="factory_reset_sent",
+            requested_state={"operation": "factory_default"},
+            result="sent; disconnect/restart expected",
+            duration_ms=int((time.monotonic() - started) * 1000),
+            verified=True,
+        )
+        return result
+    except Exception as exc:
+        record_transport_attempt(
+            ip_address=ip_address,
+            device_id=device_id,
+            action="CLI17000 factory_reset",
+            trigger="lab_factory_reset",
+            phase="factory_reset_failed",
+            requested_state={"operation": "factory_default"},
+            result=str(exc)[:500],
+            duration_ms=int((time.monotonic() - started) * 1000),
+            error_category=exc.__class__.__name__,
+        )
+        raise
 
 
 async def apply_route(

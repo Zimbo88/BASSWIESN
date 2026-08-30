@@ -5,12 +5,10 @@ from types import SimpleNamespace
 
 import httpx
 import pytest
-from fastapi.testclient import TestClient
 
 from basswiesn.app import db as app_db
 from basswiesn.app.adapters.discovery import scan_subnet_detailed
 from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
-from basswiesn.app.main import create_web_app
 from basswiesn.app.models import Device, Setting
 from basswiesn.app.services.action_preflight import port_open
 from basswiesn.app.services.device_interactions import InteractionPriority, coordinator
@@ -241,11 +239,18 @@ def test_device_api_exposes_full_protection_status_without_live_access():
     _protect()
     _device()
 
-    with TestClient(create_web_app()) as client:
-        response = client.get("/api/devices")
+    # Exercise the route projection directly. Starlette's deprecated
+    # TestClient/httpx compatibility layer can deadlock on Python 3.14; the
+    # separate browser safety test still covers the mounted HTTP contract.
+    from basswiesn.app.api.routes_devices import list_devices
 
-    assert response.status_code == 200
-    protected = next(item for item in response.json() if item["device_id"] == PROTECTED_ID)
+    db = app_db.SessionLocal()
+    try:
+        response = asyncio.run(list_devices(live=False, db=db))
+    finally:
+        db.close()
+
+    protected = next(item for item in response if item["device_id"] == PROTECTED_ID)
     assert protected["protected"] is True
     assert protected["access_protected"] is True
     assert protected["protection_label"] == "GESCHUETZT - VOLLSTAENDIG GESPERRT"
@@ -257,23 +262,24 @@ def test_ssdp_multicast_filters_protected_reply_before_unicast(monkeypatch):
 
     from basswiesn.app.services.ssdp_discovery import SSDPCandidate
 
-    def replies(*_args, **_kwargs):
-        return [SSDPCandidate(
-            location=f"http://{PROTECTED_IP}:8090/description.xml",
-            usn=f"uuid:{PROTECTED_ID}",
-            server="Bose SoundTouch",
-            st="ssdp:all",
-            remote_ip=PROTECTED_IP,
-        )]
+    replies = [SSDPCandidate(
+        location=f"http://{PROTECTED_IP}:8090/description.xml",
+        usn=f"uuid:{PROTECTED_ID}",
+        server="Bose SoundTouch",
+        st="ssdp:all",
+        remote_ip=PROTECTED_IP,
+    )]
 
     async def fail_fetch(*_args, **_kwargs):
         raise AssertionError("protected descriptor must never be fetched")
 
-    monkeypatch.setattr("basswiesn.app.services.ssdp_discovery._send_msearch", replies)
     monkeypatch.setattr("basswiesn.app.services.ssdp_discovery._fetch_descriptor", fail_fetch)
     db = app_db.SessionLocal()
     try:
-        result = asyncio.run(discover_ssdp(db, timeout_seconds=1))
+        # Feed the captured multicast reply directly. This keeps the safety
+        # contract deterministic without depending on Python's process-wide
+        # default thread executor during loop teardown.
+        result = asyncio.run(discover_ssdp(db, timeout_seconds=1, candidates=replies))
     finally:
         db.close()
     assert result["devices"] == []

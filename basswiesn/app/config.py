@@ -280,7 +280,10 @@ def get_settings() -> Settings:
     if update_channel not in {"manual", "stable", "beta"}:
         update_channel = "manual"
     settings = Settings(
-        version=_env_text("BASSWIESN_VERSION", __version__),
+        # The running source/package is authoritative.  A preserved .env from
+        # an older installation must not make an upgraded server advertise an
+        # obsolete release number.
+        version=__version__,
         lan_host=lan_host,
         lan_host_configured=bool(configured_lan_host),
         lan_host_candidates=configured_lan_candidates,

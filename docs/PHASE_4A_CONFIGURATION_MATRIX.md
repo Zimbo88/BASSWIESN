@@ -86,7 +86,7 @@ gelesen; fuer eine sichere Wirksamkeit ist ein Prozessneustart anzunehmen.
 | BASSWIESN_UPDATE_CHECK_ENABLED | bool | false | nein | WebGUI/External Services | mittel | ja | ja | true/false, 1/0, yes/no, on/off |  |
 | BASSWIESN_UPDATE_MANIFEST_URL | string | "" | nein | WebGUI/External Services | mittel | ja | ja | freier Text gemaess Code |  |
 | BASSWIESN_UPDATE_REPO_URL | string | "" | nein | WebGUI/External Services | mittel | ja | ja | freier Text gemaess Code |  |
-| BASSWIESN_VERSION | string | "__version__" | nein | Global Runtime | niedrig | ja | ja | freier Text gemaess Code |  |
+| BASSWIESN_VERSION | string | "" | nein | Global Runtime | niedrig | ja | ja | freier Text gemaess Code |  |
 | BASSWIESN_WEBHOOKS_ENABLED | bool | false | nein | WebGUI/External Services | mittel | ja | ja | true/false, 1/0, yes/no, on/off |  |
 | BASSWIESN_WEBHOOK_ALLOWED_HOSTS | csv | "" | nein | WebGUI/External Services | mittel | ja | ja | Kommagetrennte Werte |  |
 | BASSWIESN_WEBHOOK_MAX_RETRIES | int | 5 | nein | WebGUI/External Services | mittel | ja | ja | Ganzzahl; _env_int verwendet Mindestwert 1 |  |

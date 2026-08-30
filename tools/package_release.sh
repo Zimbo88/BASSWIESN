@@ -18,7 +18,7 @@ STAGE_ROOT="$(mktemp -d)"
 STAGE="$STAGE_ROOT/basswiesn-release"
 BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh .dockerignore CHANGELOG.md)
 PUBLIC_TOOLS=(tools/run_dev.py)
-PUBLIC_DOCS=(docs/releases/2.5.0/RELEASE_NOTES_2.5.0.md)
+PUBLIC_DOCS=(docs/releases/2.5.1/RELEASE_NOTES_2.5.1.md)
 trap 'rm -rf "$STAGE_ROOT"' EXIT
 
 "$PYTHON" -m compileall -q basswiesn tests tools
