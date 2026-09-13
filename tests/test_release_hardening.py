@@ -11,7 +11,8 @@ from basswiesn.app.routers import api
 from basswiesn.app.config import get_settings
 
 
-def test_support_bundle_zip_contains_release_files_and_redacts_secrets():
+def test_support_bundle_zip_contains_release_files_and_redacts_secrets(monkeypatch):
+    monkeypatch.setattr(api, "_tcp_port_open", lambda *_args, **_kwargs: (False, "mock offline"))
     db = app_db.SessionLocal()
     db.add(Device(device_id="SUPPORT1", name="Support Radio", ip_address="192.0.2.90", model="SoundTouch Portable"))
     db.add(RuntimeState(key="setup_job:test", value=json.dumps({"job_id": "test", "token": "secret-token"})))

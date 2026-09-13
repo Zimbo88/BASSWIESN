@@ -1,4 +1,7 @@
-"""Bounded, evidence-driven recovery ladder for BASSWIESN 2.5.1."""
+"""Bounded, evidence-driven general recovery ladder.
+
+The separately opted-in live-radio EOS controller does not widen this ladder.
+"""
 
 from __future__ import annotations
 

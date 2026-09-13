@@ -8,7 +8,7 @@ from basswiesn.app.main import create_web_app
 
 
 def test_app_version_is_exposed_consistently():
-    assert __version__ == "2.5.1"
+    assert __version__ == "2.6.0"
     assert get_settings().version == __version__
 
     with TestClient(create_web_app()) as client:
@@ -19,8 +19,10 @@ def test_app_version_is_exposed_consistently():
 
     assert 'data-version=' not in dashboard
     assert "Version wird geladen · Host nicht gesetzt" in dashboard
-    assert 'data-version=' not in remote
-    assert "basswiesn remote · Version nicht verfügbar" in remote
+    # The rewritten standalone remote is served no-cache and receives the
+    # same package version as its cache-busted script, not an old fallback.
+    assert f'data-version="{__version__}"' in remote
+    assert '<span id="remote-version">BASSWIESN Remote</span>' in remote
     assert f"/static/app.css?v={__version__}" in dashboard
     assert f"/static/app.js?v={__version__}" in dashboard
     assert f"/static/remote.js?v={__version__}" in remote

@@ -77,7 +77,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:336",
+      "source": "basswiesn/app/routers/cloud.py:342",
       "test_evidence": [],
       "write_operation": false
     },
@@ -105,7 +105,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/routers/cloud.py:342",
+      "source": "basswiesn/app/routers/cloud.py:348",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -140,7 +140,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/cloud.py:1403",
+      "source": "basswiesn/app/routers/cloud.py:1452",
       "test_evidence": [],
       "write_operation": false
     },
@@ -181,21 +181,25 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1001",
+      "source": "basswiesn/app/routers/cloud.py:1009",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -241,21 +245,25 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1001",
+      "source": "basswiesn/app/routers/cloud.py:1009",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -301,13 +309,16 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1104",
+      "source": "basswiesn/app/routers/cloud.py:1114",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -354,13 +365,16 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1104",
+      "source": "basswiesn/app/routers/cloud.py:1114",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -407,7 +421,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1259",
+      "source": "basswiesn/app/routers/cloud.py:1308",
       "test_evidence": [],
       "write_operation": false
     },
@@ -448,7 +462,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1259",
+      "source": "basswiesn/app/routers/cloud.py:1308",
       "test_evidence": [],
       "write_operation": false
     },
@@ -489,7 +503,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1259",
+      "source": "basswiesn/app/routers/cloud.py:1308",
       "test_evidence": [],
       "write_operation": true
     },
@@ -526,7 +540,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:694",
+      "source": "basswiesn/app/routers/cloud.py:700",
       "test_evidence": [],
       "write_operation": false
     },
@@ -563,7 +577,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:358",
+      "source": "basswiesn/app/routers/cloud.py:364",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -602,7 +616,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:669",
+      "source": "basswiesn/app/routers/cloud.py:675",
       "test_evidence": [
         "tests/test_config_rewrite.py",
         "tests/test_high_impact_architecture.py",
@@ -645,7 +659,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:694",
+      "source": "basswiesn/app/routers/cloud.py:700",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -684,7 +698,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1269",
+      "source": "basswiesn/app/routers/cloud.py:1318",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -723,7 +737,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1269",
+      "source": "basswiesn/app/routers/cloud.py:1318",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -766,7 +780,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1232",
+      "source": "basswiesn/app/routers/cloud.py:1281",
       "test_evidence": [],
       "write_operation": false
     },
@@ -807,7 +821,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1232",
+      "source": "basswiesn/app/routers/cloud.py:1281",
       "test_evidence": [],
       "write_operation": true
     },
@@ -848,7 +862,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1250",
+      "source": "basswiesn/app/routers/cloud.py:1299",
       "test_evidence": [],
       "write_operation": false
     },
@@ -889,7 +903,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1250",
+      "source": "basswiesn/app/routers/cloud.py:1299",
       "test_evidence": [],
       "write_operation": false
     },
@@ -930,7 +944,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1232",
+      "source": "basswiesn/app/routers/cloud.py:1281",
       "test_evidence": [],
       "write_operation": false
     },
@@ -971,7 +985,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1232",
+      "source": "basswiesn/app/routers/cloud.py:1281",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1012,7 +1026,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1232",
+      "source": "basswiesn/app/routers/cloud.py:1281",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1049,7 +1063,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1242",
+      "source": "basswiesn/app/routers/cloud.py:1291",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1086,7 +1100,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:1242",
+      "source": "basswiesn/app/routers/cloud.py:1291",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1123,9 +1137,10 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:701",
+      "source": "basswiesn/app/routers/cloud.py:707",
       "test_evidence": [
         "tests/test_bugfix_251.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -1168,9 +1183,10 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:921",
+      "source": "basswiesn/app/routers/cloud.py:929",
       "test_evidence": [
         "tests/test_bugfix_251.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -1211,7 +1227,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:613",
+      "source": "basswiesn/app/routers/cloud.py:619",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1248,7 +1264,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:405",
+      "source": "basswiesn/app/routers/cloud.py:411",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1285,7 +1301,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:405",
+      "source": "basswiesn/app/routers/cloud.py:411",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1322,7 +1338,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:444",
+      "source": "basswiesn/app/routers/cloud.py:450",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1361,7 +1377,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:450",
+      "source": "basswiesn/app/routers/cloud.py:456",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1400,7 +1416,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:481",
+      "source": "basswiesn/app/routers/cloud.py:487",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1439,7 +1455,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:467",
+      "source": "basswiesn/app/routers/cloud.py:473",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1478,7 +1494,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:405",
+      "source": "basswiesn/app/routers/cloud.py:411",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1517,7 +1533,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:405",
+      "source": "basswiesn/app/routers/cloud.py:411",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1556,7 +1572,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:426",
+      "source": "basswiesn/app/routers/cloud.py:432",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1595,7 +1611,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:435",
+      "source": "basswiesn/app/routers/cloud.py:441",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1634,7 +1650,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:412",
+      "source": "basswiesn/app/routers/cloud.py:418",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -1678,7 +1694,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:490",
+      "source": "basswiesn/app/routers/cloud.py:496",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1723,7 +1739,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:553",
+      "source": "basswiesn/app/routers/cloud.py:559",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1768,7 +1784,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:534",
+      "source": "basswiesn/app/routers/cloud.py:540",
       "test_evidence": [],
       "write_operation": false
     },
@@ -1813,7 +1829,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:546",
+      "source": "basswiesn/app/routers/cloud.py:552",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1858,7 +1874,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:560",
+      "source": "basswiesn/app/routers/cloud.py:566",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1903,7 +1919,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:560",
+      "source": "basswiesn/app/routers/cloud.py:566",
       "test_evidence": [],
       "write_operation": true
     },
@@ -1953,7 +1969,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1346",
+      "source": "basswiesn/app/routers/cloud.py:1395",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2003,7 +2019,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1298",
+      "source": "basswiesn/app/routers/cloud.py:1347",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2048,7 +2064,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:577",
+      "source": "basswiesn/app/routers/cloud.py:583",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2098,7 +2114,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1346",
+      "source": "basswiesn/app/routers/cloud.py:1395",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2148,7 +2164,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1298",
+      "source": "basswiesn/app/routers/cloud.py:1347",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2198,7 +2214,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1298",
+      "source": "basswiesn/app/routers/cloud.py:1347",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2243,7 +2259,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:597",
+      "source": "basswiesn/app/routers/cloud.py:603",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2288,7 +2304,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:587",
+      "source": "basswiesn/app/routers/cloud.py:593",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2329,7 +2345,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:389",
+      "source": "basswiesn/app/routers/cloud.py:395",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2370,7 +2386,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:604",
+      "source": "basswiesn/app/routers/cloud.py:610",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2411,7 +2427,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:397",
+      "source": "basswiesn/app/routers/cloud.py:403",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2452,7 +2468,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:567",
+      "source": "basswiesn/app/routers/cloud.py:573",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2493,7 +2509,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:372",
+      "source": "basswiesn/app/routers/cloud.py:378",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -2532,7 +2548,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:358",
+      "source": "basswiesn/app/routers/cloud.py:364",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2569,7 +2585,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:349",
+      "source": "basswiesn/app/routers/cloud.py:355",
       "test_evidence": [
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py"
@@ -2609,7 +2625,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:365",
+      "source": "basswiesn/app/routers/cloud.py:371",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -2652,7 +2668,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:382",
+      "source": "basswiesn/app/routers/cloud.py:388",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2693,7 +2709,7 @@
         }
       ],
       "response_type": "JSONResponse",
-      "source": "basswiesn/app/routers/cloud.py:382",
+      "source": "basswiesn/app/routers/cloud.py:388",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2734,7 +2750,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1289",
+      "source": "basswiesn/app/routers/cloud.py:1338",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2775,7 +2791,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1276",
+      "source": "basswiesn/app/routers/cloud.py:1325",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -2818,7 +2834,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1283",
+      "source": "basswiesn/app/routers/cloud.py:1332",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2860,7 +2876,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": true
     },
@@ -2902,7 +2918,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2944,7 +2960,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": false
     },
@@ -2986,7 +3002,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": false
     },
@@ -3028,7 +3044,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": true
     },
@@ -3070,7 +3086,7 @@
         }
       ],
       "response_type": "Response",
-      "source": "basswiesn/app/routers/cloud.py:1414",
+      "source": "basswiesn/app/routers/cloud.py:1463",
       "test_evidence": [],
       "write_operation": true
     },
@@ -3959,16 +3975,20 @@
         "tests/test_device_settings_200.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_maintenance_reboot.py",
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_state_api_160.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_webui_smoke.py"
@@ -4020,15 +4040,19 @@
         "tests/test_device_settings_200.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_maintenance_reboot.py",
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_state_api_160.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_setup_batch_jobs.py",
@@ -4147,7 +4171,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:298",
+      "source": "basswiesn/app/routers/telemetry.py:361",
       "test_evidence": [],
       "write_operation": true
     },
@@ -4874,6 +4898,84 @@
         200
       ],
       "future_authentication_required": true,
+      "handler": "live_reconnect_preference",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/devices/{device_id}/live-reconnect",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Management-Abfrage oder Statusdarstellung",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:36",
+      "test_evidence": [],
+      "write_operation": false
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200
+      ],
+      "future_authentication_required": true,
+      "handler": "set_live_reconnect_preference",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "PUT",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/devices/{device_id}/live-reconnect",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Management-Mutation oder vorbereitender Ablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "ReconnectPreferenceBody",
+          "name": "body"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:43",
+      "test_evidence": [],
+      "write_operation": true
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": false,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200
+      ],
+      "future_authentication_required": true,
       "handler": "device_live_summary",
       "hardware_contact_possible": false,
       "legacy_bose_compatibility_route": false,
@@ -5358,7 +5460,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:278",
+      "source": "basswiesn/app/routers/telemetry.py:341",
       "test_evidence": [],
       "write_operation": true
     },
@@ -5395,7 +5497,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:264",
+      "source": "basswiesn/app/routers/telemetry.py:327",
       "test_evidence": [],
       "write_operation": false
     },
@@ -5445,6 +5547,47 @@
       "source": "basswiesn/app/routers/api.py:2484",
       "test_evidence": [],
       "write_operation": true
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "remote_state",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/devices/{device_id}/remote-state",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:51",
+      "test_evidence": [
+        "tests/test_remote_260.py"
+      ],
+      "write_operation": false
     },
     {
       "application": "https-webgui",
@@ -5744,7 +5887,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:332",
+      "source": "basswiesn/app/routers/telemetry.py:395",
       "test_evidence": [],
       "write_operation": true
     },
@@ -6135,7 +6278,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:248",
+      "source": "basswiesn/app/routers/telemetry.py:311",
       "test_evidence": [],
       "write_operation": true
     },
@@ -7957,7 +8100,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:645",
+      "source": "basswiesn/app/routers/multiroom.py:759",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_webui_smoke.py"
@@ -7997,7 +8140,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:692",
+      "source": "basswiesn/app/routers/multiroom.py:806",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8035,7 +8178,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:390",
+      "source": "basswiesn/app/routers/multiroom.py:419",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8063,7 +8206,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:288",
+      "source": "basswiesn/app/routers/multiroom.py:317",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
@@ -8104,10 +8247,11 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:425",
+      "source": "basswiesn/app/routers/multiroom.py:526",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_phase2_activation.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_webui_smoke.py"
       ],
@@ -8142,11 +8286,55 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:825",
+      "source": "basswiesn/app/routers/multiroom.py:939",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
       "write_operation": false
+    },
+    {
+      "application": "https-webgui",
+      "application_title": "basswiesn WebGUI over optional HTTPS",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": true,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        400,
+        404,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "remote_multiroom_start",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "POST",
+      "module": "basswiesn.app.routers.multiroom",
+      "notes": "HTTPS nutzt dieselbe WebGUI-App und ist standardmaessig deaktiviert.",
+      "path": "/api/multiroom/remote-start",
+      "port": 1329,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "dict",
+          "name": "payload"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/multiroom.py:454",
+      "test_evidence": [
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py"
+      ],
+      "write_operation": true
     },
     {
       "application": "https-webgui",
@@ -8184,7 +8372,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:718",
+      "source": "basswiesn/app/routers/multiroom.py:832",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -8219,7 +8407,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:971",
+      "source": "basswiesn/app/routers/multiroom.py:1085",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_final_hardware_gate.py",
@@ -8263,7 +8451,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:977",
+      "source": "basswiesn/app/routers/multiroom.py:1091",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -8375,7 +8563,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1045",
+      "source": "basswiesn/app/routers/multiroom.py:1159",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8413,7 +8601,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1027",
+      "source": "basswiesn/app/routers/multiroom.py:1141",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8451,7 +8639,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1010",
+      "source": "basswiesn/app/routers/multiroom.py:1124",
       "test_evidence": [],
       "write_operation": true
     },
@@ -8491,7 +8679,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:446",
+      "source": "basswiesn/app/routers/multiroom.py:547",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -8534,7 +8722,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:293",
+      "source": "basswiesn/app/routers/multiroom.py:322",
       "test_evidence": [
         "tests/test_safety_fixes_160.py"
       ],
@@ -9595,7 +9783,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1057",
+      "source": "basswiesn/app/routers/multiroom.py:1171",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -9633,7 +9821,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:843",
+      "source": "basswiesn/app/routers/multiroom.py:957",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_human_ui_160.py",
@@ -9676,7 +9864,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:867",
+      "source": "basswiesn/app/routers/multiroom.py:981",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -9718,7 +9906,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:962",
+      "source": "basswiesn/app/routers/multiroom.py:1076",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -9761,7 +9949,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:931",
+      "source": "basswiesn/app/routers/multiroom.py:1045",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -9804,7 +9992,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:944",
+      "source": "basswiesn/app/routers/multiroom.py:1058",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -9847,7 +10035,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:953",
+      "source": "basswiesn/app/routers/multiroom.py:1067",
       "test_evidence": [],
       "write_operation": true
     },
@@ -10806,6 +10994,7 @@
         "tests/test_play_history_robustness.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
@@ -10856,6 +11045,7 @@
         "tests/test_offline_mode.py",
         "tests/test_phase4b_hardening.py",
         "tests/test_preset_cloud.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": true
@@ -11244,6 +11434,7 @@
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
         "tests/test_translation_coverage_251.py",
@@ -11297,6 +11488,7 @@
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
         "tests/test_translation_coverage_251.py",
@@ -11371,13 +11563,15 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/telemetry.py:202",
+      "source": "basswiesn/app/routers/telemetry.py:265",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_mobile_release.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
@@ -11415,7 +11609,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:230",
+      "source": "basswiesn/app/routers/telemetry.py:293",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -11450,7 +11644,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:219",
+      "source": "basswiesn/app/routers/telemetry.py:282",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -11909,21 +12103,25 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:219",
+      "source": "basswiesn/app/main.py:224",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -11956,21 +12154,25 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:220",
+      "source": "basswiesn/app/main.py:225",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -12003,13 +12205,16 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:221",
+      "source": "basswiesn/app/main.py:226",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -12043,13 +12248,16 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:222",
+      "source": "basswiesn/app/main.py:227",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -12083,7 +12291,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:228",
+      "source": "basswiesn/app/main.py:233",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12111,7 +12319,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:227",
+      "source": "basswiesn/app/main.py:232",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12139,7 +12347,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:229",
+      "source": "basswiesn/app/main.py:234",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12167,7 +12375,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:218",
+      "source": "basswiesn/app/main.py:223",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12195,7 +12403,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:188",
+      "source": "basswiesn/app/main.py:193",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -12225,7 +12433,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:216",
+      "source": "basswiesn/app/main.py:221",
       "test_evidence": [
         "tests/test_config_rewrite.py",
         "tests/test_high_impact_architecture.py",
@@ -12259,7 +12467,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:217",
+      "source": "basswiesn/app/main.py:222",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -12289,7 +12497,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:230",
+      "source": "basswiesn/app/main.py:235",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -12319,7 +12527,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:230",
+      "source": "basswiesn/app/main.py:235",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -12349,7 +12557,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:226",
+      "source": "basswiesn/app/main.py:231",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12377,7 +12585,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:226",
+      "source": "basswiesn/app/main.py:231",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12405,7 +12613,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:224",
+      "source": "basswiesn/app/main.py:229",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12433,7 +12641,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:223",
+      "source": "basswiesn/app/main.py:228",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12461,7 +12669,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:225",
+      "source": "basswiesn/app/main.py:230",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12489,9 +12697,10 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:215",
+      "source": "basswiesn/app/main.py:220",
       "test_evidence": [
         "tests/test_bugfix_251.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -12523,7 +12732,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:214",
+      "source": "basswiesn/app/main.py:219",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12551,7 +12760,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:195",
+      "source": "basswiesn/app/main.py:200",
       "test_evidence": [],
       "write_operation": false
     },
@@ -12579,7 +12788,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:195",
+      "source": "basswiesn/app/main.py:200",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12607,7 +12816,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:199",
+      "source": "basswiesn/app/main.py:204",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12637,7 +12846,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:200",
+      "source": "basswiesn/app/main.py:205",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12667,7 +12876,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:202",
+      "source": "basswiesn/app/main.py:207",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12697,7 +12906,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:201",
+      "source": "basswiesn/app/main.py:206",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12732,14 +12941,17 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/main.py:725",
+      "source": "basswiesn/app/main.py:730",
       "test_evidence": [
         "tests/test_artwork_cache_160.py",
         "tests/test_connectivity_recovery_250.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_local_test_expansion.py",
         "tests/test_outbound_protected_targets_160.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_ssh_preflight.py",
         "tests/test_ssh_remote_services.py",
@@ -12772,7 +12984,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:194",
+      "source": "basswiesn/app/main.py:199",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12802,7 +13014,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:194",
+      "source": "basswiesn/app/main.py:199",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12832,7 +13044,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:197",
+      "source": "basswiesn/app/main.py:202",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12862,7 +13074,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:198",
+      "source": "basswiesn/app/main.py:203",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12892,7 +13104,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:196",
+      "source": "basswiesn/app/main.py:201",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -12922,7 +13134,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:203",
+      "source": "basswiesn/app/main.py:208",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12950,7 +13162,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:206",
+      "source": "basswiesn/app/main.py:211",
       "test_evidence": [],
       "write_operation": true
     },
@@ -12978,7 +13190,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:204",
+      "source": "basswiesn/app/main.py:209",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13006,7 +13218,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:205",
+      "source": "basswiesn/app/main.py:210",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13034,7 +13246,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:207",
+      "source": "basswiesn/app/main.py:212",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13062,7 +13274,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:208",
+      "source": "basswiesn/app/main.py:213",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13090,7 +13302,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:234",
+      "source": "basswiesn/app/main.py:239",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13118,7 +13330,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:210",
+      "source": "basswiesn/app/main.py:215",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13146,7 +13358,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:235",
+      "source": "basswiesn/app/main.py:240",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13174,7 +13386,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:235",
+      "source": "basswiesn/app/main.py:240",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13202,7 +13414,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:212",
+      "source": "basswiesn/app/main.py:217",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13230,7 +13442,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:211",
+      "source": "basswiesn/app/main.py:216",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13258,7 +13470,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:192",
+      "source": "basswiesn/app/main.py:197",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13286,7 +13498,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:213",
+      "source": "basswiesn/app/main.py:218",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13314,7 +13526,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:193",
+      "source": "basswiesn/app/main.py:198",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13342,7 +13554,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:209",
+      "source": "basswiesn/app/main.py:214",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13370,7 +13582,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:190",
+      "source": "basswiesn/app/main.py:195",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -13400,7 +13612,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:187",
+      "source": "basswiesn/app/main.py:192",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13428,7 +13640,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:186",
+      "source": "basswiesn/app/main.py:191",
       "test_evidence": [
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py"
@@ -13459,7 +13671,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:189",
+      "source": "basswiesn/app/main.py:194",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -13489,7 +13701,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:191",
+      "source": "basswiesn/app/main.py:196",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13517,7 +13729,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:191",
+      "source": "basswiesn/app/main.py:196",
       "test_evidence": [],
       "write_operation": true
     },
@@ -13545,7 +13757,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:233",
+      "source": "basswiesn/app/main.py:238",
       "test_evidence": [],
       "write_operation": false
     },
@@ -13573,7 +13785,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:231",
+      "source": "basswiesn/app/main.py:236",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -13603,7 +13815,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:232",
+      "source": "basswiesn/app/main.py:237",
       "test_evidence": [],
       "write_operation": false
     },
@@ -14330,16 +14542,20 @@
         "tests/test_device_settings_200.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_maintenance_reboot.py",
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_state_api_160.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_webui_smoke.py"
@@ -14391,15 +14607,19 @@
         "tests/test_device_settings_200.py",
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_maintenance_reboot.py",
         "tests/test_multiroom_router.py",
         "tests/test_network_action_preflight.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_state_api_160.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_setup_batch_jobs.py",
@@ -14518,7 +14738,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:298",
+      "source": "basswiesn/app/routers/telemetry.py:361",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15245,6 +15465,84 @@
         200
       ],
       "future_authentication_required": true,
+      "handler": "live_reconnect_preference",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "",
+      "path": "/api/devices/{device_id}/live-reconnect",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Management-Abfrage oder Statusdarstellung",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:36",
+      "test_evidence": [],
+      "write_operation": false
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200
+      ],
+      "future_authentication_required": true,
+      "handler": "set_live_reconnect_preference",
+      "hardware_contact_possible": false,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "PUT",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "",
+      "path": "/api/devices/{device_id}/live-reconnect",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Management-Mutation oder vorbereitender Ablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "ReconnectPreferenceBody",
+          "name": "body"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:43",
+      "test_evidence": [],
+      "write_operation": true
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": false,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200
+      ],
+      "future_authentication_required": true,
       "handler": "device_live_summary",
       "hardware_contact_possible": false,
       "legacy_bose_compatibility_route": false,
@@ -15729,7 +16027,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:278",
+      "source": "basswiesn/app/routers/telemetry.py:341",
       "test_evidence": [],
       "write_operation": true
     },
@@ -15766,7 +16064,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:264",
+      "source": "basswiesn/app/routers/telemetry.py:327",
       "test_evidence": [],
       "write_operation": false
     },
@@ -15816,6 +16114,47 @@
       "source": "basswiesn/app/routers/api.py:2484",
       "test_evidence": [],
       "write_operation": true
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": false,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "remote_state",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "GET",
+      "module": "basswiesn.app.routers.telemetry",
+      "notes": "",
+      "path": "/api/devices/{device_id}/remote-state",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "str",
+          "name": "device_id"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/telemetry.py:51",
+      "test_evidence": [
+        "tests/test_remote_260.py"
+      ],
+      "write_operation": false
     },
     {
       "application": "webgui",
@@ -16115,7 +16454,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:332",
+      "source": "basswiesn/app/routers/telemetry.py:395",
       "test_evidence": [],
       "write_operation": true
     },
@@ -16506,7 +16845,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:248",
+      "source": "basswiesn/app/routers/telemetry.py:311",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18328,7 +18667,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:645",
+      "source": "basswiesn/app/routers/multiroom.py:759",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_webui_smoke.py"
@@ -18368,7 +18707,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:692",
+      "source": "basswiesn/app/routers/multiroom.py:806",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18406,7 +18745,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:390",
+      "source": "basswiesn/app/routers/multiroom.py:419",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18434,7 +18773,7 @@
       "purpose": "Management-Abfrage oder Statusdarstellung",
       "request_type": [],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:288",
+      "source": "basswiesn/app/routers/multiroom.py:317",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
@@ -18475,10 +18814,11 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:425",
+      "source": "basswiesn/app/routers/multiroom.py:526",
       "test_evidence": [
         "tests/test_multiroom_router.py",
         "tests/test_phase2_activation.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_webui_smoke.py"
       ],
@@ -18513,11 +18853,55 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:825",
+      "source": "basswiesn/app/routers/multiroom.py:939",
       "test_evidence": [
         "tests/test_play_history_robustness.py"
       ],
       "write_operation": false
+    },
+    {
+      "application": "webgui",
+      "application_title": "basswiesn WebGUI",
+      "current_error_form": "FastAPI HTTPException detail oder handler-definierte JSON-Antwort",
+      "database_change_possible": true,
+      "device_policy_required": true,
+      "documented_duplicate_reason": "",
+      "expected_status_codes": [
+        200,
+        400,
+        404,
+        409,
+        502
+      ],
+      "future_authentication_required": true,
+      "handler": "remote_multiroom_start",
+      "hardware_contact_possible": true,
+      "legacy_bose_compatibility_route": false,
+      "legacy_manual_mount": false,
+      "method": "POST",
+      "module": "basswiesn.app.routers.multiroom",
+      "notes": "",
+      "path": "/api/multiroom/remote-start",
+      "port": 1328,
+      "publicity": "internal-management",
+      "purpose": "Geraete-, Hardware- oder Diagnoseablauf",
+      "request_type": [
+        {
+          "annotation": "dict",
+          "name": "payload"
+        },
+        {
+          "annotation": "Session",
+          "name": "db"
+        }
+      ],
+      "response_type": "dict",
+      "source": "basswiesn/app/routers/multiroom.py:454",
+      "test_evidence": [
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py"
+      ],
+      "write_operation": true
     },
     {
       "application": "webgui",
@@ -18555,7 +18939,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:718",
+      "source": "basswiesn/app/routers/multiroom.py:832",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -18590,7 +18974,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:971",
+      "source": "basswiesn/app/routers/multiroom.py:1085",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_final_hardware_gate.py",
@@ -18634,7 +19018,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:977",
+      "source": "basswiesn/app/routers/multiroom.py:1091",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -18746,7 +19130,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1045",
+      "source": "basswiesn/app/routers/multiroom.py:1159",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18784,7 +19168,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1027",
+      "source": "basswiesn/app/routers/multiroom.py:1141",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18822,7 +19206,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1010",
+      "source": "basswiesn/app/routers/multiroom.py:1124",
       "test_evidence": [],
       "write_operation": true
     },
@@ -18862,7 +19246,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:446",
+      "source": "basswiesn/app/routers/multiroom.py:547",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -18905,7 +19289,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:293",
+      "source": "basswiesn/app/routers/multiroom.py:322",
       "test_evidence": [
         "tests/test_safety_fixes_160.py"
       ],
@@ -19966,7 +20350,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:1057",
+      "source": "basswiesn/app/routers/multiroom.py:1171",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -20004,7 +20388,7 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/multiroom.py:843",
+      "source": "basswiesn/app/routers/multiroom.py:957",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_human_ui_160.py",
@@ -20047,7 +20431,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:867",
+      "source": "basswiesn/app/routers/multiroom.py:981",
       "test_evidence": [
         "tests/test_final_hardware_gate.py",
         "tests/test_multiroom_router.py",
@@ -20089,7 +20473,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:962",
+      "source": "basswiesn/app/routers/multiroom.py:1076",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -20132,7 +20516,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:931",
+      "source": "basswiesn/app/routers/multiroom.py:1045",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -20175,7 +20559,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:944",
+      "source": "basswiesn/app/routers/multiroom.py:1058",
       "test_evidence": [
         "tests/test_multiroom_router.py"
       ],
@@ -20218,7 +20602,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/multiroom.py:953",
+      "source": "basswiesn/app/routers/multiroom.py:1067",
       "test_evidence": [],
       "write_operation": true
     },
@@ -21177,6 +21561,7 @@
         "tests/test_play_history_robustness.py",
         "tests/test_preset_cloud.py",
         "tests/test_preset_transactions_200.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
@@ -21227,6 +21612,7 @@
         "tests/test_offline_mode.py",
         "tests/test_phase4b_hardening.py",
         "tests/test_preset_cloud.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": true
@@ -21615,6 +22001,7 @@
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
         "tests/test_translation_coverage_251.py",
@@ -21668,6 +22055,7 @@
         "tests/test_final_hardware_gate.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_mobile_release.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_setup_rebuild_browser_160.py",
         "tests/test_setup_wizard_playwright.py",
         "tests/test_translation_coverage_251.py",
@@ -21742,13 +22130,15 @@
         }
       ],
       "response_type": "list[dict]",
-      "source": "basswiesn/app/routers/telemetry.py:202",
+      "source": "basswiesn/app/routers/telemetry.py:265",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_mobile_release.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
         "tests/test_webui_smoke.py"
       ],
       "write_operation": false
@@ -21786,7 +22176,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:230",
+      "source": "basswiesn/app/routers/telemetry.py:293",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -21821,7 +22211,7 @@
         }
       ],
       "response_type": "dict",
-      "source": "basswiesn/app/routers/telemetry.py:219",
+      "source": "basswiesn/app/routers/telemetry.py:282",
       "test_evidence": [
         "tests/test_webui_smoke.py"
       ],
@@ -22280,21 +22670,25 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:219",
+      "source": "basswiesn/app/main.py:224",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -22327,21 +22721,25 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:220",
+      "source": "basswiesn/app/main.py:225",
       "test_evidence": [
         "tests/test_connectivity_recovery_250.py",
         "tests/test_device_settings.py",
         "tests/test_high_impact_architecture.py",
         "tests/test_keepalive_circuit_breaker.py",
         "tests/test_live_device_tools.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_multiroom_router.py",
         "tests/test_phase3_soundbig_validation.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_play_history_robustness.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_portable_safe_mode.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_runtime_integration_160.py",
         "tests/test_research_state_api_160.py",
@@ -22374,13 +22772,16 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:221",
+      "source": "basswiesn/app/main.py:226",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -22414,13 +22815,16 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:222",
+      "source": "basswiesn/app/main.py:227",
       "test_evidence": [
         "tests/test_database_package.py",
         "tests/test_human_ui_160.py",
+        "tests/test_live_radio_reconnect_260.py",
+        "tests/test_playback_clock_260.py",
         "tests/test_playback_keepalive_research_160.py",
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py",
+        "tests/test_reporting_resilience_260.py",
         "tests/test_research_contracts_160.py",
         "tests/test_research_domain_persistence.py",
         "tests/test_research_runtime_integration_160.py",
@@ -22454,7 +22858,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:228",
+      "source": "basswiesn/app/main.py:233",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22482,7 +22886,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:227",
+      "source": "basswiesn/app/main.py:232",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22510,7 +22914,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:229",
+      "source": "basswiesn/app/main.py:234",
       "test_evidence": [],
       "write_operation": true
     },
@@ -22538,7 +22942,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:218",
+      "source": "basswiesn/app/main.py:223",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22566,7 +22970,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:188",
+      "source": "basswiesn/app/main.py:193",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -22596,7 +23000,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:216",
+      "source": "basswiesn/app/main.py:221",
       "test_evidence": [
         "tests/test_config_rewrite.py",
         "tests/test_high_impact_architecture.py",
@@ -22630,7 +23034,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:217",
+      "source": "basswiesn/app/main.py:222",
       "test_evidence": [
         "tests/test_high_impact_architecture.py"
       ],
@@ -22660,7 +23064,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:230",
+      "source": "basswiesn/app/main.py:235",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -22690,7 +23094,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:230",
+      "source": "basswiesn/app/main.py:235",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -22720,7 +23124,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:226",
+      "source": "basswiesn/app/main.py:231",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22748,7 +23152,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:226",
+      "source": "basswiesn/app/main.py:231",
       "test_evidence": [],
       "write_operation": true
     },
@@ -22776,7 +23180,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:224",
+      "source": "basswiesn/app/main.py:229",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22804,7 +23208,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:223",
+      "source": "basswiesn/app/main.py:228",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22832,7 +23236,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:225",
+      "source": "basswiesn/app/main.py:230",
       "test_evidence": [],
       "write_operation": true
     },
@@ -22860,9 +23264,10 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:215",
+      "source": "basswiesn/app/main.py:220",
       "test_evidence": [
         "tests/test_bugfix_251.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_orion.py",
         "tests/test_phase3b_preset_integrity.py",
         "tests/test_preset_cloud.py",
@@ -22894,7 +23299,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:214",
+      "source": "basswiesn/app/main.py:219",
       "test_evidence": [],
       "write_operation": true
     },
@@ -22922,7 +23327,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:195",
+      "source": "basswiesn/app/main.py:200",
       "test_evidence": [],
       "write_operation": false
     },
@@ -22950,7 +23355,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:195",
+      "source": "basswiesn/app/main.py:200",
       "test_evidence": [],
       "write_operation": true
     },
@@ -22978,7 +23383,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:199",
+      "source": "basswiesn/app/main.py:204",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23008,7 +23413,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:200",
+      "source": "basswiesn/app/main.py:205",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23038,7 +23443,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:202",
+      "source": "basswiesn/app/main.py:207",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23068,7 +23473,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:201",
+      "source": "basswiesn/app/main.py:206",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23103,14 +23508,17 @@
         }
       ],
       "response_type": "HTMLResponse",
-      "source": "basswiesn/app/main.py:725",
+      "source": "basswiesn/app/main.py:730",
       "test_evidence": [
         "tests/test_artwork_cache_160.py",
         "tests/test_connectivity_recovery_250.py",
+        "tests/test_live_radio_reconnect_260.py",
         "tests/test_local_test_expansion.py",
         "tests/test_outbound_protected_targets_160.py",
         "tests/test_phase3b_protected_access.py",
         "tests/test_recovery_profiles_setup.py",
+        "tests/test_remote_260.py",
+        "tests/test_remote_browser_260.py",
         "tests/test_safety_fixes_160.py",
         "tests/test_ssh_preflight.py",
         "tests/test_ssh_remote_services.py",
@@ -23143,7 +23551,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:194",
+      "source": "basswiesn/app/main.py:199",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23173,7 +23581,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:194",
+      "source": "basswiesn/app/main.py:199",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23203,7 +23611,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:197",
+      "source": "basswiesn/app/main.py:202",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23233,7 +23641,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:198",
+      "source": "basswiesn/app/main.py:203",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23263,7 +23671,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:196",
+      "source": "basswiesn/app/main.py:201",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23293,7 +23701,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:203",
+      "source": "basswiesn/app/main.py:208",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23321,7 +23729,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:206",
+      "source": "basswiesn/app/main.py:211",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23349,7 +23757,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:204",
+      "source": "basswiesn/app/main.py:209",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23377,7 +23785,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:205",
+      "source": "basswiesn/app/main.py:210",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23405,7 +23813,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:207",
+      "source": "basswiesn/app/main.py:212",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23433,7 +23841,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:208",
+      "source": "basswiesn/app/main.py:213",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23461,7 +23869,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:234",
+      "source": "basswiesn/app/main.py:239",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23489,7 +23897,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:210",
+      "source": "basswiesn/app/main.py:215",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23517,7 +23925,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:235",
+      "source": "basswiesn/app/main.py:240",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23545,7 +23953,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:235",
+      "source": "basswiesn/app/main.py:240",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23573,7 +23981,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:212",
+      "source": "basswiesn/app/main.py:217",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23601,7 +24009,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:211",
+      "source": "basswiesn/app/main.py:216",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23629,7 +24037,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:192",
+      "source": "basswiesn/app/main.py:197",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23657,7 +24065,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:213",
+      "source": "basswiesn/app/main.py:218",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23685,7 +24093,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:193",
+      "source": "basswiesn/app/main.py:198",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23713,7 +24121,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:209",
+      "source": "basswiesn/app/main.py:214",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23741,7 +24149,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:190",
+      "source": "basswiesn/app/main.py:195",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -23771,7 +24179,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:187",
+      "source": "basswiesn/app/main.py:192",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23799,7 +24207,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:186",
+      "source": "basswiesn/app/main.py:191",
       "test_evidence": [
         "tests/test_preset_cloud.py",
         "tests/test_release_polish.py"
@@ -23830,7 +24238,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:189",
+      "source": "basswiesn/app/main.py:194",
       "test_evidence": [
         "tests/test_release_polish.py"
       ],
@@ -23860,7 +24268,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:191",
+      "source": "basswiesn/app/main.py:196",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23888,7 +24296,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:191",
+      "source": "basswiesn/app/main.py:196",
       "test_evidence": [],
       "write_operation": true
     },
@@ -23916,7 +24324,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:233",
+      "source": "basswiesn/app/main.py:238",
       "test_evidence": [],
       "write_operation": false
     },
@@ -23944,7 +24352,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:231",
+      "source": "basswiesn/app/main.py:236",
       "test_evidence": [
         "tests/test_preset_cloud.py"
       ],
@@ -23974,7 +24382,7 @@
       "purpose": "Bose-/SoundTouch-Cloud-Kompatibilitaet",
       "request_type": [],
       "response_type": "handler-defined JSON",
-      "source": "basswiesn/app/main.py:232",
+      "source": "basswiesn/app/main.py:237",
       "test_evidence": [],
       "write_operation": false
     }

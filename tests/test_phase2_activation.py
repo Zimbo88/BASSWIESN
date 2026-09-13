@@ -8,6 +8,7 @@ from basswiesn.app.main import create_web_app
 from basswiesn.app.models import Device, Setting, Station
 from basswiesn.app.routers import multiroom
 from basswiesn.app.routers import stations_presets
+from basswiesn.app.routers import media
 from basswiesn.app.services import offline_preflight
 from basswiesn.app.services.logo_validation import validate_logo_reference
 
@@ -51,7 +52,7 @@ def test_offline_preflight_classifies_without_network_request(monkeypatch):
         called = True
         raise AssertionError("probe must be explicit")
 
-    monkeypatch.setattr(offline_preflight, "probe_stream_reference", unexpected_probe)
+    monkeypatch.setattr(media, "probe_stream_reference", unexpected_probe)
     with TestClient(create_web_app()) as client:
         response = client.post("/api/offline/preflight", json={"stream_url": "https://8.8.8.8/live.mp3"})
 
@@ -64,15 +65,21 @@ def test_offline_preflight_classifies_without_network_request(monkeypatch):
 
 
 def test_offline_preflight_probe_is_explicit_and_bounded(monkeypatch):
+    calls = []
     async def fake_probe(url, *, allowed_hosts=None):
+        calls.append(url)
         return {"requested": True, "performed": True, "status": "erreichbar", "host": "8.8.8.8", "content_type": "audio/mpeg", "sample_bytes": 42, "reason": "mocked"}
 
-    monkeypatch.setattr(offline_preflight, "probe_stream_reference", fake_probe)
+    # Patch where the router imported the function, not its defining module.
+    # The old patch accidentally left a real Internet request in this test.
+    monkeypatch.setattr(media, "probe_stream_reference", fake_probe)
     with TestClient(create_web_app()) as client:
         response = client.post("/api/offline/preflight", json={"stream_url": "https://8.8.8.8/live.mp3", "probe": True})
 
     assert response.status_code == 200
     assert response.json()["probe"]["performed"] is True
+    assert response.json()["probe"]["reason"] == "mocked"
+    assert calls == ["https://8.8.8.8/live.mp3"]
 
 
 def test_invalid_logo_uses_radio_symbol_fallback_in_radio_payload():

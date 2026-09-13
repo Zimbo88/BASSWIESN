@@ -81,6 +81,7 @@ def _seed(factory) -> None:
                 image_url="https://art.example/logo.png",
                 provider_station_id="station-160",
             ),
+            Setting(key="research.clock_metadata.STATE160", value='{"enabled": false}'),
         ]
     )
     db.commit()
@@ -236,13 +237,16 @@ def test_human_live_metadata_update_preserves_selection_and_requests_no_playback
     assert rejected_identity.status_code == 422
 
 
-def test_clock_metadata_setting_is_per_device_off_by_default_and_minimum_60(state_app):
+def test_clock_metadata_default_on_outside_lab_with_explicit_off_and_minimum_60(state_app):
     app, factory = state_app
     _seed(factory)
+    with factory() as db:
+        db.query(Setting).filter(Setting.key == "research.clock_metadata.STATE160").delete()
+        db.commit()
     headers = {"x-basswiesn-device-id": "STATE160"}
     with TestClient(app, base_url="http://192.0.2.40:1516") as client:
         initial = client.get("/api/devices/STATE160/metadata/clock")
-        lab_blocked = client.put(
+        without_lab = client.put(
             "/api/devices/STATE160/metadata/clock",
             json={"enabled": True, "mode": "APPEND", "interval_seconds": 60},
         )
@@ -268,17 +272,21 @@ def test_clock_metadata_setting_is_per_device_off_by_default_and_minimum_60(stat
         lab_off = client.get(
             "/bmx/orion/now-playing/station/station-160", headers=headers
         )
+        disabled = client.put("/api/devices/STATE160/metadata/clock", json={"enabled": False})
+        clock_off = client.get("/bmx/orion/now-playing/station/station-160", headers=headers)
 
-    assert initial.json()["enabled"] is False
+    assert initial.json()["enabled"] is True
     assert initial.json()["hardware_validation"] == "OPEN"
-    assert lab_blocked.status_code == 403
+    assert without_lab.status_code == 200
+    assert without_lab.json()["radio_write"] is False
     assert too_fast.status_code == 422
     assert enabled.json()["mode"] == "APPEND"
-    assert enabled.json()["experimental"] is True
+    assert enabled.json()["experimental"] is False
     assert projected.json()["askAgainAfter"] == 60
-    assert len(projected.json()["track"]) == 5
-    assert projected.json()["track"][2] == ":"
-    assert lab_off.json()["track"] == "Research FM"
+    assert projected.json()["track"].startswith("Research FM · ")
+    assert lab_off.json()["track"].startswith("Research FM · ")
+    assert disabled.status_code == 200
+    assert clock_off.json()["track"] == "Research FM"
 
 
 def test_orion_station_metadata_and_reporting_are_real_separate_contracts(state_app):

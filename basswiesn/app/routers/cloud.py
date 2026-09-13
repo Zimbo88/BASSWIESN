@@ -9,6 +9,7 @@ from html import escape
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from basswiesn.app.db import get_db
 from basswiesn.app.models import Device, MetadataState, Preset, Setting, Station
@@ -21,8 +22,13 @@ from basswiesn.app.repositories.research_state_repository import (
 )
 from basswiesn.app.services.diagnostics import log_request, redact_support_text
 from basswiesn.app.services.health_models import ProviderSignals, reduce_provider_health
-from basswiesn.app.services.clock_metadata import clock_metadata_lab_enabled, load_clock_metadata_preference
+from basswiesn.app.services.clock_metadata import (
+    clock_metadata_timezone,
+    load_clock_metadata_preference,
+    remember_clock_projection,
+)
 from basswiesn.app.services.metadata_engine import (
+    ClockMetadataMode,
     MetadataProvenance,
     MetadataSnapshot,
     clock_display_projection,
@@ -799,7 +805,7 @@ async def _unsupported_provider_contract(
             "status": 501,
             "detail": (
                 f"{provider_id} {contract} is not backed by a confirmed product "
-                "contract and is disabled in BASSWIESN 2.5.1."
+                f"contract and is disabled in BASSWIESN {get_settings().version}."
             ),
             "provider": provider_id,
             "contract": contract,
@@ -910,6 +916,8 @@ def _persist_orion_station_contract(
         availability="AVAILABLE",
         association="AVAILABLE",
     )
+    from basswiesn.app.services.live_radio_reconnect import observe_contract
+    observe_contract(db, request, device, descriptor)
     db.commit()
     runtime = getattr(request.app.state, "research_runtime", None)
     if runtime is not None:
@@ -1065,21 +1073,23 @@ def _orion_now_playing_payload(
     displayed_track = raw_track
     if device is not None:
         preference = load_clock_metadata_preference(db, device.device_id)
-        if preference.enabled and clock_metadata_lab_enabled(db):
+        if preference.enabled and preference.mode != ClockMetadataMode.OFF:
             displayed_track = clock_display_projection(
                 MetadataSnapshot(
-                    # Station identity is not a live title.  Keeping it out of
-                    # the LAB projection preserves the confirmed "no title →
-                    # HH:MM" behavior.
-                    track=current_metadata.track if current_metadata is not None else None,
+                    # A station-name fallback stays visible when no song
+                    # metadata exists; it is not stored as a real song title.
+                    track=(raw_track if preference.mode == ClockMetadataMode.APPEND
+                           else current_metadata.track if current_metadata is not None else None),
                     artist=current_metadata.artist if current_metadata is not None else None,
                 ),
                 mode=preference.mode,
+                timezone=clock_metadata_timezone(db),
             ) or ""
-            # Clock projection is deliberately slower than normal live-track
-            # metadata.  Enabling the LAB clock must never accelerate it below
-            # its explicit >=60 s preference.
+            # Reuse the existing metadata/reporting transport. No clock-only
+            # task, selection, volume change or additional radio poll.
             interval = max(interval, preference.interval_seconds)
+            if displayed_track != raw_track:
+                remember_clock_projection(db, device.device_id, station_id, displayed_track)
             if current_metadata is not None:
                 current_metadata.display_projection = displayed_track or None
                 db.flush()
@@ -1142,6 +1152,24 @@ async def _accept_reporting_contract(
         # valid and keeps compatibility with probes that send an empty body.
         decoded = {}
     report_fields = _validated_report_fields(decoded)
+    try:
+        return _persist_reporting_response(request, db, station_id=station_id,
+            provider_id=provider_id, service=service, report_fields=report_fields)
+    except SQLAlchemyError as exc:
+        # A busy diagnostics database must not turn an accepted radio report
+        # into a provider error/deselect. Preserve the current radio metadata
+        # by omitting the embedded projection, and expose storage degradation
+        # honestly. Never replay a radio action or claim durable persistence.
+        db.rollback()
+        write_masterlog("reporting_persistence_failed", provider_id=provider_id,
+                        error_type=type(exc).__name__, persistence="UNAVAILABLE")
+        return JSONResponse({"nextReportIn": 6,
+            "_links": {"bmx_reporting": {"href": str(request.url.replace(query=""))}},
+            "_embedded": {}}, headers={"X-BASSWIESN-Reporting-Storage": "unavailable"})
+
+
+def _persist_reporting_response(request: Request, db: Session, *, station_id: str,
+                                provider_id: str, service: str, report_fields: dict) -> JSONResponse:
     # The local provider uses the confirmed timed-report loop as its reliable
     # runtime-metadata transport.  Portable firmware 27.0.6 consumes the
     # initial bmx_nowplaying link but does not issue follow-up GETs from the
@@ -1198,13 +1226,34 @@ async def _accept_reporting_contract(
         nextReportIn=interval,
         device_id=device.device_id if device is not None else "",
     )
+    if report_fields.get("eventType") == "STOP":
+        # The old request log lacked a device identity, requiring timestamp
+        # correlation to attribute FINISH events. Log bounded enum evidence,
+        # not arbitrary provider bodies or header/credential values.
+        write_masterlog("playback_stop_reported",
+            device_id=device.device_id if device is not None else "",
+            provider_id=provider_id,
+            reason="FINISH" if report_fields.get("reason") == "FINISH" else "OTHER_OR_UNSPECIFIED",
+            time_into_track_seconds=report_fields.get("timeIntoTrack"),
+            automatic_action="NONE")
     embedded = {}
     if provider_id == LOCAL_PROVIDER_ID and device is not None:
         embedded["bmx_nowplaying"] = _orion_now_playing_payload(
             db, device, station_id
         )
-        # The LAB clock projection may update its diagnostic display field.
+        # The clock projection may update its diagnostic display field.
         db.commit()
+        reconnect = getattr(request.app.state, "live_radio_reconnect", None)
+        if reconnect is not None:
+            try:
+                from basswiesn.app.services.live_radio_reconnect import observe_report
+                generation = observe_report(db, request, device, station_id, report_fields)
+                db.commit()
+                if generation:
+                    reconnect.schedule(device.device_id, generation)
+            except Exception as exc:
+                db.rollback()
+                write_masterlog("live_radio_reconnect_scheduling_failed", error_type=type(exc).__name__)
     return JSONResponse(
         {
             "nextReportIn": interval,

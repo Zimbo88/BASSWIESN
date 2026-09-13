@@ -259,3 +259,33 @@ def test_explicit_stream_probe_blocks_protected_target_before_transport(monkeypa
     assert result["protected"] is True
 import pytest as _pytest_marker
 pytestmark = _pytest_marker.mark.unit
+
+
+def test_public_only_probe_never_follows_redirect_into_lan(monkeypatch):
+    from basswiesn.app.services import stream_compat as module
+    validated, opened = [], []
+    def validation(url, **kwargs):
+        assert kwargs == {"public_only": True}
+        validated.append(url)
+        return UrlValidation(not url.startswith("http://192."), "blocked" if url.startswith("http://192.") else "ok",
+                             hostname="radio.example", addresses=("93.184.216.34",), scheme="http", port=80)
+    monkeypatch.setattr(module, "validate_outbound_http_url", validation)
+
+    class Response:
+        status_code = 302
+        headers = {"location": "http://192.0.2.42/private"}
+    class Context:
+        async def __aenter__(self): return Response()
+        async def __aexit__(self, *args): pass
+    class Client:
+        def __init__(self, **kwargs): pass
+        async def __aenter__(self): return self
+        async def __aexit__(self, *args): pass
+        def stream(self, method, url, **kwargs):
+            opened.append(url)
+            return Context()
+    monkeypatch.setattr(module.httpx, "AsyncClient", Client)
+    result = asyncio.run(module.probe_stream_reachability("http://radio.example/live.mp3", public_only=True))
+    assert result["status"] == "BROKEN"
+    assert len(opened) == 1
+    assert validated[-1] == "http://192.0.2.42/private"

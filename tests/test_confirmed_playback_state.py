@@ -72,5 +72,67 @@ def test_open_duration_is_capped_and_startup_reconciliation_idempotent():
     assert reconcile_open_play_history(db) == 0
     assert row.ended_at == ended
     db.close()
+
+
+def test_same_source_station_change_rotates_history_at_confirmed_readback():
+    with app_db.SessionLocal() as db:
+        device = Device(device_id="STATIONCHANGE", ip_address="192.0.2.42")
+        first_station = Station(name="First Station", stream_url="https://example.invalid/first")
+        next_station = Station(name="Next Station", stream_url="https://example.invalid/next")
+        db.add_all([device, first_station, next_station])
+        db.flush()
+        start = datetime(2030, 1, 1, tzinfo=UTC)
+        old = confirm_playback_session(db, device, observed_at=start, source="LOCAL_INTERNET_RADIO",
+                                       station_id=first_station.id, station_name=first_station.name)
+        confirm_playback_session(db, device, observed_at=start + timedelta(minutes=5),
+                                 source="LOCAL_INTERNET_RADIO", stream_url=first_station.stream_url)
+        new = confirm_playback_session(db, device, observed_at=start + timedelta(minutes=10),
+                                       source="LOCAL_INTERNET_RADIO", stream_url=next_station.stream_url,
+                                       station_name=next_station.name)
+        assert old.id != new.id
+        assert old.end_reason == "station_changed"
+        assert old.ended_at == old.last_confirmed_playing_at
+        assert new.station_id == next_station.id
+        assert new.station_display_name == "Next Station"
+        assert db.query(PlayHistory).filter(PlayHistory.ended_at.is_(None)).count() == 1
+
+
+def test_station_rename_or_missing_readback_does_not_fragment_history():
+    with app_db.SessionLocal() as db:
+        device = Device(device_id="SAMERADIO", ip_address="192.0.2.42")
+        station = Station(name="Station", stream_url="https://example.invalid/live")
+        db.add_all([device, station])
+        db.flush()
+        start = datetime(2030, 1, 1, tzinfo=UTC)
+        old = confirm_playback_session(db, device, observed_at=start, source="LOCAL_INTERNET_RADIO", station_id=station.id)
+        station.name = "Renamed Station"
+        renamed = confirm_playback_session(db, device, observed_at=start + timedelta(minutes=5), source="LOCAL_INTERNET_RADIO", station_id=station.id)
+        missing = confirm_playback_session(db, device, observed_at=start + timedelta(minutes=10), source="LOCAL_INTERNET_RADIO")
+        assert old.id == renamed.id == missing.id
+        assert old.ended_at is None
+
+
+def test_confirmed_station_names_can_detect_switch_without_catalog_ids():
+    with app_db.SessionLocal() as db:
+        device = Device(device_id="NOCATALOG", ip_address="192.0.2.42")
+        db.add(device)
+        db.flush()
+        start = datetime(2030, 1, 1, tzinfo=UTC)
+        old = confirm_playback_session(db, device, observed_at=start, source="LOCAL_INTERNET_RADIO", station_name="First Station")
+        new = confirm_playback_session(db, device, observed_at=start + timedelta(minutes=5), source="LOCAL_INTERNET_RADIO", station_name="Second Station")
+        assert old.id != new.id
+        assert old.end_reason == "station_changed"
+
+
+def test_airplay_track_titles_do_not_become_separate_radio_station_sessions():
+    with app_db.SessionLocal() as db:
+        device = Device(device_id="NONRADIO", ip_address="192.0.2.42")
+        db.add(device)
+        db.flush()
+        start = datetime(2030, 1, 1, tzinfo=UTC)
+        old = confirm_playback_session(db, device, observed_at=start, source="AIRPLAY", station_name="First track")
+        new = confirm_playback_session(db, device, observed_at=start + timedelta(minutes=5), source="AIRPLAY", station_name="Next track")
+        assert old.id == new.id
+        assert old.ended_at is None
 import pytest as _pytest_marker
 pytestmark = _pytest_marker.mark.integration

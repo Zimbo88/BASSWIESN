@@ -141,9 +141,10 @@ def test_standalone_remote_controls_are_present_and_wired_to_remote_javascript()
     assert 'id="remote-station"' in html
     assert 'id="remote-volume"' in html
     assert "remote-play-station" in js
-    assert "/stations/${encodeURIComponent(stationId)}/play" in js
+    assert "stations/${encodeURIComponent(stationId)}/play" in js
     assert 'id="remote-safe-start-enabled"' in html
-    assert 'if (safeStartEnabled.checked) payload.safe_volume' in js
+    assert 'if (!safeStartEnabled.checked) return {}' in js
+    assert 'safeVolumePayload()' in js
     assert 'await setVolume(volume.value || 5)' not in js
     assert "data-volume-step" in html
     assert "data-key" in html
@@ -215,6 +216,7 @@ def test_lan_webgui_origin_is_allowed_for_cross_port_service_checks():
 
 
 def test_webui_task_smoke_simulates_all_major_forms_without_hardware(monkeypatch):
+    monkeypatch.setattr(api, "_tcp_port_open", lambda *_args, **_kwargs: (False, "mock offline"))
     async def fake_sync_presets_to_radio(device, expected, db, backup_label="preset-sync", **_kwargs):
         from basswiesn.app.services.preset_transactions import transition_preset_mutation
 

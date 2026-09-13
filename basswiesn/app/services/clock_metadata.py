@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 import json
+import re
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from sqlalchemy.orm import Session
 
 from basswiesn.app.config import get_settings
-from basswiesn.app.models import Setting
+from basswiesn.app.models import RuntimeState, Setting
 from basswiesn.app.services.metadata_engine import ClockMetadataMode
 
 
@@ -17,10 +19,10 @@ CLOCK_METADATA_MIN_INTERVAL_SECONDS = 60
 
 @dataclass(frozen=True, slots=True)
 class ClockMetadataPreference:
-    enabled: bool = False
-    mode: ClockMetadataMode = ClockMetadataMode.MISSING_TITLE
+    enabled: bool = True
+    mode: ClockMetadataMode = ClockMetadataMode.APPEND
     interval_seconds: int = CLOCK_METADATA_DEFAULT_INTERVAL_SECONDS
-    experimental: bool = True
+    experimental: bool = False
 
     def as_dict(self) -> dict:
         data = asdict(self)
@@ -39,9 +41,9 @@ def _decode(value: str) -> ClockMetadataPreference:
     try:
         payload = json.loads(value or "{}")
     except (TypeError, json.JSONDecodeError):
-        return ClockMetadataPreference()
+        return ClockMetadataPreference(enabled=False)
     if not isinstance(payload, dict):
-        return ClockMetadataPreference()
+        return ClockMetadataPreference(enabled=False)
     try:
         mode = ClockMetadataMode(str(payload.get("mode") or ClockMetadataMode.MISSING_TITLE.value))
     except ValueError:
@@ -60,6 +62,69 @@ def _decode(value: str) -> ClockMetadataPreference:
 def load_clock_metadata_preference(db: Session, device_id: str) -> ClockMetadataPreference:
     row = db.query(Setting).filter(Setting.key == _key(device_id)).one_or_none()
     return _decode(row.value) if row else ClockMetadataPreference()
+
+
+def clock_metadata_timezone(db: Session) -> ZoneInfo:
+    """Use the application's timezone, independent of Docker's host timezone."""
+    row = db.query(Setting).filter(Setting.key == "default_timezone").one_or_none()
+    name = (row.value if row else "") or getattr(get_settings(), "default_timezone", "") or "Europe/Berlin"
+    try:
+        return ZoneInfo(name)
+    except (ValueError, ZoneInfoNotFoundError):
+        return ZoneInfo("UTC")
+
+
+def _projection_key(device_id: str) -> str:
+    return f"device:{device_id.strip().upper()}:clock_projection"
+
+
+def remember_clock_projection(
+    db: Session, device_id: str, station_id: str, rendered: str,
+) -> None:
+    """Keep bounded, server-generated prefixes to recognize radio echoes.
+
+    Keep this separate from MetadataState and the in-memory monitor cache:
+    provider serving and radio polling run in different processes. A clock
+    echo is display readback, not a new song title. Minute rollover must not
+    repeatedly append time to that echoed title. No independent timer or
+    extra radio request is created here.
+    """
+    if re.fullmatch(r"(?:.* · )?(?:[01]\d|2[0-3]):[0-5]\d", rendered) is None:
+        return
+    prefix = rendered[:-5]
+    key = _projection_key(device_id)
+    row = db.query(RuntimeState).filter(RuntimeState.key == key).one_or_none()
+    try:
+        previous = json.loads(row.value) if row else {}
+    except (TypeError, ValueError):
+        previous = {}
+    prefixes = previous.get("prefixes", []) if isinstance(previous, dict) and previous.get("station_id") == station_id else []
+    prefixes = [item for item in prefixes if isinstance(item, str)] if isinstance(prefixes, list) else []
+    if prefix in prefixes:
+        return
+    payload = {"station_id": station_id, "prefixes": [*prefixes[-15:], prefix]}
+    if row is None:
+        row = RuntimeState(key=key)
+        db.add(row)
+    row.value = json.dumps(payload, ensure_ascii=False)
+    db.flush()  # The caller owns commit/rollback, including report persistence.
+
+
+def is_clock_projection_echo(
+    db: Session, device_id: str, station_id: str | None, track: object,
+) -> bool:
+    """Recognize only a projection generated for this exact device/selection."""
+    if not isinstance(track, str) or not station_id:
+        return False
+    if re.fullmatch(r"(?:.* · )?(?:[01]\d|2[0-3]):[0-5]\d", track) is None:
+        return False
+    row = db.query(RuntimeState).filter(RuntimeState.key == _projection_key(device_id)).one_or_none()
+    try:
+        value = json.loads(row.value) if row else {}
+    except (TypeError, ValueError):
+        return False
+    return (isinstance(value, dict) and value.get("station_id") == station_id
+            and isinstance(value.get("prefixes"), list) and track[:-5] in value["prefixes"])
 
 
 def clock_metadata_lab_enabled(db: Session) -> bool:
@@ -85,7 +150,7 @@ def save_clock_metadata_preference(
         raise ValueError("clock metadata mode must be OFF, MISSING_TITLE or APPEND") from exc
     interval = int(interval_seconds)
     if interval < CLOCK_METADATA_MIN_INTERVAL_SECONDS:
-        raise ValueError("experimental clock metadata interval must be at least 60 seconds")
+        raise ValueError("clock metadata interval must be at least 60 seconds")
     # Disabling remains explicit OFF at runtime, while the selected display
     # style is retained for a later opt-in.
     preference = ClockMetadataPreference(

@@ -118,7 +118,8 @@ def test_setup_wizard_steps_cover_enduser_flow():
     assert keys == ["server", "radio", "backup", "route", "reboot", "verify", "rollback"]
 
 
-def test_setup_wizard_server_info_endpoint():
+def test_setup_wizard_server_info_endpoint(monkeypatch):
+    monkeypatch.setattr(setup.api_core, "_tcp_port_open", lambda *_args, **_kwargs: (False, "mock closed"))
     with TestClient(create_web_app()) as client:
         response = client.get("/api/setup/wizard/server-info")
 

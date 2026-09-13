@@ -19,27 +19,28 @@ def _db() -> tuple[object, Session]:
     return engine, Session(engine)
 
 
-def test_clock_metadata_is_per_device_experimental_and_off_by_default() -> None:
+def test_clock_metadata_is_per_device_and_appends_time_by_default() -> None:
     engine, db = _db()
     try:
         assert load_clock_metadata_preference(db, "RADIO-A").as_dict() == {
-            "enabled": False,
-            "mode": "MISSING_TITLE",
+            "enabled": True,
+            "mode": "APPEND",
             "interval_seconds": 60,
-            "experimental": True,
+            "experimental": False,
         }
         saved = save_clock_metadata_preference(
-            db, "RADIO-A", enabled=True, mode=ClockMetadataMode.APPEND,
+            db, "RADIO-A", enabled=False, mode=ClockMetadataMode.APPEND,
         )
-        assert saved.enabled is True
+        assert saved.enabled is False
         assert load_clock_metadata_preference(db, "RADIO-A").mode == ClockMetadataMode.APPEND
-        assert load_clock_metadata_preference(db, "RADIO-B").enabled is False
+        assert load_clock_metadata_preference(db, "RADIO-A").enabled is False
+        assert load_clock_metadata_preference(db, "RADIO-B").enabled is True
     finally:
         db.close()
         engine.dispose()
 
 
-def test_clock_metadata_cannot_run_faster_than_conservative_lab_interval() -> None:
+def test_clock_metadata_cannot_run_faster_than_conservative_interval() -> None:
     engine, db = _db()
     try:
         with pytest.raises(ValueError, match="at least 60"):

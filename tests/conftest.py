@@ -1,4 +1,6 @@
 import os
+import ipaddress
+import socket
 
 import pytest
 from sqlalchemy import create_engine
@@ -33,9 +35,48 @@ from basswiesn.app.db import database as database_module
 
 
 @pytest.fixture(autouse=True)
+def no_real_network_in_software_tests(monkeypatch, request):
+    """Software suites may use loopback servers, never a household radio."""
+    if request.node.get_closest_marker("hardware") is not None:
+        return
+    original_connect = socket.socket.connect
+    original_connect_ex = socket.socket.connect_ex
+    original_sendto = socket.socket.sendto
+
+    def require_local(address):
+        if not isinstance(address, tuple):  # AF_UNIX socket path
+            return
+        host = address[0]
+        if host == "localhost":
+            return
+        try:
+            allowed = ipaddress.ip_address(host).is_loopback
+        except ValueError:
+            allowed = False
+        if not allowed:
+            raise AssertionError("Software test attempted non-loopback network transport; use a mock")
+
+    def connect(sock, address):
+        require_local(address)
+        return original_connect(sock, address)
+
+    def connect_ex(sock, address):
+        require_local(address)
+        return original_connect_ex(sock, address)
+
+    def sendto(sock, data, *args):
+        require_local(args[-1])
+        return original_sendto(sock, data, *args)
+
+    monkeypatch.setattr(socket.socket, "connect", connect)
+    monkeypatch.setattr(socket.socket, "connect_ex", connect_ex)
+    monkeypatch.setattr(socket.socket, "sendto", sendto)
+
+
+@pytest.fixture(autouse=True)
 def isolated_database(tmp_path, monkeypatch, request):
     """Keep API/UI tests out of the user's production database."""
-    if request.node.get_closest_marker("unit") is not None:
+    if request.node.get_closest_marker("hardware") is not None:
         yield
         return
     from basswiesn.app import models  # noqa: F401

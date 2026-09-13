@@ -14,6 +14,7 @@ from xml.etree import ElementTree as ET
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, RedirectResponse
+from pydantic import BaseModel, Field, StrictBool, StrictInt
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
@@ -42,10 +43,11 @@ from basswiesn.app.repositories.research_state_repository import (
 from basswiesn.app.routers.shared import device_or_404
 from basswiesn.app.services.clock_metadata import (
     clock_metadata_lab_enabled,
+    clock_metadata_timezone,
     load_clock_metadata_preference,
     save_clock_metadata_preference,
 )
-from basswiesn.app.services.metadata_engine import MetadataProvenance
+from basswiesn.app.services.metadata_engine import ClockMetadataMode, MetadataProvenance
 from basswiesn.app.services.airplay_readiness import assess_airplay_readiness
 from basswiesn.app.services.protected_devices import require_unprotected_device
 from basswiesn.app.services.targeted_mdns import probe_targeted_airplay_mdns
@@ -587,38 +589,37 @@ async def clock_metadata_preference(
         "device_id": device_id,
         **load_clock_metadata_preference(db, device_id).as_dict(),
         "lab_enabled": clock_metadata_lab_enabled(db),
-        "label": "Uhrzeit in Live-Metadaten anzeigen",
+        "label": "Show time in the playback title",
+        "timezone": clock_metadata_timezone(db).key,
+        "scope": "LOCAL_PROVIDER_METADATA",
+        "radio_write": False,
         "hardware_validation": "OPEN",
     }
+
+
+class ClockPreferenceUpdate(BaseModel):
+    enabled: StrictBool
+    mode: ClockMetadataMode = ClockMetadataMode.APPEND
+    interval_seconds: StrictInt = Field(default=60, ge=60, le=86400)
 
 
 @router.put("/devices/{device_id}/metadata/clock")
 async def update_clock_metadata_preference(
-    device_id: str, payload: dict, db: Session = Depends(get_db)
+    device_id: str, payload: ClockPreferenceUpdate, db: Session = Depends(get_db)
 ) -> dict[str, Any]:
-    device_or_404(db, device_id)
-    if not clock_metadata_lab_enabled(db):
-        raise HTTPException(
-            status_code=403,
-            detail="Uhr als Live-Metadaten ist ausschließlich im aktivierten LAB-Modus verfügbar.",
-        )
+    device = device_or_404(db, device_id)
+    require_unprotected_device(device, action="clock-metadata-preference")
     try:
-        preference = save_clock_metadata_preference(
+        save_clock_metadata_preference(
             db,
             device_id,
-            enabled=payload.get("enabled") is True,
-            mode=str(payload.get("mode") or "MISSING_TITLE"),
-            interval_seconds=int(payload.get("interval_seconds", 60)),
+            enabled=payload.enabled,
+            mode=payload.mode,
+            interval_seconds=payload.interval_seconds,
         )
     except (TypeError, ValueError) as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
-    return {
-        "device_id": device_id,
-        **preference.as_dict(),
-        "lab_enabled": True,
-        "label": "Uhrzeit in Live-Metadaten anzeigen",
-        "hardware_validation": "OPEN",
-    }
+    return await clock_metadata_preference(device_id, db)
 
 
 @router.get("/devices/{device_id}/restrictions")

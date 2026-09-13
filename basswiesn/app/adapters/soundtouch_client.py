@@ -254,6 +254,23 @@ class SoundTouchClient:
             endpoint=path,
         )
         pinned_url, pinned_headers, extensions = self._request_target(path, "POST")
+        if self.request_purpose != "live_radio_reconnect" and path in {
+            "/key", "/select", "/setZone", "/addZoneSlave", "/removeZoneSlave",
+        }:
+            # An explicit command wins over a queued automatic reconnect,
+            # across WebGUI/cloud processes. Never obstruct a user's STOP
+            # merely because diagnostic persistence is temporarily unavailable.
+            try:
+                from basswiesn.app import db as app_db
+                from basswiesn.app.models import Device
+                from basswiesn.app.services.live_radio_reconnect import cancel
+                with app_db.SessionLocal() as db:
+                    device = db.query(Device).filter_by(ip_address=self.ip_address).one_or_none()
+                    if device is not None:
+                        cancel(db, device.device_id)
+                        db.commit()
+            except Exception as exc:
+                write_masterlog("live_radio_reconnect_cancel_failed", error_type=type(exc).__name__)
         request_headers = {"Content-Type": "application/xml"}
         request_headers.update(pinned_headers)
         if headers:

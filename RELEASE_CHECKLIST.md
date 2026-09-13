@@ -1,12 +1,20 @@
-# BASSWIESN 2.5.1 Release Checklist
+# BASSWIESN 2.6.0 Release Checklist
 
 Do not push, tag or create a GitHub release while a critical gate is failed or
-unverified. A green unit suite alone is not a release gate.
+unverified. Unverified feature-specific hardware
+checks require explicit project-owner acceptance and a public limitation; never
+mark them passed. A green unit suite alone is not hardware validation.
+
+For 2.6.0, the owner approved publication with audible reconnect, physical
+title-clock display and remote quick-group hardware checks deferred. These checks
+were not performed under an absolute volume ceiling that the firmware cannot
+guarantee. Reconnect is off by default. Privacy, protected-device, software,
+package and installation gates are not waived. See the release notes.
 
 ## 1. Source and version
 
 - [ ] `git status` contains only reviewed release changes.
-- [ ] Backend, Web UI, package and documentation report `2.5.1`.
+- [ ] Backend, Web UI, package and documentation report `2.6.0`.
 - [ ] `git diff --check` passes.
 - [ ] No runtime database, logs, `.env`, secrets, private keys, hardware
       backups, research source material or test artifacts are publishable.
@@ -75,7 +83,10 @@ make test-release
 ## 5. Hardware validation
 
 Before audio, verify device ID, read volume, set volume `1`, confirm read-back
-`1`, then start playback.
+`1`, and assess firmware behavior before any source/zone transition. These
+prechecks do not guarantee a hard ceiling: firmware may restore source volume
+or normalize group volume. Defer the test if its required ceiling cannot be
+maintained; never treat post-action correction as prevention.
 
 - [ ] Setup write and read-back pass on every release profile in scope.
 - [ ] Rollback is tested and labeled with its exact proven scope.
@@ -123,7 +134,7 @@ tools/package_release.sh
 
 Expected public assets:
 
-- `dist/basswiesn-docker-release-2.5.1.tar.gz`
+- `dist/basswiesn-docker-release-2.6.0.tar.gz`
 - `dist/SHA256SUMS`
 
 - [ ] Archive ownership, order and timestamps are reproducible.
@@ -142,24 +153,25 @@ Extract the archive into an empty temporary directory and act as a new user:
 - [ ] Compose configuration validates.
 - [ ] Container runs non-root and becomes healthy.
 - [ ] Database and migrations initialize from empty state.
-- [ ] Web UI reports version `2.5.1`.
+- [ ] Web UI reports version `2.6.0`.
 - [ ] Setup entry is visible on desktop and mobile.
 - [ ] Page load performs no discovery or radio probe.
 - [ ] Discovery starts only after visible user action.
 
 ## 9. Public repository gate
 
-Repository replacement is destructive and happens only after every critical
-gate above passes.
+Publish a normal reviewed commit to the existing repository only after every
+critical gate above passes. Do not replace the repository, rewrite history,
+force-push, remove earlier releases or lose the dual-stack fix.
 
 - [ ] Remote owner/name are displayed and verified.
 - [ ] A complete local `git bundle` preserves the old repository.
 - [ ] Existing remote-only issues/releases/metadata are documented.
 - [ ] Final assets and checksums are stored separately.
 - [ ] A publishable-source staging tree contains no private/internal artifacts.
-- [ ] The new public repository starts with one reviewed commit:
-      `BASSWIESN 2.5.1` on `main`.
-- [ ] Tag `v2.5.1` points to that commit.
+- [ ] The existing public repository receives the reviewed release commit:
+      `BASSWIESN 2.6.0` on `main`, preserving previous history.
+- [ ] Tag `v2.6.0` points to that commit.
 - [ ] English release notes use no unsupported claim.
 
 ## 10. Validation from GitHub

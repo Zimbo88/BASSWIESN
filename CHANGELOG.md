@@ -1,5 +1,38 @@
 # Changelog
 
+## 2.6.0 - 2026-09-13
+
+### Live radio and diagnostics
+
+- Added a per-radio opt-in reconnect after confirmed unexpected live-stream
+  FINISH. A fresh session, advancing reports, INVALID_SOURCE read-back, device
+  identity and policy, standalone topology, stream validation and a durable
+  backup are required. No volume/preset writes or automatic standby wakeup.
+- Bounded reconnect attempts, cancel pending work on explicit playback actions,
+  and never retry an ambiguous POST or replay a stale job after restart.
+- Log STOP reason, media position and device attribution together. Provider
+  reports remain accepted when diagnostic database storage is temporarily busy.
+- Split playback history on confirmed station changes within the same source,
+  preserving uncertainty instead of falsely attributing long sessions.
+
+### Remote, grouping and display
+
+- Show parsed playback state and actual volume in the standalone remote; keep
+  XML/JSON details collapsed by default. Added English/German browser coverage.
+- Start a SoundTouch group directly from a radio's remote, using that radio as
+  master, with identity/backup preflight and distributed read-back. No volume
+  alignment is sent; firmware volume changes are disclosed.
+- Offer normal-mode time in the playback title, default on for new preferences
+  while retaining explicit opt-outs. Respect the application timezone and avoid
+  echoing clock projections back into canonical metadata.
+- Retain protected-device checks, safe discovery, the dual-stack IPv4 preference,
+  preset validation and separate provider/playback/reporting health.
+
+Software, browser and clean-install checks passed. The new audible reconnect,
+physical title-clock display and remote quick-group hardware checks are deferred,
+not passed. Firmware can change volume on selection/group creation; publication
+was approved with this limitation. Reconnect remains off by default.
+
 ## 2.5.1 - 2026-08-29
 
 ### Easy Mode and browser fixes

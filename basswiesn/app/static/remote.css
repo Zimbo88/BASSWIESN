@@ -1,4 +1,8 @@
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+button:disabled { opacity: .5; cursor: not-allowed; }
+button, h1, h2, label { overflow-wrap: anywhere; min-width: 0; }
+button { padding: 8px; cursor: pointer; }
 :root {
   --bg: #0f1216;
   --panel: #1a2028;
@@ -57,6 +61,17 @@ button {
   padding: 14px;
 }
 .safe-start-panel { display: grid; gap: 8px; }
+.remote-shell > * { min-width: 0; }
+#remote-message:empty, #remote-track:empty { display: none; }
+#remote-message { margin: 0; line-height: 1.5; }
+#remote-refresh { display: block; margin-top: 12px; }
+#remote-details summary { cursor: pointer; min-height: 44px; padding: 12px 0; color: var(--muted); }
+#remote-output { max-height: 320px; overflow: auto; font-size: 12px; }
+#remote-volume-readback { margin: 0; padding-left: 24px; line-height: 1.7; overflow-wrap: anywhere; }
+#remote-multiroom { border: 1px solid var(--line); border-radius: 8px; padding: 14px; background: var(--panel); }
+#remote-multiroom p { line-height: 1.5; }
+#remote-members { border: 0; padding: 0; margin-bottom: 16px; min-width: 0; }
+#remote-members label { display: flex; gap: 12px; align-items: center; min-height: 48px; }
 .safe-start-panel label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .safe-start-panel input[type="number"] { width: 76px; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: #121820; color: var(--text); padding: 6px 9px; }
 .safe-start-panel small { color: var(--muted); }

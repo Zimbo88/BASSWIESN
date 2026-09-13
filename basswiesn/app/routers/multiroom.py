@@ -1,11 +1,14 @@
 import asyncio
+from contextvars import ContextVar
+from hashlib import sha256
+import json
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from basswiesn.app.db import get_db
-from basswiesn.app.models import Device, MultiroomScenario, PlayHistory, Preset, ScheduledAction, Station, utc_now
+from basswiesn.app.models import ConfigBackup, Device, MultiroomScenario, PlayHistory, Preset, ScheduledAction, Station, utc_now
 from basswiesn.app.routers import api as api_core
 from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
 from basswiesn.app.core.masterlog import write_masterlog
@@ -14,11 +17,32 @@ from basswiesn.app.services.action_journal import record_action
 import xml.etree.ElementTree as ET
 
 router = APIRouter(prefix="/api", tags=["multiroom"])
+_remote_identity_guard = ContextVar("remote_multiroom_identity_guard", default=False)
 
 
-def _client_for(device: Device, *, purpose: str) -> SoundTouchClient:
+class _IdentityCheckedClient:
+    """Verify the radio before each operation in a remote group transaction."""
+
+    def __init__(self, client, device):
+        self.client, self.device = client, device
+
+    async def _verify(self):
+        root = ET.fromstring(await self.client.get_xml("/info"))
+        if root.tag != "info" or root.get("deviceID", "").upper() != self.device.device_id.upper():
+            raise HTTPException(status_code=409, detail={"error": "identity_mismatch"})
+
+    async def get_xml(self, path):
+        await self._verify()
+        return await self.client.get_xml(path)
+
+    async def post_xml(self, path, body):
+        await self._verify()
+        return await self.client.post_xml(path, body)
+
+
+def _client_for(device: Device, *, purpose: str):
     try:
-        return SoundTouchClient(
+        client = SoundTouchClient(
             device.ip_address,
             device_id=device.device_id,
             request_purpose=purpose,
@@ -27,7 +51,8 @@ def _client_for(device: Device, *, purpose: str) -> SoundTouchClient:
     except TypeError:
         # Preserve small test doubles while production always carries the
         # device identity into the central policy and write ledger.
-        return SoundTouchClient(device.ip_address)
+        client = SoundTouchClient(device.ip_address)
+    return _IdentityCheckedClient(client, device) if _remote_identity_guard.get() else client
 
 
 def split_csv(value) -> list[str]:
@@ -166,6 +191,10 @@ async def _read_volume(device: Device) -> int | None:
     try:
         root = ET.fromstring(await _client_for(device, purpose="multiroom_volume_readback").get_xml("/volume"))
         return int(float(root.findtext("actualvolume") or root.findtext("targetvolume") or "-1"))
+    except HTTPException:
+        if _remote_identity_guard.get():
+            raise  # A detected identity change must never be swallowed.
+        return None
     except Exception:
         return None
 
@@ -421,6 +450,78 @@ async def multiroom_latency(payload: dict, db: Session = Depends(get_db)) -> dic
     return {"mode": mode, "results": results, "explanation": "ZONE synchronisiert eine SoundTouch-Gruppe; ROOM optimiert die Ausgabe eines einzelnen Raums und bildet keine Gruppe."}
 
 
+@router.post("/multiroom/remote-start")
+async def remote_multiroom_start(payload: dict, db: Session = Depends(get_db)) -> dict:
+    """Share the current source, never select a station or send volume writes.
+
+    The simpler remote has no expert 'memory checked' checkbox. Its server
+    preflight actually verifies identity and stores the relevant before-state.
+    Existing zones are not silently replaced. Backups survive a partial failure.
+    """
+    master = db.query(Device).filter(Device.device_id == payload.get("master_device_id")).one_or_none()
+    if master is None:
+        raise HTTPException(status_code=404, detail="master device not found")
+    members = _members_or_404(db, payload.get("member_device_ids", []), master)
+    if not members:
+        raise HTTPException(status_code=400, detail="choose at least one additional radio")
+    devices = [master, *members]
+    _require_unprotected_devices(devices, action="remote_multiroom_start")
+    job = uuid4().hex
+    backup_refs = []
+    token = _remote_identity_guard.set(True)
+    try:
+        before = {}
+        for device in devices:
+            client = _client_for(device, purpose="remote_multiroom_backup")
+            state = {}
+            for endpoint in ("/info", "/now_playing", "/volume", "/getZone", "/sources", "/presets", "/rebroadcastlatencymode"):
+                xml = await client.get_xml(endpoint)
+                root = ET.fromstring(xml)
+                expected_root = {"/now_playing": "nowPlaying", "/getZone": "zone"}.get(endpoint, endpoint[1:])
+                if root.tag != expected_root:
+                    raise HTTPException(status_code=502, detail={"error": "invalid_backup_readback", "endpoint": endpoint})
+                state[endpoint] = xml
+            volume = int(ET.fromstring(state["/volume"]).findtext("actualvolume", "-1"))
+            if not 0 <= volume <= 100:
+                raise HTTPException(status_code=502, detail={"error": "volume_backup_unavailable"})
+            if _zone_summary(state["/getZone"])["active"]:
+                raise HTTPException(status_code=409, detail={"error": "existing_zone_requires_explicit_management"})
+            before[device.device_id] = state
+        now = ET.fromstring(before[master.device_id]["/now_playing"])
+        source = now.get("source", "")
+        allowed = any(node.get("source") == source and node.get("multiroomallowed") == "true"
+                      for node in ET.fromstring(before[master.device_id]["/sources"]).iter("sourceItem"))
+        if now.findtext("playStatus") != "PLAY_STATE" or not allowed:
+            raise HTTPException(status_code=409, detail={"error": "master_source_not_ready_for_zone"})
+        for device in devices:
+            state = before[device.device_id]
+            manifest = {path: sha256(xml.encode()).hexdigest() for path, xml in state.items()}
+            backup = ConfigBackup(device_id=device.device_id, path=f"remote-multiroom/{job}/before.json",
+                                  content=json.dumps({"http": state, "sha256": manifest}, ensure_ascii=False))
+            db.add(backup)
+            db.flush()
+            backup_refs.append(backup.id)
+            record_action(db, job_id=job, device_id=device.device_id, ip_address=device.ip_address,
+                          action="remote_multiroom_start", trigger="remote", phase="BACKUP_VERIFIED",
+                          backup_ref=f"config_backup:{backup.id}", before_state={"sha256": manifest}, verified=True)
+        db.commit()  # hard gate: persisted backup before ANY radio write
+        result = await multiroom_set({"master_device_id": master.device_id,
+            "member_device_ids": [member.device_id for member in members],
+            "preserve_volumes": True, "set_start_volumes": False,
+            "dry_run": False, "memory_checked": True}, db)
+        return {**result, "backup_ids": backup_refs}
+    except HTTPException as exc:
+        db.rollback()
+        if backup_refs:
+            raise HTTPException(status_code=exc.status_code, detail={"error": "remote_zone_not_confirmed", "cause": exc.detail, "backup_ids": backup_refs}) from None
+        raise
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=502, detail={"error": "remote_zone_not_confirmed", "backup_ids": backup_refs}) from None
+    finally:
+        _remote_identity_guard.reset(token)
+
+
 @router.post("/multiroom/preview")
 async def multiroom_preview(payload: dict, db: Session = Depends(get_db)) -> dict:
     master = db.query(Device).filter(Device.device_id == payload.get("master_device_id")).one_or_none()
@@ -487,6 +588,10 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
             before_zones[device.device_id] = _zone_summary(
                 await _client_for(device, purpose="multiroom_set_backup").get_xml("/getZone")
             )
+        except HTTPException:
+            if _remote_identity_guard.get():
+                raise
+            before_zones[device.device_id] = {"known": False}
         except Exception as exc:
             before_zones[device.device_id] = {"known": False, "error": exc.__class__.__name__}
     if start_volumes:
@@ -570,6 +675,15 @@ async def multiroom_set(payload: dict, db: Session = Depends(get_db)) -> dict:
                     }
                 )
             zone_ok = summary["master_device_id"] == master.device_id
+            if _remote_identity_guard.get() and device.device_id == master.device_id:
+                # A matching master alone is not a confirmed group. The master
+                # must report exactly the requested members, with no hidden
+                # additional radio. Some firmware lists the master as a member.
+                observed_members = {item["device_id"] for item in summary["members"]}
+                observed_members.discard(master.device_id)
+                zone_ok = zone_ok and observed_members == {item.device_id for item in members}
+            if _remote_identity_guard.get():
+                zone_ok = zone_ok and 0 <= actual_volume <= 100
             expected_volume = start_volumes.get(device.device_id, volume)
             # Individual values were already read back before /setZone.  A
             # later firmware normalization is evidence, not a failed write.

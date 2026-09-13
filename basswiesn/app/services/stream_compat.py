@@ -23,8 +23,8 @@ class ProtectedStreamTarget(ValueError):
     """Raised before a stream transport can target a protected radio."""
 
 
-def _validate_stream_target(url: str) -> UrlValidation | None:
-    validation = validate_outbound_http_url(url)
+def _validate_stream_target(url: str, *, public_only: bool = False) -> UrlValidation | None:
+    validation = validate_outbound_http_url(url, **({"public_only": True} if public_only else {}))
     if validation.ok:
         return validation
     if "protected device" in validation.reason:
@@ -239,14 +239,16 @@ async def resolve_stream_url(url: str, timeout: float = 2.5) -> StreamAnalysis:
         return analyze_stream_url(original)
 
 
-async def probe_stream_reachability(url: str, timeout: float = 3.0) -> dict:
+async def probe_stream_reachability(url: str, timeout: float = 3.0, *, public_only: bool = False) -> dict:
     """Perform one explicit, SSRF-safe stream probe with bounded redirects."""
 
     original = str(url or "").strip()
+    def validate(url):
+        return _validate_stream_target(url, public_only=True) if public_only else _validate_stream_target(url)
     if not original:
         return {"status": "BROKEN", "reachable": False, "reason": "stream URL missing"}
     try:
-        validation = _validate_stream_target(original)
+        validation = validate(original)
     except ProtectedStreamTarget as exc:
         return {"status": "BROKEN", "reachable": False, "reason": str(exc), "protected": True}
     if validation is None:
@@ -257,7 +259,7 @@ async def probe_stream_reachability(url: str, timeout: float = 3.0) -> dict:
         ) as client:
             current_url = original
             for hop in range(MAX_STREAM_REDIRECTS + 1):
-                validation = _validate_stream_target(current_url)
+                validation = validate(current_url)
                 if validation is None:
                     return {"status": "BROKEN", "reachable": False, "reason": "redirect target is invalid or unresolved"}
                 pinned_url, pinned_headers, extensions = pinned_http_target(

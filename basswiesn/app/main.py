@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 import json
 import logging
 import platform
+from html import escape
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
@@ -77,6 +78,9 @@ async def lifespan(app: FastAPI):
     setup_resume_task = None
     research_runtime = ResearchRuntime(lambda: SessionLocal())
     app.state.research_runtime = research_runtime
+    from basswiesn.app.services.live_radio_reconnect import LiveRadioReconnect
+    reconnect = LiveRadioReconnect(lambda: SessionLocal())
+    app.state.live_radio_reconnect = reconnect if app.title == "basswiesn Cloud Emulator" else None
     starts_background_tasks = bool(getattr(app.state, "starts_background_tasks", True))
     if app.title == "basswiesn WebGUI" and starts_background_tasks:
         # Rehydrate only persisted/local research state. Startup performs no
@@ -119,6 +123,7 @@ async def lifespan(app: FastAPI):
         except asyncio.CancelledError:
             pass
     await research_runtime.shutdown()
+    await reconnect.shutdown()
     _record_server_shutdown(app.title, boot_ts)
     write_masterlog("server_shutdown", service=app.title, runtime_seconds=int((datetime.now(UTC) - boot_ts).total_seconds()))
 
@@ -724,24 +729,37 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
     @app.get("/remote/{device_id}", response_class=HTMLResponse)
     async def remote(device_id: str) -> str:
         settings = get_settings()
+        safe_device_id = escape(device_id, quote=True)
         return f"""
         <!doctype html>
-        <html lang="de"><head><title>basswiesn remote</title>
+        <html lang="en"><head><meta charset="utf-8"><title>BASSWIESN Remote</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <link rel="stylesheet" href="/static/remote.css?v={settings.version}"></head>
         <body>
-          <main class="remote-shell" data-device-id="{device_id}">
-            <header class="remote-header"><div><span id="remote-version">basswiesn remote · Version nicht verfügbar</span><h1 id="remote-title">Radio</h1></div><a href="/">Desktop</a></header>
-            <section class="now-panel"><div id="remote-now">Loading...</div></section>
-            <section class="volume-panel"><button data-volume-step="-5">-</button><input id="remote-volume" type="range" min="0" max="100" value="5"><button data-volume-step="5">+</button><strong id="remote-volume-label">5%</strong></section>
-            <section class="safe-start-panel"><label><input id="remote-safe-start-enabled" type="checkbox"> Safe start volume</label><label id="remote-safe-start-field" hidden>Volume before playback <input id="remote-safe-start-volume" type="number" min="0" max="5" value="1"></label><small>Off keeps the radio's current volume. On verifies this value before playback.</small></section>
+          <main class="remote-shell" data-device-id="{safe_device_id}" data-version="{settings.version}">
+            <header class="remote-header"><div><span id="remote-version">BASSWIESN Remote</span><h1 id="remote-title">Radio</h1></div><a href="/" data-remote-text="home">Home</a></header>
+            <section class="now-panel"><strong id="remote-now" data-remote-text="loading">Loading…</strong><p id="remote-track"></p><small id="remote-play-status"></small><button id="remote-refresh" type="button" data-remote-text="refresh">Refresh</button></section>
+            <section class="safe-start-panel"><label><span data-remote-text="clock">Time in playback title</span><input id="remote-clock" type="checkbox" disabled></label><small id="remote-clock-help" data-remote-text="clockHelp">For BASSWIESN internet radio, add time to the title line. Other sources and the radio's native standby clock are unchanged.</small></section>
+            <section class="safe-start-panel"><label><span data-remote-text="reconnect">Reconnect live radio after stream end</span><input id="remote-reconnect" type="checkbox" disabled></label><small data-remote-text="reconnectHelp">Opt in, then start a station. Reconnect only after confirmed unexpected stream end, never from standby or in a group. No volume commands.</small></section>
+            <p id="remote-message" role="status" aria-live="polite"></p>
+            <section class="volume-panel"><button data-volume-step="-5" disabled>−</button><input id="remote-volume" aria-label="Volume" type="range" min="0" max="100" value="0" disabled><button data-volume-step="5" disabled>+</button><strong id="remote-volume-label">—</strong></section>
+            <section class="safe-start-panel"><label><input id="remote-safe-start-enabled" type="checkbox"><span data-remote-text="safeStart">Safe start volume</span></label><label id="remote-safe-start-field" hidden><span data-remote-text="volumeBefore">Volume before playback</span><input id="remote-safe-start-volume" type="number" min="0" max="5" value="1"></label><small data-remote-text="safeHelp">Off keeps the radio's current volume. On verifies this value before playback.</small></section>
             <section class="transport-grid">
-              <button data-key="PREV_TRACK">Prev</button><button data-key="PLAY_PAUSE">Play/Pause</button><button data-key="NEXT_TRACK">Next</button>
-              <button data-key="STOP">Stop</button><button data-key="MUTE">Mute</button><button data-key="POWER">Power</button>
+              <button data-key="PREV_TRACK" data-remote-text="previous">Previous</button><button data-key="PLAY_PAUSE" data-remote-text="playPause">Play / pause</button><button data-key="NEXT_TRACK" data-remote-text="next">Next</button>
+              <button data-key="STOP" data-remote-text="stop">Stop</button><button data-key="MUTE" data-remote-text="mute">Mute</button><button data-key="POWER" data-remote-text="power">Power</button>
             </section>
             <section class="preset-grid" id="remote-presets"></section>
-            <section class="station-panel"><select id="remote-station"></select><button id="remote-play-station">Play station</button></section>
-            <pre id="remote-output"></pre>
+            <section class="station-panel"><select id="remote-station" aria-label="Station"></select><button id="remote-play-station" data-remote-text="playStation">Play station</button></section>
+            <button id="remote-multiroom-open" type="button" data-remote-text="multiroom">Play radios together</button>
+            <section id="remote-multiroom" hidden aria-labelledby="remote-multiroom-title">
+              <h2 id="remote-multiroom-title" data-remote-text="multiroom">Play radios together</h2><p id="remote-master"></p>
+              <p data-remote-text="multiroomHelp">Share this radio's current playback. BASSWIESN sends no volume commands; the radio firmware may adjust volumes when grouping.</p>
+              <fieldset id="remote-members"><legend data-remote-text="members">Choose additional radios</legend></fieldset>
+              <button id="remote-multiroom-start" type="button" disabled data-remote-text="startGroup">Start group</button>
+              <button id="remote-multiroom-cancel" type="button" data-remote-text="cancel">Cancel</button>
+            </section>
+            <details id="remote-details"><summary data-remote-text="details">Technical details / XML</summary><pre id="remote-output"></pre></details>
+            <ul id="remote-volume-readback" hidden aria-label="Group volume readback"></ul>
           </main>
           <script src="/static/remote.js?v={settings.version}"></script>
         </body></html>

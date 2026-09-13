@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import asdict, dataclass, replace
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime, timedelta, tzinfo
 from enum import StrEnum
 from typing import Any, Awaitable, Callable, Mapping
 
@@ -209,19 +209,19 @@ def clock_display_projection(
     *,
     mode: ClockMetadataMode = ClockMetadataMode.OFF,
     now: datetime | None = None,
+    timezone: tzinfo | None = None,
 ) -> str | None:
-    """Build the LAB-only track projection without mutating real metadata."""
+    """Build a track-only display projection without mutating real metadata."""
 
     if mode == ClockMetadataMode.OFF:
         return snapshot.track
-    clock = _aware(now).astimezone().strftime("%H:%M")
+    clock = _aware(now).astimezone(timezone).strftime("%H:%M")
     track = (snapshot.track or "").strip()
-    artist = (snapshot.artist or "").strip()
     if mode == ClockMetadataMode.MISSING_TITLE:
         return track or clock
     if track:
-        title = f"{artist} – {track}" if artist else track
-        return f"{title} · {clock}"
+        # Artist remains in its own protocol field, not duplicated in track.
+        return f"{track} · {clock}"
     return clock
 
 

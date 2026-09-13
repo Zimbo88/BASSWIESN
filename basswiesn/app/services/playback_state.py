@@ -8,7 +8,9 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from basswiesn.app.models import Device, PlayHistory, RuntimeState, Station, utc_now
-from basswiesn.app.services.playback_identity import apply_identity, clean_station_name, resolve_playback_identity
+from basswiesn.app.services.playback_identity import (
+    apply_identity, clean_station_name, normalize_station_name, resolve_playback_identity,
+)
 
 
 INACTIVE_SOURCES = {"", "STANDBY", "INVALID_SOURCE", "SOURCE_DISCONNECTED"}
@@ -131,6 +133,32 @@ def confirm_playback_session(
         current.ended_at = safe_session_end(current, transition_at=observed_at, device_last_seen=device.last_seen)
         current.end_reason = "source_changed"
         current = None
+    if current is not None and str(source or "").upper() in {
+        "LOCAL_INTERNET_RADIO", "INTERNET_RADIO", "TUNEIN", "RADIO_BROWSER",
+    }:
+        observed_identity = resolve_playback_identity(
+            db, station_id=station_id, station_name=station_name,
+            stream_url=stream_url, source=source, source_account=source_account,
+            content_item_name=content_item_name, device_id=device.device_id,
+            preset_button=preset_button, internal_event=internal_event, is_confirmed=True,
+        )
+        if current.station_id is not None and observed_identity.station_id is not None:
+            station_changed = current.station_id != observed_identity.station_id
+        else:
+            previous_name = clean_station_name(current.station_display_name or current.station_name)
+            station_changed = bool(
+                previous_name and int(current.identity_confidence or 0) >= 70
+                and observed_identity.identity_confidence >= 70
+                and normalize_station_name(previous_name) != observed_identity.station_name_normalized
+            )
+        if station_changed:
+            # A station change need not pass through STOP or a different source
+            # family. Do not attribute the new station's hours to the old one.
+            # Missing/weak labels and track changes on AirPlay are not evidence
+            # of a station change. End at the old last confirmed observation.
+            current.ended_at = safe_session_end(current, transition_at=observed_at, device_last_seen=device.last_seen)
+            current.end_reason = "station_changed"
+            current = None
     if current is None:
         station = db.query(Station).filter(Station.id == station_id).one_or_none() if station_id else None
         identity = resolve_playback_identity(

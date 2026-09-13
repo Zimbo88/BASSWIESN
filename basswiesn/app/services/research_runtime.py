@@ -39,6 +39,7 @@ from basswiesn.app.repositories.research_state_repository import (
     dump_evidence,
 )
 from basswiesn.app.services.airplay_readiness import assess_airplay_readiness
+from basswiesn.app.services.clock_metadata import is_clock_projection_echo
 from basswiesn.app.services.metadata_engine import (
     BOSEAPP_COALESCE_SECONDS,
     DEFAULT_METADATA_STALE_AFTER_SECONDS,
@@ -1017,6 +1018,27 @@ class ResearchRuntime:
                 finally:
                     db.close()
 
+            clock_echo = False
+            if provenance == MetadataProvenance.RADIO and (source or previous.source) == "LOCAL_INTERNET_RADIO":
+                db = self._session_factory()
+                try:
+                    if is_clock_projection_echo(
+                        db, normalized_device, station_id or previous.station_id,
+                        payload.get("track", payload.get("title")),
+                    ):
+                        clock_echo = True
+                        row = db.query(MetadataState).filter(
+                            MetadataState.device_id == normalized_device,
+                        ).one_or_none()
+                        if row is not None and row.station_id == (station_id or previous.station_id):
+                            # Refresh the cross-process canonical metadata:
+                            # an old display echo must not undo a newer title.
+                            previous = _metadata_snapshot(row)
+                        payload = {key: value for key, value in payload.items()
+                                   if key not in {"track", "title", "artist", "album"}}
+                finally:
+                    db.close()
+
             current = normalize_metadata(
                 payload,
                 previous=previous,
@@ -1028,6 +1050,12 @@ class ResearchRuntime:
                 provider=provider,
                 source=source,
             )
+            if clock_echo:
+                # A changing clock is not evidence of a fresh track/provider
+                # update. Keep the canonical metadata's age and provenance.
+                current = replace(current, updated_at=previous.updated_at,
+                                  provenance=previous.provenance, confidence=previous.confidence,
+                                  stale=previous.stale)
             previous_identity = (
                 previous.station_name,
                 previous.station_id,

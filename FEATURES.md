@@ -1,4 +1,4 @@
-# BASSWIESN 2.5.1 Feature Status
+# BASSWIESN 2.6.0 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
@@ -76,6 +76,11 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - evidence-based `INVALID_SOURCE` classification with `UNKNOWN` fallback
 - automatic recovery limited to read-back, metadata refresh, provider refresh
   and stream URL re-resolution
+- separate per-radio opt-in for one-shot recovery after a confirmed local
+  live-radio FINISH: fresh identity, hashed backup, public-only stream probe,
+  no standby wakeup, no zone changes, no volume/preset write and verified playback
+- explicit commands invalidate queued reconnects; finite retry budget and no
+  replay of pending work after process restart
 - no automatic reboot or factory-reset recovery
 
 ### Presets
@@ -100,6 +105,10 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - browser artwork cache with provider image, station logo, source icon and
   fallback
 - radio display capability kept separate from browser artwork
+- optional local time in the playback title, enabled for new preferences,
+  preserving existing opt-outs and canonical song metadata; no preset rewrite
+- track/artist availability depends on supplied metadata; no universal live
+  ICY song-information collector is claimed
 
 ### Multiroom
 
@@ -154,7 +163,6 @@ Unknown. It does not implement MFi bypasses or firmware patches.
 
 ## LAB / experimental
 
-- clock-as-metadata, default off, minimum 60-second interval
 - Telnet reboot with explicit confirmation
 - Standby Clock recovery
 - BatteryMonitor patch and rollback for specifically validated binaries

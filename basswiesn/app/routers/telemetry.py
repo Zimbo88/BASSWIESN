@@ -4,8 +4,10 @@ import re
 import socket
 import subprocess
 import time
+from xml.etree import ElementTree as ET
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, StrictBool, ConfigDict
 from sqlalchemy.orm import Session
 
 from basswiesn.app.db import get_db
@@ -16,11 +18,72 @@ from basswiesn.app.routers.shared import device_or_404, summarize_payload
 from basswiesn.app.services.catalogs import RADIO_LOG_CLI17000_COMMANDS, RADIO_LOG_GUARDED_HTTP_ENDPOINTS, RADIO_LOG_HTTP_ENDPOINTS, RADIO_LOG_SSH_PLAN
 from basswiesn.app.services.network_security import validate_outbound_host
 from basswiesn.app.services.protected_devices import is_protected_ip, reject_protected_write_ip
+from basswiesn.app.services.protected_devices import require_unprotected_device
+from basswiesn.app.services.device_state import runtime_from_now_playing
 from basswiesn.app.services.action_journal import record_transport_attempt
 from basswiesn.app.adapters.soundtouch_client import SoundTouchClient
 from basswiesn.app.adapters.ssh import build_legacy_ssh_command
 
 router = APIRouter(prefix="/api", tags=["telemetry"])
+
+
+class ReconnectPreferenceBody(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: StrictBool
+
+
+@router.get("/devices/{device_id}/live-reconnect")
+def live_reconnect_preference(device_id: str, db: Session = Depends(get_db)) -> dict:
+    from basswiesn.app.services.live_radio_reconnect import preference
+    device = device_or_404(db, device_id)
+    return preference(db, device.device_id)
+
+
+@router.put("/devices/{device_id}/live-reconnect")
+def set_live_reconnect_preference(device_id: str, body: ReconnectPreferenceBody, db: Session = Depends(get_db)) -> dict:
+    from basswiesn.app.services.live_radio_reconnect import save_preference
+    device = device_or_404(db, device_id)
+    require_unprotected_device(device, action="live_reconnect_preference")
+    return save_preference(db, device.device_id, body.enabled)
+
+
+@router.get("/devices/{device_id}/remote-state")
+async def remote_state(device_id: str, db: Session = Depends(get_db)) -> dict:
+    """Small, identity-verified readback; never select a source or change volume.
+
+    A truncated telemetry summary is not parseable XML and must not be used as
+    the remote's user-facing playback state. Keep the complete readback separate
+    from its structured fields. No background scan or device-wide settings probe.
+    """
+    device = device_or_404(db, device_id)
+    require_unprotected_device(device, action="remote_state", requester="remote", method="GET", endpoint="/info")
+    client = SoundTouchClient(device.ip_address, device_id=device.device_id, request_purpose="remote_state")
+    raw = {}
+    try:
+        for path in ("/now_playing", "/volume"):
+            info = ET.fromstring(await client.get_xml("/info"))
+            if info.tag != "info" or info.get("deviceID", "").upper() != device.device_id.upper():
+                raise HTTPException(status_code=409, detail={"error": "identity_mismatch"})
+            raw[path] = await client.get_xml(path)
+        root = ET.fromstring(raw["/now_playing"])
+        volume_root = ET.fromstring(raw["/volume"])
+        if root.tag != "nowPlaying" or volume_root.tag != "volume":
+            raise ValueError("unexpected readback root")
+        actual = int(volume_root.findtext("actualvolume", "-1"))
+        if not 0 <= actual <= 100:
+            raise ValueError("actual volume missing or outside range")
+    except HTTPException:
+        raise
+    except (ET.ParseError, ValueError):
+        raise HTTPException(status_code=502, detail={"error": "invalid_radio_readback"}) from None
+    except Exception:
+        # Do not leak transport internals or treat a failed read as volume zero.
+        raise HTTPException(status_code=502, detail={"error": "radio_unreachable"}) from None
+    runtime = runtime_from_now_playing(raw["/now_playing"])
+    return {"device_id": device.device_id, "verified": True, "observed_at": utc_now().isoformat(),
+            "source": runtime["current_source"], "play_status": runtime["playback_state"],
+            "now_playing": runtime["now_playing"], "volume": actual,
+            "muted": volume_root.findtext("muteenabled") == "true", "raw": raw}
 
 
 async def send_cli17000(ip_address: str, commands: list[str], timeout: float = 8.0) -> str:

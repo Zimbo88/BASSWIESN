@@ -21,12 +21,18 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-BASSWIESN `2.5.1` is the current release. Its release gate covers software,
-real Chromium workflows, clean installation and supported real-hardware
-read-back. Easy Mode is the default UI, while experimental functions are kept
+BASSWIESN `2.6.0` focuses on live-radio recovery, a simpler standalone remote,
+and playback-title clock metadata. Release validation separates software,
+Chromium workflows, clean installation and real-hardware read-back. Easy Mode
+is the default UI, while experimental functions are kept
 out of the normal user path or marked LAB. Long-playback evidence and
 continuous HTTP reachability are reported separately rather than turned into
 an unsupported blanket uptime claim.
+
+The new reconnect, physical title-clock display and remote quick-group paths
+are software-tested but not yet hardware-validated. Reconnect is off by default.
+Firmware may change volume when selecting a source or creating a group; there
+is no guaranteed maximum-volume lock. See the [2.6.0 release notes](docs/releases/2.6.0/RELEASE_NOTES_2.6.0.md#validation-boundary).
 
 ## Supported hardware
 
@@ -111,12 +117,12 @@ addresses or hardware backups.
 Download and verify the versioned release asset:
 
 ```bash
-mkdir -p "$HOME/basswiesn-2.5.1"
-cd "$HOME/basswiesn-2.5.1"
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.1/basswiesn-docker-release-2.5.1.tar.gz
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.5.1/SHA256SUMS
+mkdir -p "$HOME/basswiesn-2.6.0"
+cd "$HOME/basswiesn-2.6.0"
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.0/basswiesn-docker-release-2.6.0.tar.gz
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.0/SHA256SUMS
 sha256sum -c SHA256SUMS
-tar -xzf basswiesn-docker-release-2.5.1.tar.gz
+tar -xzf basswiesn-docker-release-2.6.0.tar.gz
 cd basswiesn-release
 ./install.sh
 ```
@@ -214,9 +220,26 @@ Automatic recovery is limited to safe stages:
 3. provider refresh;
 4. stream URL re-resolution.
 
-Source reselection, stop/play, local service restart and radio reboot require
-explicit controlled action. Factory reset is never an automatic recovery
-stage.
+Source reselection normally requires explicit controlled action. The standalone
+remote additionally offers **Reconnect live radio after stream end**, disabled
+by default. Enable it before manually starting an Internet-radio station. A
+fresh native `STOP / FINISH` following advancing playback reports can then
+trigger one verified same-station selection if the radio reports `INVALID_SOURCE`.
+This handles an exhausted live stream without a blind six-hour restart timer.
+
+Reconnect never wakes standby, replaces an active source, operates within a
+SoundTouch Zone, writes presets, or sends volume commands. It uses fresh identity
+checks, a hashed before-state backup, public-only guarded stream revalidation,
+and playback read-back. Explicit application playback/key/zone actions cancel
+pending recovery. A lost POST response is not retried. Attempts are limited to
+three per hour with a five-minute cooldown; pending jobs expire and are not
+replayed at server startup. Device Safe Mode and protection still apply. Manual
+radio actions are checked through fresh read-back; the firmware does not offer
+an atomic compare-and-select operation, so an external action concurrent with
+the final network request cannot be locked by BASSWIESN.
+
+Stop/play, service restart and radio reboot remain controlled manual actions.
+Factory reset is never an automatic recovery stage.
 
 ## Multiroom
 
@@ -235,6 +258,12 @@ firmware-dependent and is therefore exposed only as an experimental LAB tool.
 
 Remote Control exposes real radio keys and an optional safe-start-volume
 checkbox. When it is off, BASSWIESN does not change volume before playback.
+The standalone remote shows station, track, state and actual volume without raw
+XML; **Technical details / XML** is collapsed until opened. **Play radios
+together** uses the displayed radio as master and lets you select the additional
+radios. It backs up, creates and verifies the group without volume commands;
+firmware-induced volume changes are shown separately. Current playback must be
+suitable for SoundTouch grouping and the selected radios must be standalone.
 Alarm & Timer and Device Settings remain fully available in Easy Mode.
 
 ## Backup and restore
@@ -257,8 +286,18 @@ an explicit **No station logo** mode. Changing this setting previews the
 affected slots and updates only `containerArt` after backup and live radio
 read-back; source, account, location and item identity are preserved.
 
-Clock-as-metadata is a LAB option, disabled by default and limited to a
-60-second update interval. It is not a display firmware patch.
+**Time in playback title** is available on each standalone remote. New
+preferences default to appending the configured local time, for example
+`Example Track · 20:15`; existing explicit opt-outs are retained. Without a song
+title, the station name is used. Clock metadata uses the existing provider
+reporting path and a minimum 60-second clock preference interval, not a new
+radio-polling loop. Native standby-clock settings and presets are unchanged.
+
+Artist/title can only be displayed if a metadata source supplies them. The
+local station adapter does not yet extract live ICY song information from every
+stream. A station-only title and empty artist in provider/read-back data are not
+evidence of a broken radio display. Clock text is a metadata projection, not a
+firmware patch or a separate native playback-clock region.
 
 ## AirPlayReadiness
 
