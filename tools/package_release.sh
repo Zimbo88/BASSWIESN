@@ -17,8 +17,8 @@ ARCHIVE="$DIST/basswiesn-docker-release-${VERSION}.tar.gz"
 STAGE_ROOT="$(mktemp -d)"
 STAGE="$STAGE_ROOT/basswiesn-release"
 BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh .dockerignore CHANGELOG.md)
-PUBLIC_TOOLS=(tools/run_dev.py)
-PUBLIC_DOCS=(docs/releases/2.6.0/RELEASE_NOTES_2.6.0.md)
+PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py)
+PUBLIC_DOCS=(docs/releases/2.6.5/RELEASE_NOTES_2.6.5.md docs/PI_OBSERVER.md)
 trap 'rm -rf "$STAGE_ROOT"' EXIT
 
 "$PYTHON" -m compileall -q basswiesn tests tools
@@ -47,6 +47,7 @@ PY
 if command -v node >/dev/null 2>&1; then
   node --check basswiesn/app/static/app.js
   node --check basswiesn/app/static/remote.js
+  node --check basswiesn/app/static/reboots.js
   node --check basswiesn/app/static/js/translations.js
 else
   echo "node not found; skipping JavaScript syntax checks" >&2

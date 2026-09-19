@@ -129,6 +129,10 @@ class SetupRepository:
         if expires_at is not None and expires_at.tzinfo is None:
             expires_at = expires_at.replace(tzinfo=UTC)
         if expires_at and expires_at > now and row.owner_id not in {"", owner_id}:
+            if row.owner_id.startswith("radio-reboot:"):
+                # Reboot batches share this critical-write lease but are not
+                # setup jobs. Absence from SetupRebuildJob must not unlock it.
+                return False
             # A cancelled/completed job may have been stopped between a
             # checkpoint and lease release (for example during a container
             # restart). Its lease must not block the next explicit setup run.

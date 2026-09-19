@@ -21,18 +21,20 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-BASSWIESN `2.6.0` focuses on live-radio recovery, a simpler standalone remote,
-and playback-title clock metadata. Release validation separates software,
+BASSWIESN `2.6.5` adds individually selectable and ordered radio-display fields,
+guarded radio restarts, an opt-in restart schedule and host diagnostics.
+Release validation separates software,
 Chromium workflows, clean installation and real-hardware read-back. Easy Mode
 is the default UI, while experimental functions are kept
 out of the normal user path or marked LAB. Long-playback evidence and
 continuous HTTP reachability are reported separately rather than turned into
 an unsupported blanket uptime claim.
 
-The new reconnect, physical title-clock display and remote quick-group paths
-are software-tested but not yet hardware-validated. Reconnect is off by default.
+Station/song/time display was confirmed on a SoundTouch 30. Restart dispatch
+and return were tested on SoundTouch 30 SCM and SoundTouch 20 Series III SM2;
+firmware volume/source changes are reported explicitly. Reconnect is off by default.
 Firmware may change volume when selecting a source or creating a group; there
-is no guaranteed maximum-volume lock. See the [2.6.0 release notes](docs/releases/2.6.0/RELEASE_NOTES_2.6.0.md#validation-boundary).
+is no guaranteed maximum-volume lock. See the [2.6.5 release notes](docs/releases/2.6.5/RELEASE_NOTES_2.6.5.md#hardware-boundary).
 
 ## Supported hardware
 
@@ -74,6 +76,13 @@ profile. Unknown combinations remain read-only.
   and retry behavior;
 - live station, track, artist, album and `imageUrl` metadata without source
   reselection or stream restart;
+- selectable station name, artist, song title, time and other station information,
+  with configurable order, an example preview and explicit save/read-back;
+- bounded, opt-in ICY song-information collection for compatible public streams;
+- restart one or selected radios with identity, complete backup and read-back;
+  optional weekday/timezone schedule, off by default and standby-only;
+- optional reboot-persistent, storage-bounded Linux host flight recorder for
+  memory, processes, container state, application logs and kernel warnings;
 - Web UI artwork caching with provider image, station logo, source icon and
   fallback handling;
 - consistent English and German end-user text in Easy, Standard and LAB mode;
@@ -84,6 +93,38 @@ profile. Unknown combinations remain read-only.
 - a redacted support bundle, append-only write ledger and per-radio diagnostic
   timeline;
 - responsive desktop and mobile Web UI.
+
+See [Feature status](FEATURES.md) for supported paths and honest limitations,
+and [the changelog](CHANGELOG.md) for changes since 2.6.0.
+
+### Your radio display
+
+Open a radio's remote and choose **Radio display**. Select any combination of
+station, artist, title, time and other information; use the arrows to arrange
+their order. The preview is an example, not a claim about current station data.
+Save applies a single device preference followed by read-back. No preset or
+source rewrite is required, and the separator dot before the time is removed.
+
+Selected fields share the title line. The firmware still controls its native
+station header, fonts and scrolling. Missing stream metadata is omitted, never
+invented. Long fields are shortened; album/cover/lyrics are not guaranteed by ICY.
+
+### Radio restarts
+
+Open **Radio restarts** from Radios or an individual remote. Review the selected
+devices, acknowledge the interruption and confirm. Every radio must pass identity,
+exact-profile and SHA-verified backup checks before any command is sent. Commands
+are dispatched together (maximum four); results are verified separately. An
+unresponsive radio or an active SoundTouch group blocks the batch.
+
+The optional schedule uses selected weekdays, wall-clock time and an IANA
+timezone. It is disabled by default, never interrupts active playback and does
+not catch up missed times. Ambiguous commands and interrupted jobs are never
+replayed. No volume, source resume or factory-reset command is sent by this
+feature. Firmware can restore a different boot volume; the result shows the
+actual before/after values and any source-list difference.
+
+For persistent Pi/host diagnostics, see [Host flight recorder](docs/PI_OBSERVER.md).
 
 ## Easy Mode
 
@@ -117,12 +158,12 @@ addresses or hardware backups.
 Download and verify the versioned release asset:
 
 ```bash
-mkdir -p "$HOME/basswiesn-2.6.0"
-cd "$HOME/basswiesn-2.6.0"
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.0/basswiesn-docker-release-2.6.0.tar.gz
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.0/SHA256SUMS
+mkdir -p "$HOME/basswiesn-2.6.5"
+cd "$HOME/basswiesn-2.6.5"
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.5/basswiesn-docker-release-2.6.5.tar.gz
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.5/SHA256SUMS
 sha256sum -c SHA256SUMS
-tar -xzf basswiesn-docker-release-2.6.0.tar.gz
+tar -xzf basswiesn-docker-release-2.6.5.tar.gz
 cd basswiesn-release
 ./install.sh
 ```

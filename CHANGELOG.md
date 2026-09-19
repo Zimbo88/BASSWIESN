@@ -1,5 +1,47 @@
 # Changelog
 
+## 2.6.5 - 2026-09-19
+
+### Display and station metadata
+
+- Choose station, artist, song title, time and other station information in any
+  combination and order. Preview before saving; verify the one per-radio
+  preference by read-back. All fields share the supported title line.
+- Collect ICY metadata only when selected fields require it: bounded public-only
+  streams, DNS pinning, redirect validation, shared station cache and backoff.
+  No network scan or audio playback from metadata collection.
+- Remove the dot before playback time. Preserve canonical song data, skip missing
+  station information and retain legacy display choices until explicitly saved.
+- Avoid conflicting clock controls when a custom display layout owns the clock.
+
+### Restart controls and diagnostics
+
+- Add a normal radio-restart page with exact selection preview, confirmation,
+  required identity/profile checks, complete SHA-verified backup of all targets,
+  parallel command dispatch and separate return/read-back results.
+- Add an explicitly enabled weekday/timezone schedule. Skip active/unavailable
+  radios and active zones as a batch. No missed-time catch-up, command retry,
+  replay after service restart or automatic playback resume.
+- Show firmware-caused boot-volume/source changes as differences. Tests on two
+  researched models observed return but also changed boot volume/source rows;
+  unchanged settings are not assumed merely because a radio responds again.
+- Add an optional systemd host recorder for memory, CPU, pressure, processes,
+  container restarts/OOMs and bounded logs. Private, rotated storage; no radio
+  contact, automatic repair, database dump or audio capture.
+
+### Server lifecycle
+
+- Initialize the database once before starting services, avoiding parallel
+  migration/background-writer contention.
+- Fail and restart the whole container if a required child service exits.
+  Check cloud and diagnostics health as well as the WebGUI.
+- Retain the Radio Browser IPv4/dual-stack fix, protected-device guards, preset
+  contracts, remote quick-group controls and existing backup/restore behavior.
+
+The earlier intermittent radio freeze is not claimed fixed: old receiver logs
+did not establish its cause. The new recorder is intended to retain better
+evidence for a recurrence. See the release notes for validation boundaries.
+
 ## 2.6.0 - 2026-09-13
 
 ### Live radio and diagnostics

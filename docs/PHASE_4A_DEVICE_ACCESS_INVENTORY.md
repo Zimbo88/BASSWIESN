@@ -3,8 +3,8 @@
 Statische AST-/Quelltextauswertung. Es wurden keine Radios, Sockets zu
 SoundTouch-Zielen oder externen Dienste kontaktiert.
 
-Fundstellen: 502
-Direkte SoundTouch-Fundstellen: 256
+Fundstellen: 506
+Direkte SoundTouch-Fundstellen: 259
 Coordinator-Fundstellen: 3
 
 | Datei:Zeile | Funktion | Transport | Operation | Ziel | Direkt | Policy | Timeout | Retry | Readback | Zielarchitektur |
@@ -131,10 +131,10 @@ Coordinator-Fundstellen: 3
 | basswiesn/app/routers/multiroom.py:886 | multiroom_remove_device | HTTP/XML | SoundTouch XML request/WRITE | /setZone | ja | ja | unklar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/routers/multiroom.py:897 | multiroom_remove_device | HTTP/XML | SoundTouch XML request/GET | /getZone | ja | ja | unklar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/routers/multiroom.py:901 | multiroom_remove_device | HTTP/XML | SoundTouch XML request/GET | /getZone | ja | ja | unklar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/routers/research_state.py:847 | probe_airplay_readiness | HTTP/socket | HTTP/socket/network request/NETWORK | device.ip_address | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/routers/research_state.py:856 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/routers/research_state.py:917 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /sources | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/routers/research_state.py:928 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /capabilities | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/routers/research_state.py:909 | probe_airplay_readiness | HTTP/socket | HTTP/socket/network request/NETWORK | device.ip_address | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/routers/research_state.py:918 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/routers/research_state.py:979 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /sources | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/routers/research_state.py:990 | probe_airplay_readiness | HTTP/XML | SoundTouch XML request/GET | /capabilities | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/routers/setup.py:297 | _source_bootstrap_readiness | HTTP/socket | HTTP/socket/network request/NETWORK | device.ip_address | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/routers/setup.py:299 | _source_bootstrap_readiness | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/routers/setup.py:303 | _source_bootstrap_readiness | HTTP/XML | SoundTouch XML request/GET | /sources | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
@@ -240,19 +240,19 @@ Coordinator-Fundstellen: 3
 | basswiesn/app/services/live_radio_reconnect.py:336 | _run_locked | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/live_radio_reconnect.py:346 | _run_locked | HTTP/XML | SoundTouch XML request/GET | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/logo_validation.py:85 | probe_logo_reference | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | nein/unklar | sichtbar | unklar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
-| basswiesn/app/services/maintenance_reboot.py:50 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:50 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:50 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /getZone | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:50 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /presets | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:147 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:163 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:173 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /select | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:178 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:181 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:184 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:185 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:189 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
-| basswiesn/app/services/maintenance_reboot.py:191 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:51 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:51 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:51 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /getZone | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:51 | capture_reboot_snapshot | HTTP/XML | SoundTouch XML request/GET | /presets | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:148 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:164 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:174 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /select | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:179 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:182 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:185 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:186 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /volume | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:190 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/WRITE | /key | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/maintenance_reboot.py:192 | run_maintenance_reboot | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/network_security.py:54 | _resolve | HTTP/socket | HTTP/socket/network request/NETWORK | socket.getaddrinfo | nein | ja | unklar | unklar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/offline_preflight.py:65 | probe_stream_reference | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | nein/unklar | sichtbar | unklar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/playback_keepalive.py:703 | readback | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
@@ -261,6 +261,9 @@ Coordinator-Fundstellen: 3
 | basswiesn/app/services/playback_keepalive.py:733 | provider_refresh | HTTP/XML | SoundTouch XML request/GET | /serviceAvailability | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/playback_keepalive.py:779 | recovered | HTTP/XML | SoundTouch XML request/GET | /now_playing | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/playback_keepalive.py:1015 | _read_endpoint | HTTP/XML | SoundTouch XML request/GET | endpoint | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/radio_reboots.py:139 | __init__ | HTTP/socket | HTTP/socket/network request/NETWORK | target.ip_address | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/radio_reboots.py:145 | identity | HTTP/XML | SoundTouch XML request/GET | /info | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
+| basswiesn/app/services/radio_reboots.py:158 | read | HTTP/XML | SoundTouch XML request/GET | path | ja | ja | sichtbar | sichtbar | sichtbar | DeviceInteractionCoordinator mit zentralem Policy-Check |
 | basswiesn/app/services/research_runtime.py:538 | _post_report | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | ja | sichtbar | sichtbar | sichtbar | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/setup_rebuild/cli17000.py:133 | _send_fixed | HTTP/socket | HTTP/socket/network request/NETWORK | asyncio.open_connection | nein | nein/unklar | sichtbar | sichtbar | sichtbar | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/setup_rebuild/cli17000.py:198 | _send_fixed_batch | HTTP/socket | HTTP/socket/network request/NETWORK | asyncio.open_connection | nein | nein/unklar | sichtbar | sichtbar | sichtbar | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
@@ -502,6 +505,7 @@ Coordinator-Fundstellen: 3
 | basswiesn/app/services/ssdp_discovery.py:562 | discover_ssdp | SSDP/UDP | SSDP discovery/DISCOVERY | item.to_dict | nein | ja | sichtbar | sichtbar | sichtbar | SSDP-/Discovery-Service mit Schutz- und URL-Validierung |
 | basswiesn/app/services/ssdp_discovery.py:562 | discover_ssdp | SSDP/UDP | SSDP discovery/DISCOVERY | deduped.values | nein | ja | sichtbar | sichtbar | sichtbar | SSDP-/Discovery-Service mit Schutz- und URL-Validierung |
 | basswiesn/app/services/ssdp_discovery.py:566 | manual_discovery_test | SSDP/UDP | SSDP discovery/DISCOVERY | discover_ssdp | nein | ja | sichtbar | sichtbar | sichtbar | SSDP-/Discovery-Service mit Schutz- und URL-Validierung |
+| basswiesn/app/services/station_metadata.py:171 | probe_icy | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | ja | sichtbar | sichtbar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/stream_compat.py:188 | resolve_stream_url | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | nein/unklar | sichtbar | sichtbar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/stream_compat.py:257 | probe_stream_reachability | HTTP/socket | HTTP/socket/network request/NETWORK | httpx.AsyncClient | nein | nein/unklar | sichtbar | sichtbar | nein | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |
 | basswiesn/app/services/telnet_device_control.py:267 | _send_telnet_command | HTTP/socket | HTTP/socket/network request/NETWORK | asyncio.open_connection | nein | ja | sichtbar | sichtbar | sichtbar | dedizierter Netzwerk-Service mit Timeout und Zielvalidierung |

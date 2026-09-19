@@ -801,6 +801,23 @@ function renderResearchHealth() {
   if (clockEnabled) clockEnabled.checked = clock.enabled === true;
   if (clockMode) clockMode.value = clock.mode || "MISSING_TITLE";
   if (clockInterval) clockInterval.value = Math.max(60, Number(clock.interval_seconds || 60));
+  const layoutManaged = clock.managed_by_display_layout === true;
+  const clockForm = document.getElementById("clock-metadata-form");
+  if (clockForm) clockForm.querySelectorAll("input, select, button").forEach((node) => { node.disabled = layoutManaged; });
+  const clockStatus = document.getElementById("clock-metadata-status");
+  if (clockStatus && layoutManaged) {
+    const german = (state.systemSettings?.web_language || document.documentElement.lang) === "de";
+    const link = document.createElement("a");
+    link.href = `/remote/${encodeURIComponent(state.researchHealth.deviceId)}`;
+    link.textContent = german ? "Radioanzeige in der Fernbedienung öffnen" : "Open radio display in the remote";
+    clockStatus.replaceChildren(document.createTextNode(german
+      ? "Uhrzeit und Reihenfolge werden gemeinsam in der Radioanzeige gespeichert. "
+      : "Time and field order are saved together in the radio display layout. "), link);
+    clockStatus.dataset.layoutManaged = "true";
+  } else if (clockStatus?.dataset.layoutManaged) {
+    clockStatus.replaceChildren();
+    delete clockStatus.dataset.layoutManaged;
+  }
 
   const timelineBox = document.getElementById("diagnostics-timeline");
   const items = timeline.items || [];
@@ -1995,6 +2012,9 @@ function translateCoreUi() {
   renderSetupPreparationCopy();
   renderAboutContent();
   renderFirstRunWarning();
+  document.querySelectorAll("[data-radio-reboot-link]").forEach((node) => { node.textContent = uiCopy("Radios neu starten", "Radio restarts"); });
+  const rebootHelp = document.getElementById("legacy-reboot-help");
+  if (rebootHelp) rebootHelp.textContent = uiCopy("Die alte LAB-Recovery bleibt manuell. Unter Radios neu starten gibt es geprüfte Gruppen und ausdrücklich aktivierte Zeitpläne.", "Legacy recovery is manual only. Use Radio restarts for verified batches and explicitly enabled schedules.");
 }
 
 function translateExactUiPhrases(root = document.body) {

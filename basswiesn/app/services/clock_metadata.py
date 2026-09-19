@@ -89,7 +89,7 @@ def remember_clock_projection(
     repeatedly append time to that echoed title. No independent timer or
     extra radio request is created here.
     """
-    if re.fullmatch(r"(?:.* · )?(?:[01]\d|2[0-3]):[0-5]\d", rendered) is None:
+    if re.fullmatch(r"(?:.* )?(?:[01]\d|2[0-3]):[0-5]\d", rendered) is None:
         return
     prefix = rendered[:-5]
     key = _projection_key(device_id)
@@ -116,7 +116,9 @@ def is_clock_projection_echo(
     """Recognize only a projection generated for this exact device/selection."""
     if not isinstance(track, str) or not station_id:
         return False
-    if re.fullmatch(r"(?:.* · )?(?:[01]\d|2[0-3]):[0-5]\d", track) is None:
+    # Also accepts already-sent 2.6.0 dotted projections. A suffix alone is
+    # never enough: the exact device/selection/prefix must have been recorded.
+    if re.fullmatch(r"(?:.* )?(?:[01]\d|2[0-3]):[0-5]\d", track) is None:
         return False
     row = db.query(RuntimeState).filter(RuntimeState.key == _projection_key(device_id)).one_or_none()
     try:

@@ -283,8 +283,10 @@ def test_clock_metadata_default_on_outside_lab_with_explicit_off_and_minimum_60(
     assert enabled.json()["mode"] == "APPEND"
     assert enabled.json()["experimental"] is False
     assert projected.json()["askAgainAfter"] == 60
-    assert projected.json()["track"].startswith("Research FM · ")
-    assert lab_off.json()["track"].startswith("Research FM · ")
+    assert projected.json()["track"].startswith("Research FM ")
+    assert lab_off.json()["track"].startswith("Research FM ")
+    assert "·" not in projected.json()["track"]
+    assert "·" not in lab_off.json()["track"]
     assert disabled.status_code == 200
     assert clock_off.json()["track"] == "Research FM"
 

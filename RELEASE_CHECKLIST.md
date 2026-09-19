@@ -1,20 +1,20 @@
-# BASSWIESN 2.6.0 Release Checklist
+# BASSWIESN 2.6.5 Release Checklist
 
 Do not push, tag or create a GitHub release while a critical gate is failed or
 unverified. Unverified feature-specific hardware
 checks require explicit project-owner acceptance and a public limitation; never
 mark them passed. A green unit suite alone is not hardware validation.
 
-For 2.6.0, the owner approved publication with audible reconnect, physical
-title-clock display and remote quick-group hardware checks deferred. These checks
-were not performed under an absolute volume ceiling that the firmware cannot
-guarantee. Reconnect is off by default. Privacy, protected-device, software,
-package and installation gates are not waived. See the release notes.
+For 2.6.5, display metadata and two-radio reboot observations are separate from
+software tests. Native firmware can change boot/group volume; capture and report
+that result. Reconnect and restart schedules remain off by default. No blanket
+long-run stability or universal display-layout claim is permitted. Privacy,
+protected-device, software, package and installation gates are never waived.
 
 ## 1. Source and version
 
 - [ ] `git status` contains only reviewed release changes.
-- [ ] Backend, Web UI, package and documentation report `2.6.0`.
+- [ ] Backend, Web UI, package and documentation report `2.6.5`.
 - [ ] `git diff --check` passes.
 - [ ] No runtime database, logs, `.env`, secrets, private keys, hardware
       backups, research source material or test artifacts are publishable.
@@ -134,7 +134,7 @@ tools/package_release.sh
 
 Expected public assets:
 
-- `dist/basswiesn-docker-release-2.6.0.tar.gz`
+- `dist/basswiesn-docker-release-2.6.5.tar.gz`
 - `dist/SHA256SUMS`
 
 - [ ] Archive ownership, order and timestamps are reproducible.
@@ -153,7 +153,7 @@ Extract the archive into an empty temporary directory and act as a new user:
 - [ ] Compose configuration validates.
 - [ ] Container runs non-root and becomes healthy.
 - [ ] Database and migrations initialize from empty state.
-- [ ] Web UI reports version `2.6.0`.
+- [ ] Web UI reports version `2.6.5`.
 - [ ] Setup entry is visible on desktop and mobile.
 - [ ] Page load performs no discovery or radio probe.
 - [ ] Discovery starts only after visible user action.
@@ -170,8 +170,8 @@ force-push, remove earlier releases or lose the dual-stack fix.
 - [ ] Final assets and checksums are stored separately.
 - [ ] A publishable-source staging tree contains no private/internal artifacts.
 - [ ] The existing public repository receives the reviewed release commit:
-      `BASSWIESN 2.6.0` on `main`, preserving previous history.
-- [ ] Tag `v2.6.0` points to that commit.
+      `BASSWIESN 2.6.5` on `main`, preserving previous history.
+- [ ] Tag `v2.6.5` points to that commit.
 - [ ] English release notes use no unsupported claim.
 
 ## 10. Validation from GitHub

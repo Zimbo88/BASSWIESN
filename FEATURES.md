@@ -1,4 +1,4 @@
-# BASSWIESN 2.6.0 Feature Status
+# BASSWIESN 2.6.5 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
@@ -108,7 +108,31 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - optional local time in the playback title, enabled for new preferences,
   preserving existing opt-outs and canonical song metadata; no preset rewrite
 - track/artist availability depends on supplied metadata; no universal live
-  ICY song-information collector is claimed
+  song metadata is guaranteed
+- opt-in, bounded ICY extraction for compatible public streams with guarded
+  DNS/redirect handling, per-station caching and backoff
+- any combination of station, artist, title, local time and other station
+  information, ordered individually in the radio's title line
+- preview/edit/save/read-back; missing information omitted and long fields
+  shortened without removing a selected clock
+- no separator dot before the clock; native header/font/scrolling remain
+  firmware-controlled
+
+### Explicit radio restarts
+
+- one or multiple selected radios; never the protected devices
+- current identity and exact model/firmware profile, full required readbacks,
+  routing backup and verified SHA256 before any command in the batch
+- fixed researched reboot command, maximum four concurrent dispatches
+- per-radio return/read-back, explicit differences and no fake all-green state
+- firmware may change boot volume or the source registry; before/after values
+  are shown, not silently overwritten
+- no playback resume, volume write or factory reset
+- optional weekdays/time/timezone schedule, off by default, standby-only,
+  no active group, no catch-up and no duplicate/replayed occurrence
+- missing required backup or an unavailable device blocks the whole batch
+- reboot backups remain private; a full 512 MiB budget blocks new jobs until
+  the operator exports/reviews existing backups
 
 ### Multiroom
 
@@ -129,6 +153,12 @@ BASSWIESN does not configure computer or radio Wi-Fi.
 - request and master logs with secret redaction
 - firmware/capability profiles and AirPlayReadiness evidence
 - retention and cleanup jobs
+- parent-only schema initialization before child services start
+- a failed required service terminates its siblings so Docker can restart the
+  whole application; readiness checks WebGUI, cloud and diagnostics separately
+- optional systemd host observer: minute samples, CPU/RAM/process/container/log
+  evidence, fourteen-day rolling retention, 1 GiB budget and 512 MiB free reserve
+- observer is host-only, does not query radios and never repairs/reboots services
 
 ## Diagnostic only
 

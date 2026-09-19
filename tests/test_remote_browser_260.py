@@ -28,12 +28,18 @@ def test_remote_human_flow_without_radio_contacts(tmp_path, language, width, hei
               {"device_id": "OFFLINE", "name": "Offline", "reachable": False}]
 
     reconnect_preference = {"enabled": False, "state": "IDLE"}
+    field_order = ["station", "artist", "title", "clock", "other"]
+    display_preference = {"mode": "STATION", "show_other_info": False, "fields": ["station", "clock"], "field_order": field_order}
 
     def handler(route):
         request = route.request
         path = urlparse(request.url).path
         body = request.post_data_json if request.method in {"POST", "PUT"} else None
         calls.append((request.method, path, body))
+        if path == "/api/devices/REMOTE-A/metadata/display":
+            if request.method == "PUT":
+                display_preference.update(body)
+            return route.fulfill(json=display_preference)
         if path == "/api/devices/REMOTE-A/live-reconnect":
             if request.method == "PUT":
                 reconnect_preference.update(body)
@@ -75,14 +81,55 @@ def test_remote_human_flow_without_radio_contacts(tmp_path, language, width, hei
         expect(page.locator("#remote-safe-start-field")).not_to_be_visible()
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
         assert page.evaluate("window.BAD") is None
-        expect(page.locator("#remote-clock")).to_be_enabled()
-        expect(page.locator("#remote-clock")).to_be_checked()
+        expect(page.locator("#remote-display-clock")).to_be_enabled()
+        expect(page.locator("#remote-display-clock")).to_be_checked()
         assert not [call for call in calls if call[0] in {"POST", "PUT"}]
-        page.locator("#remote-clock").uncheck()
-        expect(page.locator("#remote-clock")).to_be_enabled()
-        expect(page.locator("#remote-clock")).not_to_be_checked()
-        assert [call for call in calls if call[0] == "PUT"][-1][2] == {"enabled": False, "mode": "APPEND", "interval_seconds": 60}
-        assert calls[-1][:2] == ("GET", "/api/devices/REMOTE-A/metadata/clock")
+        expect(page.locator("#remote-display-artist")).not_to_be_checked()
+        expect(page.locator("#remote-display-title")).not_to_be_checked()
+        expect(page.locator("#remote-display-other")).not_to_be_checked()
+        page.locator("#remote-display-artist").check()
+        page.locator("#remote-display-title").check()
+        page.locator("#remote-display-other").check()
+        for _ in range(3):
+            page.locator('[data-field="clock"][data-move="up"]').click()
+        assert not [call for call in calls if call[0] in {"POST", "PUT"}], "editing is only a draft"
+        expect(page.locator("#remote-display-preview")).to_have_text(
+            "20:15 — Beispielsender — Beispielinterpret — Beispieltitel — Senderhinweis" if language == "de" else
+            "20:15 — Example Station — Example Artist — Example Song — Station information")
+        expected_order = ["clock", "station", "artist", "title", "other"]
+        page.locator("#remote-display-save").click()
+        expect(page.locator("#remote-display-station")).to_be_enabled()
+        expect(page.locator("#remote-display-save")).to_be_disabled()
+        assert display_preference["mode"] == "CUSTOM"
+        assert display_preference["fields"] == display_preference["field_order"] == expected_order
+        assert calls[-1][:2] == ("GET", "/api/devices/REMOTE-A/metadata/display")
+        # Persist/reload the actual browser view: no implicit writes.
+        writes_before = len([call for call in calls if call[0] in {"POST", "PUT"}])
+        page.reload()
+        expect(page.locator("#remote-display-clock")).to_be_enabled()
+        assert page.locator(".remote-display-row").first.get_attribute("data-field") == "clock"
+        assert len([call for call in calls if call[0] in {"POST", "PUT"}]) == writes_before
+        # Exercise all32 field combinations with real controls on one mobile
+        # viewport; every save is a single preference PUT followed by GET.
+        if language == "de" and width == 390:
+            for mask in range(32):
+                for index, field in enumerate(field_order):
+                    page.locator(f"#remote-display-{field}").set_checked(bool(mask & (1 << index)))
+                if page.locator("#remote-display-save").is_enabled():
+                    page.locator("#remote-display-save").click()
+                    expect(page.locator("#remote-display-station")).to_be_enabled()
+                    expect(page.locator("#remote-display-save")).to_be_disabled()
+                expected_fields = [field for field in expected_order if mask & (1 << field_order.index(field))]
+                assert display_preference["fields"] == expected_fields
+                assert display_preference["field_order"] == expected_order
+            # Disabled fields retain their position in the next layout.
+            page.locator("#remote-display-clock").uncheck()
+            page.locator('[data-field="clock"][data-move="down"]').click()
+            page.locator("#remote-display-save").click()
+            expect(page.locator("#remote-display-station")).to_be_enabled()
+            expect(page.locator("#remote-display-save")).to_be_disabled()
+            assert "clock" not in display_preference["fields"]
+            assert display_preference["field_order"][1] == "clock"
         expect(page.locator("#remote-reconnect")).not_to_be_checked()
         page.locator("#remote-reconnect").check()
         expect(page.locator("#remote-reconnect")).to_be_enabled()

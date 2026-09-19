@@ -75,6 +75,14 @@ button {
 .safe-start-panel label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .safe-start-panel input[type="number"] { width: 76px; min-height: 38px; border: 1px solid var(--line); border-radius: 8px; background: #121820; color: var(--text); padding: 6px 9px; }
 .safe-start-panel small { color: var(--muted); }
+#remote-display-heading { margin: 0; font-size: 18px; }
+#remote-display-fields { margin: 0; padding: 0; min-width: 0; border: 0; }
+#remote-display-fields legend { margin-bottom: 8px; color: var(--muted); }
+.remote-display-row { display: grid; grid-template-columns: minmax(0, 1fr) 44px 44px; align-items: center; gap: 6px; padding: 3px 0; }
+.remote-display-row label { justify-content: flex-start; min-height: 44px; }
+.remote-display-row button { min-height: 44px; padding: 4px; }
+.remote-display-row input { flex-shrink: 0; }
+#remote-display-preview { display: block; padding: 10px; border: 1px solid var(--line); border-radius: 8px; line-height: 1.6; overflow-wrap: anywhere; }
 #remote-now { color: var(--text); line-height: 1.45; overflow-wrap: anywhere; }
 #remote-battery { margin-top: 8px; color: var(--ok); }
 .volume-panel {

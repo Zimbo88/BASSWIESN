@@ -51,7 +51,7 @@ def seeded():
 def test_clock_timezone_dst_and_midnight_do_not_duplicate_artist(instant, expected):
     original = MetadataSnapshot(track="Song", artist="Artist")
     rendered = clock_display_projection(original, mode=ClockMetadataMode.APPEND, now=instant, timezone=ZoneInfo("Europe/Berlin"))
-    assert rendered == f"Song · {expected}"
+    assert rendered == f"Song {expected}"
     assert original.track == "Song"
     assert original.artist == "Artist"
 
@@ -82,7 +82,7 @@ def test_projection_keeps_real_fields_and_reporting_uses_same_payload(seeded, mo
         db.commit()
         raw = db.query(MetadataState).one()
         assert (raw.track, raw.artist, raw.album) == ("Song", "Artist", "Album")
-        assert payload["track"] == "Song · 20:15"
+        assert payload["track"] == "Song 20:15"
         assert payload["artist"] == "Artist"
         assert is_clock_projection_echo(db, "CLOCK-A", "station-a", payload["track"])
         assert not is_clock_projection_echo(db, "CLOCK-A", "station-b", payload["track"])
@@ -90,7 +90,17 @@ def test_projection_keeps_real_fields_and_reporting_uses_same_payload(seeded, mo
         save_clock_metadata_preference(db, "CLOCK-A", enabled=False, mode="APPEND")
         assert cloud._orion_now_playing_payload(db, device, "station-a")["track"] == "Song"
         # Disabling must still recognize already-sent, late display readbacks.
-        assert is_clock_projection_echo(db, "CLOCK-A", "station-a", "Song · 20:14")
+        assert is_clock_projection_echo(db, "CLOCK-A", "station-a", "Song 20:14")
+
+
+def test_dot_removal_keeps_previous_projection_echoes_safe(seeded):
+    with seeded() as db:
+        remember_clock_projection(db, "CLOCK-A", "station-a", "Song · 20:15")
+        remember_clock_projection(db, "CLOCK-A", "station-a", "Song 20:16")
+        db.commit()
+        assert is_clock_projection_echo(db, "CLOCK-A", "station-a", "Song · 20:17")
+        assert is_clock_projection_echo(db, "CLOCK-A", "station-a", "Song 20:17")
+        assert not is_clock_projection_echo(db, "CLOCK-A", "station-a", "Other 20:17")
 
 
 def test_projection_memory_is_bounded_and_minute_rollover_does_not_add_rows(seeded):

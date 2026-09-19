@@ -221,7 +221,7 @@ def clock_display_projection(
         return track or clock
     if track:
         # Artist remains in its own protocol field, not duplicated in track.
-        return f"{track} · {clock}"
+        return f"{track} {clock}"
     return clock
 
 

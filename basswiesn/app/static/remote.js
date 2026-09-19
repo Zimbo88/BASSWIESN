@@ -8,6 +8,7 @@ const safeStartField = byId("remote-safe-start-field");
 const safeStartVolume = byId("remote-safe-start-volume");
 const messages = {
   en: {
+    reboots: "Radio restarts",
     home: "Home", loading: "Loading…", refresh: "Refresh", safeStart: "Safe start volume",
     volumeBefore: "Volume before playback", safeHelp: "Off keeps the radio's current volume. On verifies this value before playback.",
     previous: "Previous", next: "Next", playPause: "Play / pause", stop: "Stop", mute: "Mute", power: "Power",
@@ -21,10 +22,15 @@ const messages = {
     confirmGroup: "Share the current playback with these radios?", unverified: "Group not confirmed by every selected radio.",
     playing: "Playing", paused: "Paused", stopped: "Stopped", buffering: "Buffering", standby: "Standby",
     unknown: "Unknown", invalid: "Source unavailable", volume: "Volume", station: "Station", preset: "Preset",
-    clock: "Time in playback title",
-    clockHelp: "For BASSWIESN internet radio, add time to the title line. Other sources and the radio's native standby clock are unchanged.",
+    displayHeading: "Radio display", displayFields: "Fields and order",
+    displayHelp: "Choose the fields and their order on the radio. Missing station data is skipped; it is never invented.",
+    displayStation: "Station name", displayArtist: "Artist", displayTitle: "Song title", displayClock: "Time", displayOther: "Other station information",
+    displayUp: "Move up", displayDown: "Move down", displaySave: "Save display",
+    displayPreview: "Example preview (not live data)", displayEmpty: "No additional title text. The radio may still show its native station header.",
+    exampleStation: "Example Station", exampleArtist: "Example Artist", exampleTitle: "Example Song", exampleOther: "Station information",
     clockSaved: "Display preference saved. It takes effect with the next metadata update; no playback restart is needed.",
     clockUnavailable: "The display preference could not be loaded. Playback controls remain available.",
+    metadataHelp: "For BASSWIESN internet radio only. Selected fields share the title line; the radio controls its native station header, font and scrolling. Long fields are shortened. No source, preset or volume changes. Stream checks at most once a minute per station.",
     reconnect: "Reconnect live radio after stream end",
     reconnectHelp: "Opt in, then start a station. Reconnect only after confirmed unexpected stream end, never from standby or in a group. No volume commands.",
     reconnectSaved: "Reconnect preference saved. Applies to the next manually started internet-radio session.",
@@ -32,6 +38,7 @@ const messages = {
     groupVolumes: "Group volume readback", unchanged: "unchanged", changedByFirmware: "changed by firmware",
   },
   de: {
+    reboots: "Radios neu starten",
     home: "Startseite", loading: "Wird geladen…", refresh: "Aktualisieren", safeStart: "Sichere Startlautstärke",
     volumeBefore: "Lautstärke vor der Wiedergabe", safeHelp: "Aus lässt die aktuelle Radiolautstärke unverändert. Ein setzt und prüft diesen Wert vor der Wiedergabe.",
     previous: "Zurück", next: "Weiter", playPause: "Wiedergabe / Pause", stop: "Stopp", mute: "Stumm", power: "Ein / Standby",
@@ -45,10 +52,15 @@ const messages = {
     confirmGroup: "Die aktuelle Wiedergabe mit diesen Radios teilen?", unverified: "Gruppe nicht von allen ausgewählten Radios bestätigt.",
     playing: "Wiedergabe läuft", paused: "Pausiert", stopped: "Gestoppt", buffering: "Wird gepuffert", standby: "Standby",
     unknown: "Unbekannt", invalid: "Quelle nicht verfügbar", volume: "Lautstärke", station: "Sender", preset: "Preset",
-    clock: "Uhrzeit in der Titelzeile",
-    clockHelp: "Bei BASSWIESN-Internetradio die Uhrzeit in der Titelzeile ergänzen. Andere Quellen und die eingebaute Standby-Uhr bleiben unverändert.",
+    displayHeading: "Radioanzeige", displayFields: "Angaben und Reihenfolge",
+    displayHelp: "Wähle die Angaben und ihre Reihenfolge auf dem Radio. Fehlende Senderdaten werden ausgelassen und nicht erfunden.",
+    displayStation: "Sendername", displayArtist: "Interpret", displayTitle: "Songtitel", displayClock: "Uhrzeit", displayOther: "Sonstige Senderinformationen",
+    displayUp: "Nach oben", displayDown: "Nach unten", displaySave: "Anzeige speichern",
+    displayPreview: "Beispielvorschau (keine Live-Daten)", displayEmpty: "Kein zusätzlicher Titeltext. Die eingebaute Senderzeile kann weiterhin sichtbar sein.",
+    exampleStation: "Beispielsender", exampleArtist: "Beispielinterpret", exampleTitle: "Beispieltitel", exampleOther: "Senderhinweis",
     clockSaved: "Anzeigeeinstellung gespeichert. Sie gilt ab der nächsten Metadatenaktualisierung; kein Wiedergabeneustart nötig.",
     clockUnavailable: "Die Anzeigeeinstellung konnte nicht geladen werden. Die Fernbedienung bleibt verfügbar.",
+    metadataHelp: "Nur für BASSWIESN-Internetradio. Ausgewählte Angaben stehen gemeinsam in der Titelzeile; die eingebaute Senderzeile, Schrift und Laufschrift bestimmt das Radio. Lange Angaben werden gekürzt. Keine Sender-, Preset- oder Lautstärkeänderung. Streamprüfung höchstens einmal pro Minute und Sender.",
     reconnect: "Live-Radio nach Streamende neu verbinden",
     reconnectHelp: "Einschalten, dann einen Sender starten. Neuverbindung nur nach bestätigtem unerwartetem Streamende, nie aus Standby oder in einer Gruppe. Keine Lautstärkebefehle.",
     reconnectSaved: "Neuverbindungseinstellung gespeichert. Sie gilt für die nächste manuell gestartete Internetradio-Sitzung.",
@@ -60,13 +72,20 @@ let language = "en";
 let devices = [];
 let busy = false;
 let volumeKnown = false;
-let clockPreference = null;
 let reconnectPreference = null;
+let displayPreference = null;
+let displayDraft = null;
+const displayFieldOrder = ["station", "artist", "title", "clock", "other"];
+const displayLabels = { station: "displayStation", artist: "displayArtist", title: "displayTitle", clock: "displayClock", other: "displayOther" };
+function displayPayload() {
+  return { mode: "CUSTOM", fields: displayDraft.field_order.filter((field) => displayDraft.fields.includes(field)), field_order: [...displayDraft.field_order] };
+}
 const t = (key) => messages[language][key];
 const path = (suffix) => `/api/devices/${encodeURIComponent(deviceId)}/${suffix}`;
 function details(value) { byId("remote-output").textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2); }
 function message(key) { byId("remote-message").textContent = key ? t(key) : ""; }
 function localize() {
+  byId("remote-reboots").href = `/reboots?device=${encodeURIComponent(deviceId)}`;
   document.documentElement.lang = language;
   document.querySelectorAll("[data-remote-text]").forEach((node) => { node.textContent = t(node.dataset.remoteText); });
   volume.setAttribute("aria-label", t("volume"));
@@ -89,8 +108,14 @@ function setVolumeLabel() { byId("remote-volume-label").textContent = volumeKnow
 function updateControls() {
   shell.querySelectorAll("button").forEach((node) => { node.disabled = busy; });
   volume.disabled = busy || !volumeKnown;
-  byId("remote-clock").disabled = busy || clockPreference === null;
   byId("remote-reconnect").disabled = busy || reconnectPreference === null;
+  byId("remote-display-fields").disabled = busy || displayDraft === null;
+  byId("remote-display-save").disabled = busy || displayDraft === null || displayPreference === null || (
+    JSON.stringify(displayPayload()) === JSON.stringify({ mode: "CUSTOM", fields: displayPreference.fields, field_order: displayPreference.field_order }));
+  byId("remote-display-rows").querySelectorAll("[data-move]").forEach((node) => {
+    const index = displayDraft?.field_order.indexOf(node.dataset.field);
+    node.disabled = busy || displayDraft === null || (node.dataset.move === "up" ? index === 0 : index === 4);
+  });
   shell.querySelectorAll("[data-volume-step]").forEach((node) => { node.disabled = busy || !volumeKnown; });
   byId("remote-multiroom-start").disabled = busy || !byId("remote-members").querySelector("input:checked");
 }
@@ -197,17 +222,85 @@ safeStartEnabled.addEventListener("change", () => {
   try { localStorage.setItem(`basswiesn_remote_safe_start_${deviceId}`, String(safeStartEnabled.checked)); } catch { /* Storage can be unavailable. */ }
 });
 byId("remote-refresh").addEventListener("click", () => run(async () => { details(await readState()); message(""); }));
-function showClockPreference(value) {
-  if (typeof value.enabled !== "boolean" || !["OFF", "MISSING_TITLE", "APPEND"].includes(value.mode)) throw new Error("invalid_clock_preference");
-  clockPreference = value;
-  byId("remote-clock").checked = value.enabled && value.mode !== "OFF";
-  byId("remote-clock-help").textContent = `${t("clockHelp")} ${value.timezone || ""}`.trim();
-}
 function showReconnectPreference(value) {
   if (typeof value.enabled !== "boolean") throw new Error("invalid_reconnect_preference");
   reconnectPreference = value;
   byId("remote-reconnect").checked = value.enabled;
 }
+function showDisplayPreference(value) {
+  if (!["STATION", "TRACK_ARTIST", "CUSTOM"].includes(value.mode)
+      || !Array.isArray(value.fields) || !Array.isArray(value.field_order)
+      || new Set(value.fields).size !== value.fields.length || value.fields.some((field) => !displayFieldOrder.includes(field))
+      || value.field_order.length !== 5 || new Set(value.field_order).size !== 5
+      || value.field_order.some((field) => !displayFieldOrder.includes(field))) throw new Error("invalid_display_preference");
+  displayPreference = value;
+  displayDraft = { fields: [...value.fields], field_order: [...value.field_order] };
+  renderDisplayFields();
+}
+
+function showDisplayPreview() {
+  const values = { station: t("exampleStation"), artist: t("exampleArtist"), title: t("exampleTitle"), clock: "20:15", other: t("exampleOther") };
+  let preview = "";
+  for (const field of displayDraft.field_order) {
+    if (!displayDraft.fields.includes(field)) continue;
+    preview += (preview ? (field === "clock" ? " " : " — ") : "") + values[field];
+  }
+  byId("remote-display-preview").textContent = preview || t("displayEmpty");
+}
+function renderDisplayFields() {
+  const rows = byId("remote-display-rows");
+  rows.replaceChildren();
+  for (const field of displayDraft.field_order) {
+    const row = document.createElement("div");
+    row.className = "remote-display-row";
+    row.dataset.field = field;
+    const label = document.createElement("label");
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.id = `remote-display-${field}`;
+    input.checked = displayDraft.fields.includes(field);
+    input.addEventListener("change", () => {
+      displayDraft.fields = displayDraft.field_order.filter((item) => item === field ? input.checked : displayDraft.fields.includes(item));
+      showDisplayPreview(); updateControls(); message("");
+    });
+    label.append(input, document.createTextNode(t(displayLabels[field])));
+    row.append(label);
+    for (const direction of ["up", "down"]) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.move = direction;
+      button.dataset.field = field;
+      button.textContent = direction === "up" ? "↑" : "↓";
+      button.setAttribute("aria-label", `${t(displayLabels[field])}: ${t(direction === "up" ? "displayUp" : "displayDown")}`);
+      button.addEventListener("click", () => {
+        const index = displayDraft.field_order.indexOf(field);
+        const next = index + (direction === "up" ? -1 : 1);
+        if (next < 0 || next >= 5) return;
+        [displayDraft.field_order[index], displayDraft.field_order[next]] = [displayDraft.field_order[next], displayDraft.field_order[index]];
+        renderDisplayFields(); updateControls(); message("");
+        const moved = rows.querySelector(`[data-field="${field}"][data-move="${direction}"]`);
+        (moved.disabled ? byId(`remote-display-${field}`) : moved).focus();
+      });
+      row.append(button);
+    }
+    rows.append(row);
+  }
+  showDisplayPreview();
+}
+byId("remote-display-save").addEventListener("click", () => run(async () => {
+  const payload = displayPayload();
+  try {
+    await request(path("metadata/display"), payload, "PUT");
+    const saved = await request(path("metadata/display"));
+    showDisplayPreference(saved);
+    if (saved.mode !== "CUSTOM" || JSON.stringify(displayPayload()) !== JSON.stringify(payload)) throw new Error("display_preference_readback_mismatch");
+    message("clockSaved");
+  } catch (error) {
+    try { showDisplayPreference(await request(path("metadata/display"))); }
+    catch { displayPreference = null; displayDraft = null; }
+    throw error;
+  }
+}));
 byId("remote-reconnect").addEventListener("change", () => run(async () => {
   const enabled = byId("remote-reconnect").checked;
   try {
@@ -219,22 +312,6 @@ byId("remote-reconnect").addEventListener("change", () => run(async () => {
   } catch (error) {
     try { showReconnectPreference(await request(path("live-reconnect"))); }
     catch { reconnectPreference = null; byId("remote-reconnect").checked = false; }
-    throw error;
-  }
-}));
-byId("remote-clock").addEventListener("change", () => run(async () => {
-  const enabled = byId("remote-clock").checked;
-  try {
-    await request(path("metadata/clock"), { enabled, mode: "APPEND", interval_seconds: 60 }, "PUT");
-    const saved = await request(path("metadata/clock"));
-    showClockPreference(saved);
-    if (saved.enabled !== enabled || saved.mode !== "APPEND") throw new Error("clock_preference_readback_mismatch");
-    message("clockSaved");
-  } catch (error) {
-    // The write may have reached the server even if its response was lost.
-    // Show readback if available; otherwise disable the indeterminate control.
-    try { showClockPreference(await request(path("metadata/clock"))); }
-    catch { clockPreference = null; byId("remote-clock").checked = false; }
     throw error;
   }
 }));
@@ -286,8 +363,8 @@ run(async () => {
   }
   details(await readState());
   message("");
-  try { showClockPreference(await request(path("metadata/clock"))); }
-  catch (error) { message("clockUnavailable"); details(error.detail || String(error)); }
   try { showReconnectPreference(await request(path("live-reconnect"))); }
   catch (error) { message("reconnectUnavailable"); details(error.detail || String(error)); }
+  try { showDisplayPreference(await request(path("metadata/display"))); }
+  catch (error) { message("clockUnavailable"); details(error.detail || String(error)); }
 });

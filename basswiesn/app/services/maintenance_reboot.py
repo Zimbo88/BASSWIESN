@@ -15,13 +15,14 @@ from basswiesn.app.services.action_journal import record_action
 from basswiesn.app.services.action_preflight import action_preflight, port_open
 from basswiesn.app.services.playback_state import close_open_sessions, confirm_playback_session, is_confirmed_playing
 from basswiesn.app.services.protected_devices import require_unprotected_device
+from basswiesn.app.services.device_policy import device_lock
 
 
 _locks: dict[str, asyncio.Lock] = {}
 
 
 def _lock(device_id: str) -> asyncio.Lock:
-    return _locks.setdefault(device_id, asyncio.Lock())
+    return device_lock(device_id)
 
 
 def maintenance_reboot_lab_enabled(db) -> bool:

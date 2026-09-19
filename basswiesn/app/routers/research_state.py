@@ -14,7 +14,7 @@ from xml.etree import ElementTree as ET
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import FileResponse, RedirectResponse
-from pydantic import BaseModel, Field, StrictBool, StrictInt
+from pydantic import BaseModel, Field, StrictBool, StrictInt, model_validator
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
@@ -585,9 +585,15 @@ async def clock_metadata_preference(
     device_id: str, db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     device_or_404(db, device_id)
+    from basswiesn.app.services.station_metadata import load_display_preference
+    display = load_display_preference(db, device_id)
+    clock = load_clock_metadata_preference(db, device_id).as_dict()
+    if display.mode == "CUSTOM":
+        clock.update(enabled="clock" in (display.fields or ()), mode="APPEND", interval_seconds=60)
     return {
         "device_id": device_id,
-        **load_clock_metadata_preference(db, device_id).as_dict(),
+        **clock,
+        "managed_by_display_layout": display.mode == "CUSTOM",
         "lab_enabled": clock_metadata_lab_enabled(db),
         "label": "Show time in the playback title",
         "timezone": clock_metadata_timezone(db).key,
@@ -603,12 +609,68 @@ class ClockPreferenceUpdate(BaseModel):
     interval_seconds: StrictInt = Field(default=60, ge=60, le=86400)
 
 
+class DisplayPreferenceUpdate(BaseModel):
+    model_config = {"extra": "forbid"}
+    mode: str = Field(pattern="^(STATION|TRACK_ARTIST|CUSTOM)$")
+    show_other_info: StrictBool = False
+    fields: list[str] | None = Field(default=None, max_length=5)
+    field_order: list[str] | None = Field(default=None, max_length=5)
+
+    @model_validator(mode="after")
+    def validate_selection(self):
+        from basswiesn.app.services.station_metadata import DisplayPreference, validate_display_preference
+        if self.mode == "CUSTOM":
+            if self.fields is None or self.field_order is None:
+                raise ValueError("CUSTOM requires fields and field_order")
+            if "show_other_info" in self.model_fields_set and self.show_other_info != ("other" in self.fields):
+                raise ValueError("show_other_info conflicts with fields")
+            validate_display_preference(DisplayPreference("CUSTOM", "other" in self.fields,
+                                                         tuple(self.fields), tuple(self.field_order)))
+        elif self.fields is not None or self.field_order is not None:
+            raise ValueError("explicit fields require CUSTOM mode")
+        return self
+
+
+@router.get("/devices/{device_id}/metadata/display")
+async def display_metadata_preference(device_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
+    from basswiesn.app.services.station_metadata import load_display_preference
+    device_or_404(db, device_id)
+    clock = load_clock_metadata_preference(db, device_id)
+    preference = load_display_preference(db, device_id)
+    return {"device_id": device_id, **preference.as_public_dict(legacy_clock_enabled=clock.enabled and clock.mode != ClockMetadataMode.OFF),
+            "scope": "LOCAL_PROVIDER_METADATA", "radio_write": False,
+            "presentation": "COMPOSED_TITLE_LINE" if preference.mode == "CUSTOM" else "LEGACY_FIELDS",
+            "native_station_header": "FIRMWARE_CONTROLLED",
+            "probe_interval_seconds": 60, "hardware_validation": "OPEN"}
+
+
+@router.put("/devices/{device_id}/metadata/display")
+async def update_display_metadata_preference(device_id: str, payload: DisplayPreferenceUpdate,
+                                            db: Session = Depends(get_db)) -> dict[str, Any]:
+    from basswiesn.app.services.station_metadata import DisplayPreference, save_display_preference
+    device = device_or_404(db, device_id)
+    require_unprotected_device(device, action="display-metadata-preference")
+    if payload.mode == "CUSTOM":
+        preference = DisplayPreference("CUSTOM", "other" in payload.fields,
+                                       tuple(payload.fields), tuple(payload.field_order))
+    else:
+        preference = DisplayPreference(payload.mode, payload.show_other_info)
+    save_display_preference(db, device_id, preference)
+    return await display_metadata_preference(device_id, db)
+
+
 @router.put("/devices/{device_id}/metadata/clock")
 async def update_clock_metadata_preference(
     device_id: str, payload: ClockPreferenceUpdate, db: Session = Depends(get_db)
 ) -> dict[str, Any]:
     device = device_or_404(db, device_id)
     require_unprotected_device(device, action="clock-metadata-preference")
+    from basswiesn.app.services.station_metadata import load_display_preference
+    if load_display_preference(db, device_id).mode == "CUSTOM":
+        raise HTTPException(status_code=409, detail={
+            "error": "clock_managed_by_display_layout",
+            "message": "Change the clock field in the radio display layout; its selection and order are saved together.",
+        })
     try:
         save_clock_metadata_preference(
             db,

@@ -25,7 +25,7 @@ from basswiesn.app.services.playback_state import reconcile_open_play_history
 from basswiesn.app.services.filesystem_contract import ensure_runtime_directories
 from basswiesn.app.services.task_registry import start_owned_task, stop_owned_task
 from basswiesn.app.api import routes_devices
-from basswiesn.app.routers import api, catalogs, cloud, debug, devices, fulltest, media, multiroom, research_state, setup, setup_rebuild, stations_presets, telemetry
+from basswiesn.app.routers import api, catalogs, cloud, debug, devices, fulltest, media, multiroom, radio_reboots, research_state, setup, setup_rebuild, stations_presets, telemetry
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +53,8 @@ def _duplicate_contract_routes(app: FastAPI) -> list[dict]:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     ensure_runtime_directories(get_settings().data_dir)
-    init_db()
+    if not getattr(app.state, "database_schema_prepared", False):
+        init_db()
     duplicate_routes = _duplicate_contract_routes(app)
     if duplicate_routes:
         logger.warning("Duplicate legacy route contract remains mounted: %s", duplicate_routes)
@@ -81,7 +82,17 @@ async def lifespan(app: FastAPI):
     from basswiesn.app.services.live_radio_reconnect import LiveRadioReconnect
     reconnect = LiveRadioReconnect(lambda: SessionLocal())
     app.state.live_radio_reconnect = reconnect if app.title == "basswiesn Cloud Emulator" else None
+    from basswiesn.app.services.station_metadata import StationMetadataCollector
+    metadata_collector = StationMetadataCollector(lambda: SessionLocal())
+    app.state.station_metadata_collector = metadata_collector if app.title == "basswiesn Cloud Emulator" else None
     starts_background_tasks = bool(getattr(app.state, "starts_background_tasks", True))
+    from basswiesn.app.services.radio_reboots import RadioRebootManager
+    reboot_manager = RadioRebootManager(lambda: SessionLocal())
+    app.state.radio_reboots = reboot_manager if "WebGUI" in app.title else None
+    reboot_stop = asyncio.Event()
+    reboot_task = None
+    if app.title == "basswiesn WebGUI" and starts_background_tasks:
+        reboot_task = start_owned_task("radio_reboot_scheduler", lambda: reboot_manager.loop(reboot_stop), stop_event=reboot_stop)
     if app.title == "basswiesn WebGUI" and starts_background_tasks:
         # Rehydrate only persisted/local research state. Startup performs no
         # device discovery, radio request or provider catch-up burst.
@@ -112,6 +123,10 @@ async def lifespan(app: FastAPI):
     yield
     stop_keepalive.set()
     stop_alarm_engine.set()
+    reboot_stop.set()
+    if reboot_task:
+        await stop_owned_task("radio_reboot_scheduler")
+    await reboot_manager.shutdown()
     if keepalive_task:
         await stop_owned_task("playback_keepalive")
     if alarm_task:
@@ -124,6 +139,7 @@ async def lifespan(app: FastAPI):
             pass
     await research_runtime.shutdown()
     await reconnect.shutdown()
+    await metadata_collector.shutdown()
     _record_server_shutdown(app.title, boot_ts)
     write_masterlog("server_shutdown", service=app.title, runtime_seconds=int((datetime.now(UTC) - boot_ts).total_seconds()))
 
@@ -272,6 +288,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
     app.include_router(telemetry.router)
     app.include_router(devices.router)
     app.include_router(research_state.router)
+    app.include_router(radio_reboots.router)
 
     @app.get("/", response_class=HTMLResponse)
     async def index() -> str:
@@ -414,11 +431,12 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
               </div>
             </section>
             <section class="view" id="view-devices">
+              <div class="button-row"><a class="command" href="/reboots" data-radio-reboot-link>Radio restarts</a></div>
               <div class="page-head"><h2>Radios</h2><div class="button-row"><button class="command primary" id="scan-radios-now" type="button">Radios suchen</button><button class="command" id="reload-devices">Aktualisieren</button></div></div>
               <div id="device-scan-results" class="event-list device-scan-results" aria-live="polite"></div>
               <form class="toolbar-form easy-hidden" id="device-form"><input name="name" placeholder="Name or room"><input name="ip_address" placeholder="IP address" required><input name="model" type="hidden" value="SoundTouch"><button class="command primary" type="submit">Add radio</button></form><pre class="easy-hidden" id="device-form-output" data-i18n-static>Add saves a radio locally, then /info can fill model, firmware and device id.</pre>
               <div class="device-layout"><section class="panel"><h3>Configured radios</h3><div id="devices-cards" class="device-card-grid"></div><div class="table-scroll"><table><thead><tr><th>Name</th><th>IP</th><th>Model</th><th>Firmware</th><th>Config</th><th>Ready</th><th>Identifier</th><th>Aktion</th></tr></thead><tbody id="devices-table"></tbody></table></div></section></div>
-              <details class="panel lab-only danger-panel"><summary>Manueller LAB-Radio-Reboot</summary><p class="muted-copy">Recovery-Stufe 7 ist ausschliesslich eine bewusst gestartete LAB-Aktion. BASSWIESN plant niemals automatische Radio-Reboots.</p><div class="settings-form"><label>Radio<select id="maintenance-reboot-device" name="device_id" required></select></label><div class="button-row"><button class="command danger" id="maintenance-reboot-now" type="button">Radio manuell neu starten</button></div></div><pre id="maintenance-reboot-output">Keine Reboot-Aktion gestartet.</pre></details>
+              <details class="panel lab-only danger-panel"><summary>Manueller LAB-Radio-Reboot</summary><p class="muted-copy" id="legacy-reboot-help">Legacy recovery is manual only. Use Radio restarts for verified batches and explicitly enabled schedules.</p><a href="/reboots" data-radio-reboot-link>Radio restarts</a><div class="settings-form"><label>Radio<select id="maintenance-reboot-device" name="device_id" required></select></label><div class="button-row"><button class="command danger" id="maintenance-reboot-now" type="button">Radio manuell neu starten</button></div></div><pre id="maintenance-reboot-output">Keine Reboot-Aktion gestartet.</pre></details>
               <div class="split easy-hidden">
                 <section class="panel"><h3>Radio Info ohne SSH</h3><form id="device-info-form" class="settings-form"><label>Radio<select id="device-info-select" name="device_id" required></select></label><label class="toggle-line"><input name="dry_run" type="checkbox" checked>Preview only</label><div class="button-row"><button class="command" id="probe-device-info" type="button">Probe planen</button><button class="command" id="load-host-config" type="button">Config-Dateien lesen <span class="requires-ssh">SSH</span></button></div></form><div id="device-info-cleartext" class="event-list"></div><details><summary>Debug XML / raw plan</summary><pre id="device-info-output">Hier erscheinen /info, /capabilities, erkannter Cloud-Zielhost und der SSH-Leseplan.</pre></details></section>
                 <section class="panel"><h3>Einrichtungsstatus</h3><div class="status-legend"><span class="status-pill config-basswiesn">basswiesn</span><span class="status-pill config-bose">Bose Cloud</span><span class="status-pill config-other">anderer Dienst</span><span class="status-pill config-unknown">unbekannt</span></div><div id="device-readiness" class="event-list"></div></section>
@@ -738,8 +756,16 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
         <body>
           <main class="remote-shell" data-device-id="{safe_device_id}" data-version="{settings.version}">
             <header class="remote-header"><div><span id="remote-version">BASSWIESN Remote</span><h1 id="remote-title">Radio</h1></div><a href="/" data-remote-text="home">Home</a></header>
+            <a id="remote-reboots" href="/reboots" data-remote-text="reboots">Radio restarts</a>
             <section class="now-panel"><strong id="remote-now" data-remote-text="loading">Loading…</strong><p id="remote-track"></p><small id="remote-play-status"></small><button id="remote-refresh" type="button" data-remote-text="refresh">Refresh</button></section>
-            <section class="safe-start-panel"><label><span data-remote-text="clock">Time in playback title</span><input id="remote-clock" type="checkbox" disabled></label><small id="remote-clock-help" data-remote-text="clockHelp">For BASSWIESN internet radio, add time to the title line. Other sources and the radio's native standby clock are unchanged.</small></section>
+            <section class="safe-start-panel" aria-labelledby="remote-display-heading">
+              <h2 id="remote-display-heading" data-remote-text="displayHeading">Radio display</h2>
+              <small data-remote-text="displayHelp">Choose the fields and their order on the radio. Missing station data is skipped; it is never invented.</small>
+              <fieldset id="remote-display-fields" disabled><legend data-remote-text="displayFields">Fields and order</legend><div id="remote-display-rows"></div></fieldset>
+              <small data-remote-text="displayPreview">Example preview (not live data)</small><output id="remote-display-preview" aria-live="polite"></output>
+              <button id="remote-display-save" type="button" data-remote-text="displaySave" disabled>Save display</button>
+              <small data-remote-text="metadataHelp">For BASSWIESN internet radio only. Selected fields share the title line; the radio controls its native station header, font and scrolling. Long fields are shortened. No source, preset or volume changes. Stream checks at most once a minute per station.</small>
+            </section>
             <section class="safe-start-panel"><label><span data-remote-text="reconnect">Reconnect live radio after stream end</span><input id="remote-reconnect" type="checkbox" disabled></label><small data-remote-text="reconnectHelp">Opt in, then start a station. Reconnect only after confirmed unexpected stream end, never from standby or in a group. No volume commands.</small></section>
             <p id="remote-message" role="status" aria-live="polite"></p>
             <section class="volume-panel"><button data-volume-step="-5" disabled>−</button><input id="remote-volume" aria-label="Volume" type="range" min="0" max="100" value="0" disabled><button data-volume-step="5" disabled>+</button><strong id="remote-volume-label">—</strong></section>

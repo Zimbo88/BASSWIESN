@@ -332,6 +332,8 @@ async def start_telnet_reboot(db: Session, device: Device, *, confirmation: str)
     if str(confirmation or "").strip() != REBOOT_CONFIRMATION:
         raise PermissionError(f"confirmation required: {REBOOT_CONFIRMATION}")
     require_unprotected_device(device, action="telnet_reboot", requester="telnet_device_control", method="TELNET", endpoint="reboot")
+    if device_lock(device.device_id).locked():
+        raise PermissionError("Device action in progress; reboot refused")
     active = (
         db.query(TelnetJob)
         .filter(TelnetJob.device_id == device.device_id, TelnetJob.action == "reboot", TelnetJob.status.in_(ACTIVE_JOB_STATES))

@@ -1,6 +1,8 @@
 FROM python:3.12-slim
 
 WORKDIR /app
+LABEL org.opencontainers.image.version="2.6.5" \
+      org.opencontainers.image.source="https://github.com/Zimbo88/BASSWIESN"
 ARG APP_UID=10001
 ARG APP_GID=10001
 RUN apt-get update \
@@ -22,5 +24,5 @@ ENV HOME=/tmp \
     PYTHONUNBUFFERED=1
 EXPOSE 1328 1329 1516 1860
 USER basswiesn
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["python", "-c", "import json, urllib.request; payload=json.load(urllib.request.urlopen('http://127.0.0.1:1328/api/readiness', timeout=3)); raise SystemExit(0 if payload.get('ready') else 1)"]
+HEALTHCHECK --interval=30s --timeout=8s --start-period=30s --retries=3 CMD ["python", "tools/run_dev.py", "--healthcheck"]
 CMD ["python", "tools/run_dev.py"]

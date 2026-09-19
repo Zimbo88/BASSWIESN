@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>BASSWIESN — Radio restarts</title><link rel="stylesheet" href="/static/remote.css"><link rel="stylesheet" href="/static/reboots.css"></head>
+<body><main class="remote-shell reboot-shell">
+  <header class="remote-header"><h1 data-text="heading">Radio restarts</h1><a href="/" data-text="home">Home</a></header>
+  <p data-text="intro">Restart selected radios without resetting their configuration. No automatic playback resume. Protected radios are never selectable.</p>
+  <p id="reboot-message" role="status" aria-live="polite"></p>
+  <section class="safe-start-panel"><h2 data-text="radios">Select radios</h2>
+    <button id="reboot-select-all" type="button" disabled data-text="all">Select all reachable radios</button>
+    <fieldset id="reboot-devices" disabled><legend data-text="radios">Select radios</legend></fieldset>
+    <small data-text="offlineHelp">Reachability shown here is the last known state. Identity and backups are checked before any reboot. An unresponsive radio may still need a manual power cycle.</small>
+  </section>
+  <section class="safe-start-panel"><h2 data-text="manual">Restart now</h2>
+    <p data-text="manualHelp">All selected radios must pass identity and backup checks first. Restart commands are then dispatched together, up to four at a time. Stop active SoundTouch groups yourself first.</p>
+    <label><input id="reboot-interrupt" type="checkbox"><span data-text="interrupt">Allow interruption of active playback on selected radios</span></label>
+    <button id="reboot-preview" type="button" disabled data-text="preview">Review restart</button>
+    <section id="reboot-confirmation" hidden>
+      <h3 data-text="confirmHeading">Confirm the exact radios</h3><ul id="reboot-preview-list"></ul>
+      <p data-text="warning">Playback stops. Backups are mandatory. This is a restart, not a factory reset.</p>
+      <label><input id="reboot-confirm-check" type="checkbox"><span data-text="ack">I want to restart these radios</span></label>
+      <button id="reboot-start" type="button" disabled data-text="start">Restart selected radios</button>
+      <button id="reboot-cancel" type="button" data-text="cancel">Cancel</button>
+    </section>
+  </section>
+  <section class="safe-start-panel"><h2 data-text="schedule">Optional restart schedule</h2>
+    <p data-text="scheduleHelp">Off by default. Only selected radios in standby, without an active group. If any selected radio is active or unavailable, the batch is skipped. Missed times are not caught up.</p>
+    <label><input id="reboot-schedule-enabled" type="checkbox"><span data-text="enable">Enable scheduled restarts</span></label>
+    <label><span data-text="time">Time</span><input id="reboot-schedule-time" type="time" value="04:00" required></label>
+    <label><span data-text="timezone">Timezone (IANA)</span><input id="reboot-schedule-timezone" type="text" value="Europe/Berlin" maxlength="80" required></label>
+    <fieldset id="reboot-weekdays"><legend data-text="days">Days</legend></fieldset>
+    <label><input id="reboot-schedule-confirm" type="checkbox"><span data-text="scheduleAck">I authorize this schedule for the selected radios</span></label>
+    <button id="reboot-schedule-save" type="button" disabled data-text="save">Save schedule</button>
+    <p id="reboot-schedule-state"></p>
+  </section>
+  <section class="safe-start-panel"><h2 data-text="result">Restart progress</h2><p id="reboot-job-status" aria-live="polite" data-text="none">No restart started.</p><ul id="reboot-results"></ul>
+    <details><summary data-text="details">Technical details</summary><pre id="reboot-details"></pre></details>
+  </section>
+  <script src="/static/reboots.js"></script>
+</main></body></html>

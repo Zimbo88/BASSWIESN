@@ -351,7 +351,8 @@ def test_clock_as_metadata_is_lab_projection_and_preserves_original_track():
     snapshot = MetadataSnapshot(track="Titel", artist="Interpret")
     assert clock_display_projection(snapshot, mode=ClockMetadataMode.OFF, now=OBSERVED) == "Titel"
     assert clock_display_projection(snapshot, mode=ClockMetadataMode.MISSING_TITLE, now=OBSERVED) == "Titel"
-    assert clock_display_projection(snapshot, mode=ClockMetadataMode.APPEND, now=OBSERVED).endswith(" · 01:00")
+    assert clock_display_projection(snapshot, mode=ClockMetadataMode.APPEND, now=OBSERVED).endswith(" 01:00")
+    assert "·" not in clock_display_projection(snapshot, mode=ClockMetadataMode.APPEND, now=OBSERVED)
     assert snapshot.track == "Titel"
     empty = MetadataSnapshot()
     assert clock_display_projection(empty, mode=ClockMetadataMode.MISSING_TITLE, now=OBSERVED) == "01:00"

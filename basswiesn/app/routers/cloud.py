@@ -39,6 +39,7 @@ from basswiesn.app.core.masterlog import write_masterlog
 from basswiesn.app.config import get_settings
 from basswiesn.app.services.orion import OrionLocationError, StationDescriptor, decode_orion_data, playback_response, station_contract_key, station_location
 from basswiesn.app.services.stream_compat import analyze_stream_url
+from basswiesn.app.services.station_metadata import cached_metadata, display_fields, has_display_preference, load_display_preference
 from basswiesn.app.services.xml import sources_xml
 from basswiesn.app.services.provider_registry import SERVICE_MANIFEST, provider, provider_rows, normalize_source_name
 from basswiesn.app.services.playback_safety_gate import (
@@ -1070,17 +1071,45 @@ def _orion_now_playing_payload(
         if station is not None
         else ""
     )
+    displayed_artist = (current_metadata.artist or "") if current_metadata is not None else ""
+    displayed_album = (current_metadata.album or "") if current_metadata is not None else ""
+    display_configured = False
+    display_has_song = False
+    custom_display = False
+    if device is not None and station is not None:
+        display_preference = load_display_preference(db, device.device_id)
+        display_configured = display_preference.needs_metadata or has_display_preference(db, device.device_id)
+        if display_configured:
+            live_metadata = cached_metadata(db, station.stream_url)
+            custom_display = display_preference.mode == "CUSTOM"
+            custom_clock = custom_display and "clock" in (display_preference.fields or ())
+            clock_text = clock_display_projection(
+                MetadataSnapshot(), mode=ClockMetadataMode.MISSING_TITLE,
+                timezone=clock_metadata_timezone(db),
+            ) if custom_clock else ""
+            fields = display_fields(display_preference, station.name, live_metadata, clock_text=clock_text or "")
+            raw_track, displayed_artist = fields["track"], fields["artist"]
+            # These ICY observations do not establish an album field. Never
+            # combine a new song with an old radio-echo album.
+            displayed_album = ""
+            display_has_song = display_preference.mode == "TRACK_ARTIST" and bool(live_metadata.get("track") and live_metadata.get("artist"))
+            if custom_clock:
+                interval = max(interval, 60)
+            if custom_display and current_metadata is not None:
+                current_metadata.display_projection = raw_track or None
+                db.flush()
     displayed_track = raw_track
     if device is not None:
         preference = load_clock_metadata_preference(db, device.device_id)
-        if preference.enabled and preference.mode != ClockMetadataMode.OFF:
+        if not custom_display and preference.enabled and preference.mode != ClockMetadataMode.OFF:
             displayed_track = clock_display_projection(
                 MetadataSnapshot(
                     # A station-name fallback stays visible when no song
                     # metadata exists; it is not stored as a real song title.
-                    track=(raw_track if preference.mode == ClockMetadataMode.APPEND
+                    track=(raw_track if preference.mode == ClockMetadataMode.APPEND or display_has_song
+                           else None if display_configured
                            else current_metadata.track if current_metadata is not None else None),
-                    artist=current_metadata.artist if current_metadata is not None else None,
+                    artist=displayed_artist,
                 ),
                 mode=preference.mode,
                 timezone=clock_metadata_timezone(db),
@@ -1095,8 +1124,8 @@ def _orion_now_playing_payload(
                 db.flush()
     return {
         "track": displayed_track,
-        "album": (current_metadata.album or "") if current_metadata is not None else "",
-        "artist": (current_metadata.artist or "") if current_metadata is not None else "",
+        "album": displayed_album,
+        "artist": displayed_artist,
         "askAgainAfter": interval,
         "imageUrl": (
             current_metadata.artwork_url
@@ -1243,6 +1272,15 @@ def _persist_reporting_response(request: Request, db: Session, *, station_id: st
         )
         # The clock projection may update its diagnostic display field.
         db.commit()
+        collector = getattr(request.app.state, "station_metadata_collector", None)
+        if collector is not None:
+            try:
+                collector.schedule(db, device, _station_by_contract_key(db, station_id),
+                    peer=request.client.host if request.client else "", event_type=report_fields.get("eventType", ""))
+            except Exception as exc:
+                # A display-only task must never fail an accepted report.
+                db.rollback()
+                write_masterlog("station_metadata_schedule_failed", error_type=type(exc).__name__)
         reconnect = getattr(request.app.state, "live_radio_reconnect", None)
         if reconnect is not None:
             try:
