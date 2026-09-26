@@ -12,10 +12,10 @@
   }
   function localize() {
     const de = document.documentElement.lang === "de";
-    const labels = de ? { system: "Wie Gerät", light: "Tag", dark: "Nacht" } : { system: "System", light: "Light", dark: "Dark" };
-    document.querySelectorAll("[data-theme-label]").forEach(node => { node.textContent = de ? "Darstellung" : "Appearance"; });
+    const labels = window.BasswiesnI18n?.appearance?.() || (de ? { label: "Darstellung", system: "Wie Gerät", light: "Tag", dark: "Nacht" } : { label: "Appearance", system: "System", light: "Light", dark: "Dark" });
+    document.querySelectorAll("[data-theme-label]").forEach(node => { node.textContent = labels.label; });
     document.querySelectorAll("[data-theme-select]").forEach(node => {
-      node.setAttribute("aria-label", de ? "Darstellung" : "Appearance");
+      node.setAttribute("aria-label", labels.label);
       for (const option of node.options) option.textContent = labels[option.value];
     });
   }

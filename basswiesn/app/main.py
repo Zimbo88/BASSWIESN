@@ -750,15 +750,15 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
           </section>
         </div>
         <div class="modal-backdrop" id="operation-overlay" hidden><section class="modal-card"><button class="modal-close" id="operation-overlay-close" type="button" aria-label="Schliessen">×</button><h2 id="operation-title">Aktion</h2><p id="operation-radio"></p><ol class="operation-steps"><li data-operation-step="execute">ausgefuehrt</li><li data-operation-step="reboot">warte auf reboot</li><li data-operation-step="verify">pruefe</li><li data-operation-step="ok">ok</li></ol><strong id="operation-countdown"></strong></section></div>
-        <aside class="help-drawer" id="page-help" aria-hidden="true" aria-label="Seitenhilfe">
-          <header><div><span>Einfach erklärt</span><h2 id="page-help-title">Hilfe</h2></div><button id="page-help-close" type="button" aria-label="Hilfe schließen">×</button></header>
-          <div class="help-drawer-body"><p id="page-help-intro"></p><div id="page-help-flow" class="help-flow"></div><h3>Was kommt wo hinein?</h3><div id="page-help-fields" class="help-field-list"></div><div id="page-help-tip" class="help-tip"></div></div>
-        </aside><div class="help-scrim" id="page-help-scrim" hidden></div>
         <script src="/static/js/api.js?v={settings.version}"></script>
         <script src="/static/js/ui-errors.js?v={settings.version}"></script>
         <script src="/static/js/translations.js?v={settings.version}"></script>
         <script src="/static/js/about.js?v={settings.version}"></script>
         <script src="/static/js/language-extension.js?v={settings.version}"></script>
+        <script src="/static/js/locale-301.js?v={settings.version}"></script>
+        <script src="/static/js/help-content.js?v={settings.version}"></script>
+        <script src="/static/js/help.js?v={settings.version}"></script>
+        <link rel="stylesheet" href="/static/help.css?v={settings.version}">
         <script src="/static/app.js?v={settings.version}"></script>
         <script src="/static/js/dlna-library.js?v={settings.version}"></script>
         <script src="/static/js/update-admin.js?v={settings.version}"></script>
@@ -813,6 +813,12 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
             <details id="remote-details"><summary data-remote-text="details">Technical details / XML</summary><pre id="remote-output"></pre></details>
             <ul id="remote-volume-readback" hidden aria-label="Group volume readback"></ul>
           </main>
+          <script src="/static/js/translations.js?v={settings.version}"></script>
+          <script src="/static/js/language-extension.js?v={settings.version}"></script>
+          <script src="/static/js/locale-301.js?v={settings.version}"></script>
+          <script src="/static/js/help-content.js?v={settings.version}"></script>
+          <script src="/static/js/help.js?v={settings.version}"></script>
+          <link rel="stylesheet" href="/static/help.css?v={settings.version}">
           <script src="/static/remote.js?v={settings.version}"></script>
         </body></html>
         """

@@ -94,7 +94,7 @@ const displayLabels = { station: "displayStation", artist: "displayArtist", titl
 function displayPayload() {
   return { mode: "CUSTOM", fields: displayDraft.field_order.filter((field) => displayDraft.fields.includes(field)), field_order: [...displayDraft.field_order] };
 }
-const t = (key) => messages[language][key];
+const t = (key) => window.BasswiesnI18n.scoped(messages)[key];
 const path = (suffix) => `/api/devices/${encodeURIComponent(deviceId)}/${suffix}`;
 function details(value) { byId("remote-output").textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2); }
 function message(key) { byId("remote-message").textContent = key ? t(key) : ""; }
@@ -372,7 +372,8 @@ byId("remote-multiroom-start").addEventListener("click", () => run(async () => {
 
 run(async () => {
   const settings = await request("/api/system/settings");
-  language = settings.web_language === "de" ? "de" : "en";
+  language = window.BasswiesnI18n.normalizeLanguage(settings.web_language);
+  window.BasswiesnI18n.setLanguage(language);
   localize();
   byId("remote-version").textContent = `BASSWIESN Remote · v${shell.dataset.version}`;
   try { safeStartEnabled.checked = localStorage.getItem(`basswiesn_remote_safe_start_${deviceId}`) === "true"; } catch { safeStartEnabled.checked = false; }

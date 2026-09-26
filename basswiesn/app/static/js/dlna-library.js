@@ -3,6 +3,7 @@
   "use strict";
   const panel = document.getElementById("dlna-library-panel");
   if (!panel) return;
+  panel.dataset.authoredCopy = "true";
   const api = window.BasswiesnApi;
   const copy = {
     en: {title:"DLNA media library", enable:"Enable media library", address:"Server description URL",
@@ -33,7 +34,7 @@
       transport:"Keine gültige Serverantwort. Adresse und UPnP-Einstellungen prüfen."}
   };
   const state = {enabled:false, servers:[], server:"", object:"0", parents:[], page:null, busy:false, message:"", url:""};
-  const labels = () => copy[document.documentElement.lang] || copy.en;
+  const labels = () => window.BasswiesnI18n.scoped(copy);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const route = () => "/api/dlna/servers/" + encodeURIComponent(state.server);
   function render() {

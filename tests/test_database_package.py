@@ -181,8 +181,8 @@ def test_release_packaging_includes_public_runtime_docs_and_excludes_private_fil
     script = Path("tools/package_release.sh").read_text(encoding="utf-8")
 
     assert "BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE THIRD_PARTY_NOTICES.md .env.example install.sh" in script
-    assert "PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py tools/check_update_host.py tools/prepare_update_host.py tools/prepare_update_service.py tools/install_update_helper.py tools/configure_update_env.py tools/verify_release_archive.py)" in script
-    assert "PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md docs/lab-workbench.md)" in script
+    assert "PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py tools/check_update_host.py tools/prepare_update_host.py tools/prepare_update_service.py tools/install_update_helper.py tools/configure_update_env.py tools/verify_release_archive.py tools/audit_languages.js)" in script
+    assert "PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/releases/3.0.1/RELEASE_NOTES_3.0.1.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md docs/lab-workbench.md docs/languages-and-help.md)" in script
     assert "installation-specific hardware or filesystem data" in script
     assert "__pycache__" in script
     assert "package_private_rpi.sh" in script

@@ -1504,7 +1504,7 @@ function i18nPhraseT(value) { return window.BasswiesnI18n?.phrase(value) || valu
 function i18nLangT(language, key) { return window.BasswiesnI18n?.catalogs?.[language]?.[key] || window.BasswiesnI18n?.catalogs?.en?.[key] || key; }
 function uiCopy(de, en) {
   const language = state.systemSettings?.web_language || document.documentElement.lang || "en";
-  return language === "de" ? de : en;
+  return language === "de" ? de : (window.BasswiesnI18n?.localize(en) || en);
 }
 
 const ABOUT_COPY = window.BasswiesnAbout.labels;
@@ -4807,94 +4807,7 @@ function maybeShowFirstRunWarning() {
   }, { once: true });
 }
 
-const pageHelp = {
-  dashboard: ["Start", "Hier siehst du auf einen Blick, ob BASSWIESN und deine Radios erreichbar sind.", ["Status prüfen", "Radio auswählen", "Zur passenden Seite wechseln"], "Rot bedeutet: Dieser Punkt braucht Aufmerksamkeit. Die Hilfe erklärt, ob du selbst etwas tun musst."],
-  setup: ["Einrichtung", "Führt ein Radio nach Reset oder Neuinstallation sicher bis zur lokalen BASSWIESN-Cloud.", ["Server erkennen", "Radio sichern", "Verbinden und prüfen"], "Verwende immer die LAN-Adresse des BASSWIESN-Rechners, niemals 127.0.0.1."],
-  devices: ["Radios", "Zeigt jedes echte Gerät genau einmal – mit Seriennummer, Firmware und Cloud-Ziel.", ["Radio wählen", "Live aktualisieren", "Name oder Einstellungen ändern"], "Die Seriennummer identifiziert das physische Radio; die Geräte-ID ist seine Netzwerkkennung."],
-  health: ["Status & Diagnose", "Zeigt Playback, Provider, Metadaten, Reporting, Restrictions und AirPlay als getrennte Verträge.", ["Radio wählen", "Zustände vergleichen", "Zeitlinie von oben nach unten lesen"], "Das Öffnen dieser Seite liest nur die lokale Datenbank und sendet keine Anfrage an das Radio."],
-  controls: ["Fernbedienung", "Bedient Lautstärke, Wiedergabe, Presets und Standby wie eine normale Fernbedienung.", ["Radio wählen", "Lautstärke festlegen", "Taste drücken"], "Beim Testen zuerst eine niedrige Lautstärke wählen."],
-  stations: ["Sender", "Hier legst du Internetradios an, suchst Online-Sender und startest sie auf einem Radio.", ["Sender finden", "Radio wählen", "Wiedergabe starten"], "Am zuverlässigsten sind direkte HTTP/HTTPS-MP3-Streams."],
-  presets: ["Presets", "Ordnet Sender den sechs echten Preset-Tasten eines Radios zu.", ["Radio und Taste wählen", "Sender auswählen", "Speichern und prüfen"], "BASSWIESN meldet Erfolg erst, nachdem das Radio den Slot zurückgelesen und bestätigt hat."],
-  multiroom: ["Multiroom", "Verbindet mehrere SoundTouch-Radios zu einer synchronen lokalen Zone.", ["Hauptradio wählen", "Räume markieren", "Multiroom starten"], "Für normale Nutzung ist setZone richtig. Capabilities liest nur Fähigkeiten; SYNC_TO_ROOM bildet keine Gruppe."],
-  schedules: ["Wecker Timer", "Speichert zeitgesteuerte Sender-, Preset-, Lautstärke- und Multiroom-Aktionen.", ["Zeit wählen", "Radio und Sender oder Preset wählen", "Wecker Timer speichern"], "Prüfe Start, Ende und Wochentage besonders sorgfältig."],
-  "device-settings": ["Radio-Einstellungen", "Ändert unterstützte Einstellungen wie Bass, Sprache, Uhr und Energiesparen.", ["Radio wählen", "Wert einstellen", "Am Radio bestätigen lassen"], "Angebotene Werte werden aus Firmwarewissen und Gerätefähigkeiten begrenzt."],
-  display: ["Display", "Steuert normale Wiedergabemetadaten und zeigt getrennt, welche Uhr- und WLAN-Daten verfügbar sind.", ["Radio wählen", "Anzeigeart wählen", "Speichern oder Sender starten"], "Künstlicher Text wird nicht als falscher Sendername an das Display geschickt."],
-  media: ["Musikbibliothek", "Ordner eines freigegebenen Medienservers durchsuchen und MP3-/AAC-Titel zur Senderliste hinzufügen.", ["Medienserver ausdrücklich verbinden", "Ordner öffnen und Titel übernehmen", "In der Senderliste ein Radio auswählen und starten"], "Importieren startet kein Radio und verändert keine Presets. Keine automatische Netzwerksuche. Die technischen Radio-Proben sind im LAB-Bereich."],
-  "system-settings": ["BASSWIESN", "Legt Sprache, Zeitzone und allgemeine Standardwerte dieser Oberfläche fest.", ["Standard wählen", "Speichern", "Oberfläche aktualisieren"], "Diese Einstellungen sind von den Einstellungen eines einzelnen Radios getrennt."],
-  backup: ["Sicherung", "Sichert Radiozustände und bereitet einen kontrollierten Wiederherstellungsweg vor.", ["Radio wählen", "Sicherung erstellen", "Vor Restore vergleichen"], "Vollständige Restores nur auf dasselbe Gerät und dieselbe Firmware anwenden."],
-  config: ["Technik", "Zeigt die von BASSWIESN verwendeten lokalen Cloud-, Registry- und Gerätepfade.", ["Bereich wählen", "Status lesen", "Nur bestätigte Änderungen ausführen"], "Dieser Bereich ist für Diagnose; normale Bedienung findet auf den Hauptseiten statt."],
-  telnet: ["CLI 17000", "Erstellt kontrollierte Befehle für die interne SoundTouch-Engineering-Schnittstelle.", ["Radio wählen", "Bekannten Befehl wählen", "Ergebnis prüfen"], "Unbekannte Schreibbefehle gehören nicht in den normalen Endnutzerbetrieb."],
-  debug: ["Protokoll", "Zeigt nachvollziehbar, welche Anfragen Radios und BASSWIESN austauschen.", ["Zeitpunkt merken", "Aktion ausführen", "Passenden Eintrag öffnen"], "Sicherungen bleiben beim Leeren der Laufzeitprotokolle erhalten."],
-  telemetry: ["Diagnose", "Liest Gerätewerte und sammelt strukturierte Fehlerdaten.", ["Radio wählen", "Messwert wählen", "Ergebnis vergleichen"], "Lesende Diagnosen verändern das Radio nicht."],
-  lab: ["Labor", "Enthält Diagnose- und Forschungsfunktionen, die nicht in die tägliche Bedienung gehören.", ["Erklärung lesen", "Sicherung prüfen", "Exakte Bestätigung eingeben"], "Manuelle Schreibaktionen können das Radio vorübergehend vom Netzwerk trennen."],
-  about: ["Über BASSWIESN", "Erklärt Motivation, Projektstatus und die technischen Grundsätze hinter BASSWIESN.", ["Motivation lesen", "Unterstützte Radios prüfen", "Research nachvollziehen"], "Die angezeigte Version kommt aus der laufenden BASSWIESN-Backend-Konfiguration."],
-};
-
-function describeHelpField(label, control) {
-  const name = (control?.name || control?.id || "").toLowerCase();
-  if (/device|radio|master/.test(name)) return "Wähle das Radio, auf das diese Aktion angewendet wird.";
-  if (/station|source/.test(name)) return "Wähle den Sender oder die Audioquelle.";
-  if (/volume/.test(name)) return "Gewünschte Lautstärke von 0 bis 100.";
-  if (/name/.test(name)) return "Ein kurzer, verständlicher Anzeigename.";
-  if (/host|ip/.test(name)) return "LAN-Adresse, unter der das Ziel im Heimnetz erreichbar ist.";
-  if (/confirmation/.test(name)) return "Sicherheitsbestätigung für eine ausdrücklich gefährliche Aktion.";
-  if (control?.tagName === "SELECT") return "Wähle eine der unterstützten Möglichkeiten aus.";
-  if (control?.type === "checkbox") return "Schaltet diese Zusatzoption ein oder aus.";
-  return `Trage hier „${label}“ ein. Pflichtfelder sind entsprechend markiert.`;
-}
-
-function openPageHelp(view) {
-  const key = view.id.replace("view-", "");
-  const info = pageHelp[key] || [view.querySelector("h2")?.textContent || "Hilfe", "Diese Seite erklärt ihren Ablauf Schritt für Schritt.", ["Auswählen", "Eingeben", "Ausführen"], "Bei Unsicherheit zuerst den Status aktualisieren."];
-  document.getElementById("page-help-title").textContent = info[0];
-  document.getElementById("page-help-intro").textContent = info[1];
-  document.getElementById("page-help-flow").innerHTML = info[2].map((step, index) => `${index ? "<b>→</b>" : ""}<span>${escapeHtml(step)}</span>`).join("");
-  document.getElementById("page-help-tip").innerHTML = `<strong>Gut zu wissen</strong><br>${escapeHtml(info[3])}`;
-  const labels = Array.from(view.querySelectorAll("label")).filter((label) => label.offsetParent !== null).slice(0, 24);
-  document.getElementById("page-help-fields").innerHTML = labels.length ? labels.map((label, index) => {
-    const control = label.querySelector("input, select, textarea");
-    const title = Array.from(label.childNodes).find((node) => node.nodeType === Node.TEXT_NODE)?.textContent.trim() || control?.name || "Feld";
-    label.dataset.helpTarget = `${key}-${index}`;
-    return `<button class="help-field-card" data-help-target="${key}-${index}" type="button"><strong>${escapeHtml(title)}</strong><small>${escapeHtml(describeHelpField(title, control))}</small></button>`;
-  }).join("") : `<div class="empty">Auf dieser Seite sind keine Eingabefelder nötig.</div>`;
-  const drawer = document.getElementById("page-help");
-  drawer.classList.add("is-open"); drawer.setAttribute("aria-hidden", "false"); document.getElementById("page-help-scrim").hidden = false;
-}
-
-function closePageHelp() {
-  document.getElementById("page-help").classList.remove("is-open");
-  document.getElementById("page-help").setAttribute("aria-hidden", "true");
-  document.getElementById("page-help-scrim").hidden = true;
-}
-
-function initPageHelp() {
-  document.querySelectorAll(".view").forEach((view) => {
-    const head = view.querySelector(":scope > .page-head");
-    if (!head || head.querySelector(".page-help-button")) return;
-    const button = document.createElement("button"); button.type = "button"; button.className = "page-help-button"; button.textContent = "?"; button.setAttribute("aria-label", "Diese Seite erklären");
-    button.addEventListener("click", () => openPageHelp(view)); head.append(button);
-  });
-  document.getElementById("page-help-close")?.addEventListener("click", closePageHelp);
-  document.getElementById("page-help-scrim")?.addEventListener("click", closePageHelp);
-  document.getElementById("page-help-fields")?.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-help-target]"); if (!button) return;
-    const target = document.querySelector(`[data-help-target="${button.dataset.helpTarget}"]`); if (!target) return;
-    closePageHelp(); target.scrollIntoView({ behavior: "smooth", block: "center" }); target.classList.add("help-highlight"); setTimeout(() => target.classList.remove("help-highlight"), 2400);
-  });
-  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    document.getElementById("page-help-fields")?.addEventListener("mouseover", (event) => {
-      const button = event.target.closest("[data-help-target]");
-      if (!button) return;
-      document.querySelector(`[data-help-target="${button.dataset.helpTarget}"]:not(.help-field-card)`)?.classList.add("help-hover-link");
-    });
-    document.getElementById("page-help-fields")?.addEventListener("mouseout", (event) => {
-      const button = event.target.closest("[data-help-target]");
-      if (!button) return;
-      document.querySelector(`[data-help-target="${button.dataset.helpTarget}"]:not(.help-field-card)`)?.classList.remove("help-hover-link");
-    });
-  }
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape") closePageHelp(); });
-}
+function initPageHelp() { window.BasswiesnHelp?.install(); }
 
 function simplifyActionForms() {
   // End-user pages execute the selected action directly.  Backend guards,

@@ -1,17 +1,24 @@
-# BASSWIESN 3.0.0 Feature Status
+# BASSWIESN 3.0.1 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
 test exists.
 
-## Unreleased LAB development
+## 3.0.1 — help, language coverage and LAB workbench
+
+Question-mark help and ten illustrated three-step guides cover setup, remote,
+presets, multiroom, display, workbench, AirPlay, DLNA, updater and recovery.
+These guides and 87 new help/control terms have entries in all 28 UI locales.
+Compact remotes and restart pages now retain the chosen locale too. Untranslated
+specialist text uses English, not German. See [language scope](docs/languages-and-help.md).
+The personal German About statement is unchanged.
 
 The [listening workbench](docs/lab-workbench.md) adds cached playback diagnosis,
 metadata provenance/freshness, recent-station replay with explicit volume-1
 confirmation, local QR remote links, bounded snapshot comparison/export,
 listening CSV and saved stream-format inventory. Every new API requires LAB;
-opening the workbench does not contact radios. These changes are local
-development, **not included in the published 3.0.0 archive**. Radio acceptance
+opening the workbench does not contact radios. These changes are included in
+the 3.0.1 source tree, not the earlier 3.0.0 archive. Radio acceptance
 remains pending. AirPlay, DLNA and production updater completion are unchanged.
 
 ## 3.0.0 — stable core and explicit LAB boundary

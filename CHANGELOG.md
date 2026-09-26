@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased — LAB only
+## 3.0.1 — prepared locally, not a publication receipt
+
+- Include the LAB listening workbench described below; its radio acceptance is
+  still separate from the offline software tests.
+- Add translated, illustrated guides for ten everyday and LAB workflows in all
+  28 interface languages. Help never executes the illustrated action.
+- Replace the German-only question-mark drawer with keyboard-accessible help;
+  add context for reset, battery experiments, SSH and restart safety.
+- Share localization with the compact remote, restart page, DLNA browser,
+  updater and workbench. Add 87 localized help/control terms per language.
+- Keep untranslated specialist text in English. The language audit reports
+  coverage honestly; this is not a claim of complete native-speaker review.
+- Prevent a Traditional Chinese translation-observer loop during language changes.
+
+### LAB listening workbench
 
 - Add a listening workbench that explains saved playback warnings without
   guessing a cause or automatically restarting radios.

@@ -3,6 +3,7 @@
   "use strict";
   const panel = document.getElementById("lab-workbench"), api = window.BasswiesnApi;
   if (!panel || !api) return;
+  panel.dataset.authoredCopy = "true";
   const words = {
     en: {
       title:"Listening workbench", intro:"LAB · Software-tested; real-radio acceptance is pending. These tools use saved BASSWIESN data, not new radio queries.",
@@ -81,7 +82,7 @@
   };
   const s = {opened:false, busy:false, devices:[], device:"", data:null, snapshots:[], formats:null,
     qr:null, diff:null, replay:null, message:"", hours:24, days:7, label:"", auto:false};
-  const t = () => words[document.documentElement.lang] || words.en;
+  const t = () => window.BasswiesnI18n.scoped(words);
   const esc = value => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const active = () => document.body.classList.contains("lab-mode");
   const base = "/api/lab/workbench";

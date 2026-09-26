@@ -21,6 +21,13 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
+The `3.0.1` source tree integrates the LAB listening workbench and adds
+contextual help and illustrated tutorials in all 28 UI languages. The compact
+remote and restart page use the selected language, with English fallback for
+specialist text that has not been translated. See [help and language scope](docs/languages-and-help.md)
+and the [3.0.1 notes](docs/releases/3.0.1/RELEASE_NOTES_3.0.1.md).
+This version label does not certify GitHub publication or a production upgrade.
+
 BASSWIESN `3.0.0` improves mobile navigation, light/dark appearance, remote
 controls, preset checks, listening statistics and readable diagnostics. The
 display layouts, guarded restarts and host diagnostics from 2.6.5 are retained.

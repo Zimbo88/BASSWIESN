@@ -20,7 +20,7 @@ def test_version_date_is_observed_publication_not_build_or_today(monkeypatch):
     monkeypatch.setattr(publication, "fetch_publication", forbidden)
     with TestClient(create_web_app()) as client:
         result = client.get("/api/version").json()
-    assert result["version"] == "3.0.0"
+    assert result["version"] == "3.0.1"
     assert result["published_at"] is None
     assert result["publication_status"] == "UNKNOWN"
     assert result["publication_source"] == "NONE"
@@ -130,5 +130,5 @@ def test_refresh_route_uses_installed_version_not_request_input(monkeypatch):
     with TestClient(create_web_app()) as client:
         result = client.post("/api/version/publication-refresh", json={"version": "evil", "url": "http://127.0.0.1"})
     assert result.status_code == 200
-    assert versions == ["3.0.0"]
+    assert versions == ["3.0.1"]
     assert result.json()["published_at"] is None

@@ -42,7 +42,7 @@
     },
   };
   let lang = "en", config = null, busy = false, previewIds = null, timer = null;
-  const t = (key) => messages[lang][key] || messages[lang].unknown;
+  const t = (key) => window.BasswiesnI18n.scoped(messages)[key] || window.BasswiesnI18n.word("unknown");
   const selected = () => [...el("reboot-devices").querySelectorAll("input:checked")].map((input) => input.value);
   const terminal = new Set(["VERIFIED", "STATE_DIFFERENCE", "BLOCKED_NO_REBOOT", "PARTIAL_OR_UNCONFIRMED", "INTERRUPTED_NO_REPLAY"]);
   async function api(path, body, method = "POST") {
@@ -152,7 +152,8 @@
   window.addEventListener("pagehide", () => clearTimeout(timer));
   run(async () => {
     const settings = await api("/api/system/settings");
-    lang = settings.web_language === "de" ? "de" : "en";
+    lang = window.BasswiesnI18n.normalizeLanguage(settings.web_language);
+    window.BasswiesnI18n.setLanguage(lang);
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-text]").forEach((node) => { node.textContent = t(node.dataset.text); });
     document.title = `BASSWIESN — ${t("heading")}`;

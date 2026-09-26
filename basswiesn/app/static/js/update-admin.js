@@ -1,7 +1,7 @@
 /* Explicit privileged action. Store only the request ID, never the admin code. */
 (() => {
   "use strict";
-  const t = (de, en) => document.documentElement.lang === "de" ? de : en;
+  const t = (de, en) => window.BasswiesnI18n.copy(de, en);
   const storageKey = "basswiesn.update.request";
   const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
   const terminal = new Set(["COMPLETE", "RESTORED", "FAILED", "MANUAL_ACTION_REQUIRED"]);
@@ -13,6 +13,7 @@
   if (!boundary) return;
   const box = document.createElement("div");
   box.id = "update-admin";
+  box.dataset.authoredCopy = "true";
   box.className = "lab-only";
   box.innerHTML = `<p id="update-admin-status" role="status"></p><a id="update-admin-https" hidden></a>
     <label><span id="update-admin-code-label"></span><input id="update-admin-code" type="password" autocomplete="off" spellcheck="false" maxlength="43"></label>

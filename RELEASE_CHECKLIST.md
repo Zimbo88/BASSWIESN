@@ -1,11 +1,11 @@
-# BASSWIESN 3.0.0 Release Checklist
+# BASSWIESN 3.0.1 Release Checklist
 
 Do not push, tag or create a GitHub release while a critical gate is failed or
 unverified. Unverified feature-specific hardware
 checks require explicit project-owner acceptance and a public limitation; never
 mark them passed. A green unit suite alone is not hardware validation.
 
-For 3.0.0, display metadata and two-radio reboot observations are separate from
+For 3.0.1, display metadata and two-radio reboot observations are separate from
 software tests. Native firmware can change boot/group volume; capture and report
 that result. Reconnect and restart schedules remain off by default. No blanket
 long-run stability or universal display-layout claim is permitted. Privacy,
@@ -14,7 +14,7 @@ protected-device, software, package and installation gates are never waived.
 ## 1. Source and version
 
 - [ ] `git status` contains only reviewed release changes.
-- [ ] Backend, Web UI, package and documentation report `3.0.0`.
+- [ ] Backend, Web UI, package and documentation report `3.0.1`.
 - [ ] `git diff --check` passes.
 - [ ] No runtime database, logs, `.env`, secrets, private keys, hardware
       backups, research source material or test artifacts are publishable.
@@ -134,7 +134,7 @@ tools/package_release.sh
 
 Expected public assets:
 
-- `dist/basswiesn-docker-release-3.0.0.tar.gz`
+- `dist/basswiesn-docker-release-3.0.1.tar.gz`
 - `dist/SHA256SUMS`
 
 - [ ] Archive ownership, order and timestamps are reproducible.
@@ -153,7 +153,7 @@ Extract the archive into an empty temporary directory and act as a new user:
 - [ ] Compose configuration validates.
 - [ ] Container runs non-root and becomes healthy.
 - [ ] Database and migrations initialize from empty state.
-- [ ] Web UI reports version `3.0.0`.
+- [ ] Web UI reports version `3.0.1`.
 - [ ] Setup entry is visible on desktop and mobile.
 - [ ] Page load performs no discovery or radio probe.
 - [ ] Discovery starts only after visible user action.
@@ -170,8 +170,8 @@ force-push, remove earlier releases or lose the dual-stack fix.
 - [ ] Final assets and checksums are stored separately.
 - [ ] A publishable-source staging tree contains no private/internal artifacts.
 - [ ] The existing public repository receives the reviewed release commit:
-      `BASSWIESN 3.0.0` on `main`, preserving previous history.
-- [ ] Tag `v3.0.0` points to that commit.
+      `BASSWIESN 3.0.1` on `main`, preserving previous history.
+- [ ] Tag `v3.0.1` points to that commit.
 - [ ] English release notes use no unsupported claim.
 
 ## 10. Validation from GitHub
