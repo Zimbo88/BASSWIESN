@@ -24,6 +24,7 @@ WEB_MODULES = {
     "basswiesn.app.routers.media",
     "basswiesn.app.routers.dlna",
     "basswiesn.app.routers.lab_workbench",
+    "basswiesn.app.routers.lab_learning",
     "basswiesn.app.routers.fulltest",
     "basswiesn.app.routers.stations_presets",
     "basswiesn.app.routers.multiroom",
@@ -289,6 +290,11 @@ def route_record(route: dict[str, Any], application: str, method: str) -> dict[s
         "action_preflight", "protected_device", "DeviceInteraction",
     ))
     workbench = route["module"] == "basswiesn.app.routers.lab_workbench"
+    learning = route["module"] == "basswiesn.app.routers.lab_learning"
+    if learning:
+        hardware = False
+        database = route["handler"] in {"save_profile", "remove_profile"}
+        policy = False  # LAB dependency, no device identity or transport
     if workbench:
         # Delegated playback is invisible to this function-local scanner;
         # conversely, selecting a saved snapshot does not contact a radio.
@@ -310,7 +316,7 @@ def route_record(route: dict[str, Any], application: str, method: str) -> dict[s
         purpose = "Management-Abfrage oder Statusdarstellung"
     statuses = {int(route["status_code"] or 200)}
     statuses.update(route["http_exception_codes"])
-    if workbench:
+    if workbench or learning:
         statuses.add(409)  # require_lab dependency, including read-only routes
         if "{device_id}" in route["path"]:
             statuses.update({403, 404, 422})

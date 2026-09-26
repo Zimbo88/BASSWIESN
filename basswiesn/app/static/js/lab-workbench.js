@@ -103,7 +103,11 @@
     if(s.data && s.device) {
       panel.innerHTML+='<label class="toggle-line"><input type="checkbox" id="workbench-auto" '+(s.auto?"checked":"")+'>'+w.auto+'</label>'
         +'<div class="workbench-grid"><section><h4>'+w.diagnosis+'</h4><strong>'+w.cause+'</strong>'+paragraph(w.caution)
-        +(s.data.diagnosis.observations.map(o=>'<p>'+esc(label(o.code))+' <small>'+esc(label(o.freshness)+" · "+date(o.observed_at))+'</small></p>').join("") || paragraph(w.noClues))
+        +paragraph(window.BasswiesnI18n.word302("first_event"))
+        +(s.data.diagnosis.observations.map(o=>'<details><summary>'+esc(label(o.code))+' <small>'+esc(label(o.freshness)+" · "+date(o.observed_at))+'</small></summary>'
+          +'<h5>'+esc(window.BasswiesnI18n.word302("meaning"))+'</h5>'+paragraph(window.BasswiesnI18n.word302(o.meaning==="stopped"?"stopped_meaning":o.meaning))
+          +'<h5>'+esc(window.BasswiesnI18n.word302("next_step"))+'</h5>'+paragraph(window.BasswiesnI18n.word302(o.next_step))
+          +'<h5>'+esc(window.BasswiesnI18n.word302("not_proven"))+'</h5>'+paragraph(window.BasswiesnI18n.word302(o.not_proven))+'</details>').join("") || paragraph(w.noClues))
         +'</section><section><h4>'+w.metadata+'</h4>'+paragraph(w.metadataNote)+'<p>'+esc(label(meta.state))+'</p><dl>'
         +Object.entries(meta.fields).map(([k,v])=>'<dt>'+esc(label(k))+'</dt><dd>'+esc(v||"—")+'</dd>').join("")
         +'<dt>'+w.provenance+'</dt><dd>'+esc(meta.provenance)+'</dd><dt>'+w.age+'</dt><dd>'+esc(meta.age_seconds??w.unknown)+'</dd>'

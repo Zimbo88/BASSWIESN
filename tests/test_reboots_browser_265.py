@@ -29,6 +29,8 @@ def test_reboot_preview_schedule_and_reload_are_explicit(tmp_path, lang, width, 
         if path in {"/static/reboots.js", "/static/reboots.css", "/static/remote.css",
                     "/static/js/translations.js", "/static/js/language-extension.js",
                     "/static/js/locale-301.js", "/static/js/help-content.js",
+                    "/static/js/locale-302.js", "/static/js/accessibility.js",
+                    "/static/theme.css", "/static/js/theme.js",
                     "/static/js/help.js", "/static/help.css"}:
             return route.fulfill(body=(assets/path.removeprefix("/static/")).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
         if path == "/api/system/settings": return route.fulfill(json={"web_language":lang})

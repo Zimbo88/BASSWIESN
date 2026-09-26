@@ -100,9 +100,12 @@
     if (extra[pageContext] && position === null) {
       const [de, en] = extra[pageContext];
       const isGerman = i.language() === "de";
-      const text = node("p", isGerman ? de : en);
-      text.lang = isGerman ? "de" : "en";
-      if (!["de", "en"].includes(i.language())) body.append(node("small", word("fallback")));
+      const noteKey=({lab:"help_lab",backup:"help_backup",restart:"help_restart",debug:"help_privacy"})[pageContext];
+      const translated=noteKey&&i.word302?i.word302(noteKey):(isGerman?de:en);
+      const fallback=!isGerman&&i.language()!=="en"&&(noteKey?translated===(window.Basswiesn302Catalogs?.en?.[noteKey]||en):translated===en);
+      const text = node("p", translated);
+      text.lang = fallback ? "en" : i.language();
+      if (fallback) body.append(node("small", word("fallback")));
       body.append(text);
     }
     body.append(diagram(steps));

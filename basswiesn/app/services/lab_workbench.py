@@ -23,6 +23,20 @@ HISTORY_LIMIT = 2000
 EVENT_LIMIT = 100
 OBSERVATION_TTL = 600
 
+# These are explanation keys, not commands. UI translations describe safe
+# manual checks; no adapter is constructed and no diagnosis triggers recovery.
+GUIDANCE = {
+    "CACHED_OFFLINE": ("connection", "identity", "current_connection"),
+    "SOURCE_INVALID": ("source", "source_mapping", "stream_cause"),
+    "STREAM_NOT_ALIVE": ("stream", "stream_evidence", "provider_cause"),
+    "PLAYBACK_ATTENTION": ("playback", "first_event", "hardware_cause"),
+    "STOP_OBSERVED": ("stopped", "first_event", "stop_cause"),
+    "PROVIDER_ATTENTION": ("provider", "provider_evidence", "audio_failure"),
+    "REPORTING_ONLY": ("reporting", "reporting_evidence", "audio_failure"),
+    "TIMER_CONFIGURED": ("timer", "timer_evidence", "timer_cause"),
+    "METADATA_ONLY": ("metadata", "metadata_evidence", "audio_failure"),
+}
+
 
 def iso(value):
     return aware(value).isoformat() if value else None
@@ -169,9 +183,12 @@ def cached_snapshot(db, device, *, now=None):
 def diagnose(snapshot):
     observations = []
     def add(key, layer, observed):
+        meaning, next_step, not_proven = GUIDANCE[key]
         observations.append({"code": key, "layer": layer,
                              "freshness": observed.get("freshness", "UNKNOWN"),
-                             "observed_at": observed.get("observed_at")})
+                             "observed_at": observed.get("observed_at"),
+                             "meaning": meaning, "next_step": next_step,
+                             "not_proven": not_proven, "automatic_action": False})
     device, health, playback = snapshot["device"], snapshot["health"], snapshot["playback"]
     if not device["cached_reachable"]:
         add("CACHED_OFFLINE", "CONTROL", device)
@@ -195,7 +212,9 @@ def diagnose(snapshot):
             add("TIMER_CONFIGURED", "RESTRICTIONS", restriction)
     if snapshot["metadata"]["state"] in {"STALE", "SELECTION_MISMATCH"}:
         add("METADATA_ONLY", "METADATA", {})
+    observations.sort(key=lambda item: (item["observed_at"] is None, item["observed_at"] or ""))
     return {"root_cause": "NOT_ESTABLISHED", "automatic_action": False,
+            "order": "EARLIEST_KNOWN_OBSERVATION_NOT_CAUSAL_ORDER",
             "observations": observations, "no_observed_issue_is_health_proof": False}
 
 

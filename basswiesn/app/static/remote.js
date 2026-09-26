@@ -370,11 +370,42 @@ byId("remote-multiroom-start").addEventListener("click", () => run(async () => {
   message(result.volume_warnings?.length ? "volumeWarning" : "groupOK");
 }));
 
+function installDisplayProfiles() {
+  const word=key=>window.BasswiesnI18n.word302(key);
+  const panel=document.createElement("details");panel.id="remote-display-profiles";panel.dataset.authoredCopy="true";
+  const heading=document.createElement("summary");heading.textContent=word("profiles")+" · LAB";
+  const note=document.createElement("p");note.textContent=word("profile_note");
+  const list=document.createElement("select");list.id="remote-profile-select";list.setAttribute("aria-label",word("saved"));
+  const load=document.createElement("button");load.type="button";load.id="remote-profile-load";load.textContent=word("load");
+  const copy=document.createElement("button");copy.type="button";copy.id="remote-profile-copy";copy.textContent=word("draft");
+  let profiles=[];
+  load.addEventListener("click",()=>run(async()=>{
+    const value=await request("/api/lab/learning/display-profiles");
+    profiles=Array.isArray(value.items)?value.items:[];list.replaceChildren();
+    for(const [index,p] of profiles.entries()) list.add(new Option(p.name,String(index)));
+    if(!profiles.length) list.add(new Option(word("no_profiles"),""));
+    message("");
+  }));
+  copy.addEventListener("click",()=>{
+    if(busy||displayDraft===null||list.value==="") return;
+    const p=profiles[Number(list.value)];
+    if(!p||!Array.isArray(p.fields)||!Array.isArray(p.field_order)||p.field_order.length!==5
+      ||new Set(p.field_order).size!==5||new Set(p.fields).size!==p.fields.length
+      ||p.fields.some(k=>!displayFieldOrder.includes(k))||p.field_order.some(k=>!displayFieldOrder.includes(k))) return;
+    displayDraft={fields:[...p.fields],field_order:[...p.field_order]};
+    renderDisplayFields();updateControls();
+    byId("remote-message").textContent=word("copied");
+    byId("remote-display-save").focus();
+  });
+  panel.append(heading,note,load,list,copy);byId("remote-display-panel").append(panel);
+}
+
 run(async () => {
   const settings = await request("/api/system/settings");
   language = window.BasswiesnI18n.normalizeLanguage(settings.web_language);
   window.BasswiesnI18n.setLanguage(language);
   localize();
+  if(settings.ui_mode === "lab") installDisplayProfiles();
   byId("remote-version").textContent = `BASSWIESN Remote · v${shell.dataset.version}`;
   try { safeStartEnabled.checked = localStorage.getItem(`basswiesn_remote_safe_start_${deviceId}`) === "true"; } catch { safeStartEnabled.checked = false; }
   safeStartField.hidden = !safeStartEnabled.checked;

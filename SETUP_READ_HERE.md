@@ -1,4 +1,4 @@
-# BASSWIESN 2.5 Setup Guide
+# BASSWIESN 3.0.2 Setup Guide
 
 This guide describes the normal end-user setup flow. BASSWIESN is an
 independent, unofficial project and is not affiliated with Bose.
@@ -11,6 +11,10 @@ independent, unofficial project and is not affiliated with Bose.
 - SoundTouch radios already connected to that LAN by the user
 
 ## Installation
+
+For the complete download, checksum and installation commands, start with
+[Quick Install](README.md#quick-install). Use the versioned release archive,
+not GitHub's automatically generated “Source code” archive, for normal installation.
 
 From a freshly unpacked release directory, run:
 
@@ -30,6 +34,37 @@ http://<BASSWIESN-host>:1328
 
 The local SoundTouch compatibility service uses port `1516`; diagnostics use
 port `1860`.
+
+## Updating an existing installation
+
+Do not run the new-install block on top of a running installation. Do not delete
+the old folder or use `docker compose down -v`. The database, presets managed
+by BASSWIESN, preferences and `.env` belong to your installation, not the release.
+
+For a manual update on a single Docker host:
+
+1. Note the exact old installation directory and running version. Download the
+   3.0.2 archive and `SHA256SUMS` into a new directory; verify the checksum and
+   unpack it, but do not start it yet.
+2. Plan a short interruption. In the **old** installation directory run
+   `docker compose stop`. This closes the application before the database copy.
+3. Make a private backup of the complete old directory, including hidden `.env`
+   and `data/`. Preserve file ownership and permissions. Check that the backup
+   can be read. Do not post it in an issue.
+4. Copy the stopped installation's `.env` and complete `data/` into the unpacked
+   new release. Use the host administrator if permissions require it. Do not
+   use a sample database or overwrite a backup with a fresh empty database.
+5. Run `./install.sh` in the new release directory. Verify version **3.0.2** in
+   About, your radio list, presets and settings. Only then test normal playback.
+6. Keep the old installation and its matched data backup. If the update fails,
+   stop the new instance before starting the old version with the **old data**.
+   Do not run two instances or downgrade using a database changed by a newer version.
+
+Installation layouts differ, so these steps deliberately do not guess paths or
+automatically copy/delete your data. If unsure, stop before step 2 and ask for
+help with the non-secret layout information. The LAB updater has its own
+[administrator setup and rollback guide](docs/update-helper.md); checking for
+a new release is not the same as installing it.
 
 ## Important Wi-Fi boundary
 

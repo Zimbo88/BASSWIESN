@@ -1,11 +1,20 @@
 # BASSWIESN
 
-Local server and cloud replacement for Bose SoundTouch systems.
+Keep your Bose SoundTouch radios useful with a local server and a web browser.
 
-BASSWIESN is an independent, unofficial project that keeps supported
-SoundTouch radios useful on a trusted home network. It combines a local
-SoundTouch compatibility service, a browser-based setup assistant, radio and
-preset management, Multiroom controls, metadata, health models and diagnostics.
+BASSWIESN runs on a Linux computer or Raspberry Pi in your home network.
+Use your phone or computer to choose stations, manage the six radio presets,
+control playback and create SoundTouch multiroom groups. The server must remain
+on while your radios use it; you do not need to keep the browser open.
+
+**New here?** Start with [Quick Install](#quick-install), then follow the
+[setup guide](SETUP_READ_HERE.md). [What changed in 3.0.2?](docs/releases/3.0.2/RELEASE_NOTES_3.0.2.md)
+
+**Deutsch:** BASSWIESN steuert deine SoundTouch-Radios lokal im Heimnetz.
+Sender, Presets, Fernbedienung und Multiroom erreichst du im Browser – auch
+auf dem Handy. Die Oberfläche bietet Deutsch und 27 weitere Sprachen.
+Die [Installation unten](#quick-install) ist zum Kopieren; die
+[Änderungen für 3.0.2](docs/releases/3.0.2/RELEASE_NOTES_3.0.2.md) sind auch auf Deutsch erklärt.
 
 BASSWIESN is not affiliated with, endorsed by or supported by Bose.
 
@@ -21,12 +30,16 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-The `3.0.1` source tree integrates the LAB listening workbench and adds
-contextual help and illustrated tutorials in all 28 UI languages. The compact
-remote and restart page use the selected language, with English fallback for
-specialist text that has not been translated. See [help and language scope](docs/languages-and-help.md)
-and the [3.0.1 notes](docs/releases/3.0.1/RELEASE_NOTES_3.0.1.md).
-This version label does not certify GitHub publication or a production upgrade.
+Version **3.0.2** adds clearer diagnosis, local-day listening statistics,
+browser-local text size and high contrast, and offline practice tools in LAB.
+Named display profiles let you prepare and reuse a layout without immediately
+changing a radio. It also includes the help and workbench work prepared as
+3.0.1; there was no separate public 3.0.1 release.
+
+Question-mark help and ten illustrated tutorials cover all 28 UI languages.
+New safety explanations and confirmations are translated too. Some specialist
+text still uses English; [the language guide](docs/languages-and-help.md)
+explains the scope without claiming complete native-speaker review.
 
 BASSWIESN `3.0.0` improves mobile navigation, light/dark appearance, remote
 controls, preset checks, listening statistics and readable diagnostics. The
@@ -102,8 +115,10 @@ profile. Unknown combinations remain read-only.
   timeline;
 - responsive desktop and mobile Web UI.
 
+For everyday use: start in **Easy**, choose **Standard** for more controls, and
+enter **LAB** only when you want experimental or diagnostic tools.
 See [Feature status](FEATURES.md) for supported paths and honest limitations,
-and [the changelog](CHANGELOG.md) for changes since 2.6.0.
+and [the changelog](CHANGELOG.md) for a version-by-version summary.
 
 ### Your radio display
 
@@ -163,9 +178,12 @@ light/dark/system appearance and puts the main remote controls before display
 options. Commands are followed by a radio-state readback; a successful command
 alone is not presented as a verified new volume or audible playback.
 
-Listening statistics offer today (UTC), rolling 7/30 days and all-time views,
-grouped by radio and station. These are estimates from recorded radio states,
-not measurements of uninterrupted sound. Advanced device checks are explicit,
+Listening statistics offer today in the configured timezone, rolling 7/30 days
+and all-time views, grouped by radio and station. Daylight-saving changes are
+handled as 23/25-hour days. Recorded session endings and open intervals are
+shown separately: they do not prove an audible dropout or its cause.
+These are estimates from recorded radio states, not measurements of uninterrupted sound.
+Advanced device checks are explicit,
 read-only and identity-guarded; they do not enable SSH or change redirects.
 
 Settings can check the official stable GitHub release without configuring a
@@ -204,21 +222,42 @@ addresses or hardware backups.
 
 ## Quick Install
 
-Download and verify the versioned release asset:
+For a **new installation** on Linux with Docker Engine and Docker Compose v2
+already installed. Run this as your normal Docker-enabled user. If Docker
+reports a permission error, stop and ask the host administrator to configure
+access; do not make the Docker socket world-writable.
+
+Copy the complete block into a Bash terminal. It stops on a failed download or
+checksum and refuses to reuse an existing installation folder:
 
 ```bash
-mkdir -p "$HOME/basswiesn-3.0.0"
-cd "$HOME/basswiesn-3.0.0"
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.0/basswiesn-docker-release-3.0.0.tar.gz
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.0/SHA256SUMS
+(
+set -eu
+mkdir "$HOME/basswiesn-3.0.2"
+cd "$HOME/basswiesn-3.0.2"
+curl --fail --location --retry 3 --output basswiesn-docker-release-3.0.2.tar.gz https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.2/basswiesn-docker-release-3.0.2.tar.gz
+curl --fail --location --retry 3 --output SHA256SUMS https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.2/SHA256SUMS
 sha256sum -c SHA256SUMS
-tar -xzf basswiesn-docker-release-3.0.0.tar.gz
+tar -xzf basswiesn-docker-release-3.0.2.tar.gz
 cd basswiesn-release
 ./install.sh
+)
 ```
 
-The installer requires Docker Engine and Docker Compose v2. It creates a local
-`.env` only when one does not already exist and never changes host Wi-Fi.
+When the checksum prints **OK**, the download matches the release checksum.
+This is an integrity check, not a cryptographic publisher signature.
+The installer then builds and starts BASSWIESN. Open `http://<server-address>:1328`
+in your browser, select your language, and follow **Setup**. No radio discovery
+runs until you request it. The installer never changes host Wi-Fi.
+
+**Deutsch:** Der Block ist für eine Neuinstallation, nicht zum Überschreiben
+deiner bisherigen Installation. Bei `OK` stimmt die Prüfsumme. Danach im Browser
+die Adresse deines Servers mit `:1328` öffnen und **Setup** wählen.
+
+**Already using BASSWIESN?** Do not start a second instance beside it or delete
+its data. Back up the existing `.env` and `data/`, and read the
+[upgrade instructions](SETUP_READ_HERE.md#updating-an-existing-installation).
+The in-app installer remains an explicitly enrolled, experimental LAB path.
 
 ## Installation
 
@@ -246,6 +285,21 @@ Other local ports are `1516` for the SoundTouch compatibility service and
 Never use `docker compose down -v` as an upgrade step.
 
 See [SETUP_READ_HERE.md](SETUP_READ_HERE.md) for the complete workflow.
+
+## Trying the improvements without radios
+
+In LAB, open **Practice and display profiles**. Seven fictional failures explain
+how to distinguish connection, provider, reporting and group problems. The
+simulator does not contact equipment or change playback. Display previews use
+fictional songs. A saved profile only becomes a radio preference when you copy
+it into that radio's remote editor and explicitly save.
+
+At the bottom of each page, **Reading and keyboard** offers larger text and
+high contrast. These settings stay in this browser, including the compact remote;
+they do not change radio settings. Keyboard users can skip to the main content.
+
+Want to run the software tests yourself? The [testing guide](docs/testing.md)
+explains each command, the expected result and what a passing test does **not** prove.
 
 ## First setup and adding a radio
 

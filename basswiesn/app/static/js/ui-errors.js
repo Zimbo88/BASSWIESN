@@ -10,11 +10,17 @@
   }
 
   function showApiError(error, context = "Aktion fehlgeschlagen") {
+    const i=window.BasswiesnI18n;
+    const fallback={error_generic:"Action failed",error_forbidden:"Check protection settings. Do not bypass a protected-device warning.",
+      error_timeout:"No timely response. Check the recorded state before trying again.",
+      error_server:"Inspect the earliest relevant diagnostic event. Do not repeat a write blindly."};
+    const word=key=>i?.word302?.(key)||fallback[key];
     const code = error?.code && error.code !== "HTTP_ERROR" ? ` (${error.code})` : "";
-    const next = error?.status === 403 ? " Einstellungen und IP Write Guard prüfen."
-      : error?.status === 502 || error?.status === 504 ? " Radio und Netzwerk prüfen; danach erneut versuchen."
-      : error?.status >= 500 ? " Logs oder Support Bundle prüfen und erneut versuchen." : "";
-    showToast(`${context}${code}: ${error?.message || String(error)}${next}`, "error");
+    const next = error?.status === 403 ? word("error_forbidden")
+      : error?.status === 502 || error?.status === 504 ? word("error_timeout")
+      : error?.status >= 500 ? word("error_server") : "";
+    const title=context==="Aktion fehlgeschlagen"?word("error_generic"):(i?.dynamic(context)||context);
+    showToast(`${title}${code}: ${i?.dynamic(error?.message||String(error))||error?.message||String(error)} ${next}`, "error");
   }
 
   function setFormBusy(form, busy, label = "Wird ausgeführt") {

@@ -6,7 +6,7 @@ const root = path.resolve(__dirname, "..");
 const sandbox = {window: {}, console: {warn() {}}};
 vm.createContext(sandbox);
 const read = file => fs.readFileSync(path.join(root, file), "utf8");
-for (const file of ["translations", "language-extension", "locale-301", "help-content"]) {
+for (const file of ["translations", "language-extension", "locale-301", "locale-302", "help-content"]) {
   vm.runInContext(read(`basswiesn/app/static/js/${file}.js`), sandbox, {timeout:1000});
 }
 const i = sandbox.window.BasswiesnI18n;
@@ -25,7 +25,8 @@ for (const [name, file, variable, indent] of [
 const report = {scope:"Common catalog, remote, restarts, LAB workbench, DLNA, help vocabulary and tutorials. Not a whole-application native-language certification.",
   english_equivalent:"Includes correct shared technical terms as well as fallback. Counts are not quality percentages.", languages:{}, errors:[]};
 const samples = [...new Set(Object.values(i.catalogs).flatMap(Object.values)
-  .concat(Object.values(i.vocabulary).flatMap(Object.values),Object.values(i.extraTerms).flat()))];
+  .concat(Object.values(i.vocabulary).flatMap(Object.values),Object.values(i.extraTerms).flat(),
+    Object.values(sandbox.window.Basswiesn302Catalogs).flatMap(Object.values)))];
 for (const lang of i.languages) {
   i.setLanguage(lang);
   const row = {common_entries:0, common_different_from_english:0, scoped_entries:0,
@@ -54,6 +55,13 @@ for (const lang of i.languages) {
   row.help_vocabulary=Object.keys(vocab || {}).length+(terms?.length || 0);
   row.tutorials=Object.keys(tutorials || {}).length;
   row.tutorial_steps=Object.values(tutorials || {}).flat().length;
+  const learning=sandbox.window.Basswiesn302Catalogs;
+  row.offline_tools_native_entries=Object.keys(learning[lang] || {}).length;
+  row.offline_tools_english_fallback=[];
+  for(const key of Object.keys(learning.en)) {
+    if(!i.word302(key)) report.errors.push(lang+":offline-tools:empty:"+key);
+    if(!learning[lang]?.[key]) row.offline_tools_english_fallback.push(key);
+  }
   for (const steps of Object.values(tutorials || {})) {
     if (steps.length !== 3 || steps.some(value => !value.trim())) report.errors.push(lang+":empty tutorial");
   }

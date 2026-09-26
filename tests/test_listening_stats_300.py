@@ -60,7 +60,7 @@ def test_stats_endpoint_excludes_internal_and_unconfirmed_and_handles_boundary(m
         db.add(row(id=3, is_confirmed=False))
         db.commit()
     with TestClient(create_web_app(background_tasks=False)) as client:
-        response = client.get("/api/stats/playback")
+        response = client.get("/api/stats/playback?timezone=UTC")
     assert response.status_code == 200
     value = response.json()
     assert value["listening"]["periods"]["today"]["seconds"] == 1800

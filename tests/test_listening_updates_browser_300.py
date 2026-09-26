@@ -22,8 +22,9 @@ def test_statistics_filter_and_official_check_are_passive_until_clicked(language
                 return route.abort()
             path = route.request.url.removeprefix(server.url)
             if path == "/api/stats/playback":
-                return route.fulfill(json={"listening": {"periods": {
+                return route.fulfill(json={"listening": {"timezone": "Europe/Berlin", "periods": {
                     "7d": {"seconds": 3600, "sessions": 2, "by_device": [{"name": "Example Radio", "seconds": 3600, "sessions": 2}],
+                           "open_sessions": 1, "observed_end_reasons": {"user_stop": 1},
                            "by_station": [{"name": "Example Station", "seconds": 3600, "sessions": 2}]},
                     "today": {"seconds": 0, "sessions": 0, "by_device": [], "by_station": []}}}})
             if path == "/api/update/official/check":
@@ -38,7 +39,15 @@ def test_statistics_filter_and_official_check_are_passive_until_clicked(language
         page.locator('[data-view="dashboard"]').click()
         expect(page.locator(".listening-summary")).to_contain_text("Example Radio")
         expect(page.locator(".listening-summary")).to_contain_text("Example Station")
-        assert page.locator("#dashboard-play-stats details").get_attribute("open") is None
+        # Both the new lifecycle explanation and the older statistics stay closed.
+        for detail in page.locator("#dashboard-play-stats details").all():
+            assert detail.get_attribute("open") is None
+        lifecycle=page.locator(".listening-summary details")
+        lifecycle.locator("summary").click()
+        expect(lifecycle).to_contain_text("user_stop")
+        expect(lifecycle).to_contain_text("keinen Tonaussetzer" if language=="de" else "does not prove an audio dropout")
+        assert requests == []
+        expect(page.locator(".listening-summary")).to_contain_text("Europe/Berlin")
         page.locator("#listening-period").select_option("today")
         expect(page.locator(".listening-summary")).to_contain_text("Noch keine bestätigte" if language == "de" else "No confirmed playback")
         page.locator("#listening-period").select_option("7d")

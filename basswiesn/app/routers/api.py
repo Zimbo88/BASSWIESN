@@ -14,7 +14,7 @@ from types import SimpleNamespace
 from urllib.parse import quote, urlparse
 from uuid import uuid4
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
@@ -1951,8 +1951,14 @@ async def record_play_history_event(payload: dict, db: Session = Depends(get_db)
 
 
 @router.get("/stats/playback")
-async def playback_stats(db: Session = Depends(get_db)) -> dict:
+async def playback_stats(db: Session = Depends(get_db), timezone: str | None = Query(default=None, max_length=80)) -> dict:
     from basswiesn.app.services.listening_stats import listening_summary, observed_interval, overlap_seconds
+    from basswiesn.app.services.clock_metadata import clock_metadata_timezone
+    from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+    try:
+        zone = ZoneInfo(timezone) if timezone is not None else clock_metadata_timezone(db)
+    except (ValueError, ZoneInfoNotFoundError):
+        raise HTTPException(422, detail={"code": "INVALID_TIMEZONE"})
     all_rows = db.query(PlayHistory).order_by(PlayHistory.started_at.desc()).all()
     rows = [row for row in all_rows if _is_user_playback_row(row)]
     devices = {row.device_id: row for row in db.query(Device).all()}
@@ -1965,7 +1971,7 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
     device_history: dict[str, dict] = {}
     active = []
     now = utc_now()
-    today = now.date()
+    today = now.astimezone(zone).date()
     week_start = today.fromisocalendar(today.isocalendar().year, today.isocalendar().week, 1)
     month_start = today.replace(day=1)
     year_start = today.replace(month=1, day=1)
@@ -1975,12 +1981,13 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
     timer = {"plays": 0, "successes": 0, "seconds": 0}
     station_names = {}
     tolerance = get_settings().playback_keepalive_interval_seconds + 60
-    period_boundaries = {key: datetime.combine(value, datetime.min.time(), tzinfo=UTC) for key, value in
+    period_boundaries = {key: datetime.combine(value, datetime.min.time(), tzinfo=zone).astimezone(UTC) for key, value in
                          (("today", today), ("week", week_start), ("month", month_start), ("year", year_start), ("decade", decade_start))}
     for row in rows:
         interval_start, interval_end = observed_interval(row, now=now, tolerance=tolerance)
         seconds = max(0, int((interval_end - interval_start).total_seconds()))
-        started_at = row.started_at or utc_now()
+        started_at = (row.started_at or utc_now())
+        started_at = (started_at.replace(tzinfo=UTC) if started_at.tzinfo is None else started_at).astimezone(zone)
         started_date = started_at.date()
         device_key = row.device_id or "unknown"
         identity = identity_for_history(db, row)
@@ -2017,7 +2024,9 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
             device_bucket["failures"] += 1
         if not device_bucket["device_ip"] and getattr(row, "device_ip", ""):
             device_bucket["device_ip"] = row.device_ip
-        started_iso = _iso_or_empty(started_at)
+        # Calendar grouping is local; sortable API/event timestamps stay UTC,
+        # including the repeated hour when daylight saving ends.
+        started_iso = _iso_or_empty(started_at.astimezone(UTC))
         if not device_bucket["first_usage"] or started_iso < device_bucket["first_usage"]:
             device_bucket["first_usage"] = started_iso
         if not device_bucket["last_played_at"] or started_iso > device_bucket["last_played_at"]:
@@ -2092,7 +2101,9 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
     total_runtime = int(server_rows.get("server:total_runtime_seconds") or 0) + current_uptime
     return {
         "listening": listening_summary(rows, now=now, tolerance=tolerance,
-                                       device_names={key: device.name for key, device in devices.items()}, station_names=station_names),
+                                       device_names={key: device.name for key, device in devices.items()}, station_names=station_names,
+                                       timezone_name=zone.key),
+        "timezone": zone.key,
         "today": today_stats,
         "lifetime": {"total_plays": len(rows), "total_seconds": aggregate_seconds["lifetime"], "internal_events_excluded": len(all_rows) - len(rows)},
         "aggregate": {f"{key}_hours": round(value / 3600, 2) for key, value in aggregate_seconds.items()},

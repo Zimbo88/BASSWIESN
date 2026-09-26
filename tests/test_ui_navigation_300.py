@@ -97,6 +97,9 @@ def test_themes_lab_boundaries_and_remote_controls_first(engine, language, monke
                 page.locator('[data-theme-select]').select_option(theme)
                 assert page.locator('html').get_attribute('data-theme') == theme
                 assert page.evaluate('document.documentElement.scrollWidth <= innerWidth')
+                # Wait for the selected theme to be painted before reading
+                # descendant computed colours, including WebKit's hidden panels.
+                page.evaluate('() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))')
                 contrast = page.evaluate('''() => {
                   const canvas = document.createElement('canvas');
                   canvas.width = canvas.height = 1;

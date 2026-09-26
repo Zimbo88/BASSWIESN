@@ -25,7 +25,7 @@ from basswiesn.app.services.playback_state import reconcile_open_play_history
 from basswiesn.app.services.filesystem_contract import ensure_runtime_directories
 from basswiesn.app.services.task_registry import start_owned_task, stop_owned_task
 from basswiesn.app.api import routes_devices
-from basswiesn.app.routers import airplay_bridge, api, catalogs, cloud, debug, devices, dlna, fulltest, lab_workbench, media, multiroom, radio_reboots, research_state, setup, setup_rebuild, stations_presets, telemetry, update_admin
+from basswiesn.app.routers import airplay_bridge, api, catalogs, cloud, debug, devices, dlna, fulltest, lab_learning, lab_workbench, media, multiroom, radio_reboots, research_state, setup, setup_rebuild, stations_presets, telemetry, update_admin
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +283,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
     app.include_router(update_admin.router)
     app.include_router(dlna.router)
     app.include_router(lab_workbench.router)
+    app.include_router(lab_learning.router)
     app.include_router(fulltest.router)
     app.include_router(stations_presets.router)
     app.include_router(multiroom.router)
@@ -696,6 +697,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
             </section>
             <section class="view" id="view-lab">
               <section class="panel lab-only" id="lab-workbench"></section>
+              <section class="panel lab-only" id="lab-learning"></section>
               <section class="panel" id="release-lab-boundary">
                 <h3 data-i18n="release_lab_title"></h3>
                 <p data-i18n="release_lab_boundary"></p>
@@ -756,6 +758,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
         <script src="/static/js/about.js?v={settings.version}"></script>
         <script src="/static/js/language-extension.js?v={settings.version}"></script>
         <script src="/static/js/locale-301.js?v={settings.version}"></script>
+        <script src="/static/js/locale-302.js?v={settings.version}"></script>
         <script src="/static/js/help-content.js?v={settings.version}"></script>
         <script src="/static/js/help.js?v={settings.version}"></script>
         <link rel="stylesheet" href="/static/help.css?v={settings.version}">
@@ -763,6 +766,8 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
         <script src="/static/js/dlna-library.js?v={settings.version}"></script>
         <script src="/static/js/update-admin.js?v={settings.version}"></script>
         <script src="/static/js/lab-workbench.js?v={settings.version}"></script>
+        <script src="/static/js/lab-learning.js?v={settings.version}"></script>
+        <script src="/static/js/accessibility.js?v={settings.version}"></script>
         </body></html>
         """
 
@@ -816,10 +821,12 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
           <script src="/static/js/translations.js?v={settings.version}"></script>
           <script src="/static/js/language-extension.js?v={settings.version}"></script>
           <script src="/static/js/locale-301.js?v={settings.version}"></script>
+          <script src="/static/js/locale-302.js?v={settings.version}"></script>
           <script src="/static/js/help-content.js?v={settings.version}"></script>
           <script src="/static/js/help.js?v={settings.version}"></script>
           <link rel="stylesheet" href="/static/help.css?v={settings.version}">
           <script src="/static/remote.js?v={settings.version}"></script>
+          <script src="/static/js/accessibility.js?v={settings.version}"></script>
         </body></html>
         """
 

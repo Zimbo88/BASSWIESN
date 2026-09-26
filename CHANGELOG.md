@@ -1,6 +1,36 @@
 # Changelog
 
-## 3.0.1 — prepared locally, not a publication receipt
+## 3.0.2 — 2026-09-26
+
+### Easier to use
+
+- Add larger text, high contrast and a keyboard shortcut link to the main content.
+  Reading preferences stay in your browser and also work in the compact remote.
+- Count “Today” from midnight in your chosen timezone, including daylight-saving
+  changes. Show open listening sessions and recorded endings separately; these
+  statistics do not measure actual sound or prove why playback ended.
+- Explain saved diagnosis warnings as observation, meaning, safe next step and
+  what is still unknown. No automatic restart or speculative repair.
+- Translate the new controls, confirmations, important errors and safety help
+  across all 28 languages. Untranslated specialist explanations use English.
+- Simplify installation instructions, feature descriptions and the test guide.
+
+### New in LAB
+
+- Practise seven faults with fictional data: lost connection, changed address,
+  missing song information, failed reporting, unavailable provider, invalid
+  source and a partially joined group. No radio communication is performed.
+- Save up to 30 named display layouts and preview missing or long metadata.
+  Loading a layout is not a radio write: copy it into the remote editor and
+  save explicitly when you want to apply it.
+- Include the listening workbench and translated help prepared as 3.0.1 below.
+  There was no separate public 3.0.1 release.
+
+AirPlay receiver integration remains disabled. DLNA audio and the production
+updater still await their separate acceptance tests. This release was developed
+and checked without contacting household radios or installing on the Pi.
+
+## 3.0.1 — local work, first published with 3.0.2
 
 - Include the LAB listening workbench described below; its radio acceptance is
   still separate from the offline software tests.

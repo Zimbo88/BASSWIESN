@@ -52,10 +52,14 @@ def test_remote_human_flow_without_radio_contacts(tmp_path, language, width, hei
             return route.fulfill(body=html, content_type="text/html")
         if path in {"/static/remote.js", "/static/remote.css", "/static/theme.css", "/static/js/theme.js",
                     "/static/js/translations.js", "/static/js/language-extension.js", "/static/js/locale-301.js",
+                    "/static/js/locale-302.js", "/static/js/accessibility.js",
                     "/static/js/help-content.js", "/static/js/help.js", "/static/help.css"}:
             return route.fulfill(body=(assets / path.removeprefix("/static/")).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
         response = {
-            "/api/system/settings": {"web_language": language, "safe_startup_volume": 1},
+            "/api/system/settings": {"web_language": language, "safe_startup_volume": 1,
+                                     "ui_mode": "lab" if language == "en" else "standard"},
+            "/api/lab/learning/display-profiles": {"items": [{"name": "Office profile",
+                "fields": ["title", "clock"], "field_order": ["title", "clock", "station", "artist", "other"]}]},
             "/api/devices": radios,
             "/api/stations": [{"id": 1, "name": "Example Station"}, {"id": 2, "name": '<img src=x onerror="window.BAD=true">'}],
             "/api/presets/REMOTE-A": [{"button": 1, "station_name": "Example Station"}],
@@ -165,4 +169,23 @@ def test_remote_human_flow_without_radio_contacts(tmp_path, language, width, hei
         page.screenshot(path=str(tmp_path / f"remote-{language}-{width}.png"), full_page=True)
         page.locator("#remote-details summary").click()
         expect(page.locator("#remote-output")).to_be_visible()
+        if language == "en":
+            profile_panel = page.locator("#remote-display-profiles")
+            profile_panel.locator("summary").click()
+            assert not [call for call in calls if call[1] == "/api/lab/learning/display-profiles"]
+            page.locator("#remote-profile-load").click()
+            expect(page.locator("#remote-profile-select")).to_contain_text("Office profile")
+            writes_before = len([call for call in calls if call[0] in {"POST", "PUT"}])
+            page.locator("#remote-profile-copy").click()
+            expect(page.locator("#remote-display-save")).to_be_focused()
+            expect(page.locator("#remote-display-station")).not_to_be_checked()
+            expect(page.locator("#remote-message")).to_contain_text("editor only")
+            assert len([call for call in calls if call[0] in {"POST", "PUT"}]) == writes_before
+            page.locator("#remote-display-save").click()
+            expect(page.locator("#remote-display-station")).to_be_enabled()
+            expect(page.locator("#remote-display-save")).to_be_disabled()
+            assert display_preference["fields"] == ["title", "clock"]
+            assert calls[-1][:2] == ("GET", "/api/devices/REMOTE-A/metadata/display")
+        else:
+            expect(page.locator("#remote-display-profiles")).to_have_count(0)
         browser.close()

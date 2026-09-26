@@ -1,10 +1,27 @@
-# BASSWIESN 3.0.1 Feature Status
+# BASSWIESN 3.0.2 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
 test exists.
 
-## 3.0.1 — help, language coverage and LAB workbench
+## At a glance
+
+| What you want to do | Where | Status |
+|---|---|---|
+| Play stations, use presets, control radios and create a SoundTouch group | Easy / Standard | Existing core, with identity and readback checks |
+| Make the interface easier to read | Reading and keyboard, at the bottom of each page | Larger text, high contrast, keyboard skip link; browser-local |
+| See how long a station was selected today | Listening statistics | Uses configured timezone; estimates, not a microphone measurement |
+| Understand a saved warning | LAB listening workbench | Observation, meaning and safe next step; not an automatic repair |
+| Practise diagnosis without devices | LAB fault simulator | Seven synthetic scenarios, no radio communication |
+| Reuse a display layout | LAB display profiles | Up to 30 named layouts; copy to a remote editor and save explicitly |
+| Learn an unfamiliar function | Question mark → Tutorial | Ten illustrated workflows in 28 languages; no actions executed |
+| Receive AirPlay through BASSWIESN | LAB preview | Disabled; unfinished |
+| Use DLNA audio / automatic update installation | LAB | Experimental; joint real-device/production acceptance remains open |
+
+The new offline features are software-tested. They do not certify AirPlay,
+DLNA audio or a production updater installation. No new firmware patch is included.
+
+## Help, language coverage and LAB workbench
 
 Question-mark help and ten illustrated three-step guides cover setup, remote,
 presets, multiroom, display, workbench, AirPlay, DLNA, updater and recovery.
@@ -18,7 +35,7 @@ metadata provenance/freshness, recent-station replay with explicit volume-1
 confirmation, local QR remote links, bounded snapshot comparison/export,
 listening CSV and saved stream-format inventory. Every new API requires LAB;
 opening the workbench does not contact radios. These changes are included in
-the 3.0.1 source tree, not the earlier 3.0.0 archive. Radio acceptance
+3.0.2, including the previously unpublished 3.0.1 work. Radio acceptance
 remains pending. AirPlay, DLNA and production updater completion are unchanged.
 
 ## 3.0.0 — stable core and explicit LAB boundary
@@ -34,7 +51,7 @@ are LAB-only or disabled. Software checks do not replace real-radio acceptance.
 | Remote control | Main controls first, command followed by current-state readback, collapsed technical output; display and compact-remote shortcuts | Readback is not proof of audible output |
 | Display metadata | Distinguish missing, stale, unavailable and artist/title-bearing station metadata in the display editor without starting a probe | Stored upstream evidence is not physical display verification; absent cache does not prove absent station metadata |
 | Preset checker | Actual sourceItem parsing, separate configuration/provider/stream results | Physical buttons and audible playback remain separate checks |
-| Listening statistics | Today (UTC), rolling 7/30 days and all-time summaries; by-radio and station totals; midnight clipping | Estimated intervals, not continuous sound measurement |
+| Listening statistics | Today in the configured timezone (including daylight-saving boundaries), rolling 7/30 days and all-time summaries; by-radio/station totals, recorded endings and open intervals | Estimated intervals; ending reasons are observations, not proof of audible interruption or cause |
 | Device readiness | Explicit identity-guarded read-only SSH/marker check, cached with expiry; concise request/retry summary and last response, technical details in LAB | Marker presence does not prove boot persistence or the redirect destination; allowed requests are not a current connectivity check |
 | Updates | Stable official release check; experimental LAB installation with explicit enrollment, HTTPS administrator action, root-sealed Unix service, backup/cutover/rollback and durable reconnect status. See [setup and limits](docs/update-helper.md) | Production updater acceptance remains open. Rootful Linux Docker/systemd and administrator setup required. No unattended updates, arbitrary archives or host commands. Checksums are not publisher signatures |
 | About | Unchanged German author statement, English translation, observed release date | Other languages explicitly use the English essay fallback |

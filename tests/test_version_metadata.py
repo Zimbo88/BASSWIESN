@@ -8,7 +8,7 @@ from basswiesn.app.main import create_web_app
 
 
 def test_app_version_is_exposed_consistently():
-    assert __version__ == "3.0.1"
+    assert __version__ == "3.0.2"
     assert get_settings().version == __version__
 
     with TestClient(create_web_app()) as client:

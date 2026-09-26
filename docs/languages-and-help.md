@@ -30,11 +30,15 @@ override any of these requirements.
 
 ## Translation boundary
 
-Version 3.0.1 adds 87 help/control terms per locale and 30 tutorial steps per
-locale. Existing core translations are retained. New LAB widgets and standalone
-pages use a shared exact-phrase catalog and English fallback. Additional
-specialist context currently has complete DE/EN copy; other locales visibly
-mark those English paragraphs. The original German About essay is preserved;
+The work prepared in 3.0.1 adds 87 help/control terms and 30 tutorial steps per
+locale. Version 3.0.2 includes that work and adds 50 native entries per additional
+locale for the offline tools, reading settings, scenario names, delete/save
+confirmation, important error advice and LAB/backup/restart/privacy help.
+German and English have the fuller specialist catalog. Existing core
+translations are retained. New LAB widgets and standalone pages use a shared
+exact-phrase catalog and English fallback. Longer diagnostic explanations can
+still be English in other locales; the audit lists those fallback keys explicitly.
+The original German About essay is preserved;
 the English essay remains the fallback for other locales.
 
 **This is not a claim that every older diagnostic sentence is natively
@@ -58,7 +62,7 @@ missing translations. Counts do not measure linguistic accuracy. The tool does
 not call an online translation service or contact hardware.
 
 Catalogs live in `static/js/translations.js`, `language-extension.js`,
-`locale-301.js` and `help-content.js` under `basswiesn/app`. Keep the ordered
+`locale-301.js`, `locale-302.js` and `help-content.js` under `basswiesn/app`. Keep the ordered
 vocabulary rows aligned, preserve confirmation semantics and run the audit
 after edits. Never translate a protocol token, confirmation value or payload.
 Human corrections to terminology and naturalness are welcome.
