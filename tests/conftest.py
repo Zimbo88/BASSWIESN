@@ -35,6 +35,22 @@ from basswiesn.app.db import database as database_module
 
 
 @pytest.fixture(autouse=True)
+def isolated_settings_cache(request):
+    """Environment overrides must not leave cached Settings in later cases.
+
+    In particular, a release-default test temporarily clears protection env
+    variables. Clearing this cache is test isolation, never a production reset
+    of configured protections.
+    """
+    if request.node.get_closest_marker("hardware") is not None:
+        yield
+        return
+    get_settings.cache_clear()
+    yield
+    get_settings.cache_clear()
+
+
+@pytest.fixture(autouse=True)
 def browser_setup_probe_stays_offline(monkeypatch, request):
     if request.node.get_closest_marker("browser") is not None:
         from basswiesn.app.routers import api

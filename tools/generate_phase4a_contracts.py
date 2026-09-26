@@ -23,6 +23,7 @@ WEB_MODULES = {
     "basswiesn.app.routers.api",
     "basswiesn.app.routers.media",
     "basswiesn.app.routers.dlna",
+    "basswiesn.app.routers.lab_workbench",
     "basswiesn.app.routers.fulltest",
     "basswiesn.app.routers.stations_presets",
     "basswiesn.app.routers.multiroom",
@@ -287,6 +288,13 @@ def route_record(route: dict[str, Any], application: str, method: str) -> dict[s
         "require_unprotected_device", "reject_protected_device_access",
         "action_preflight", "protected_device", "DeviceInteraction",
     ))
+    workbench = route["module"] == "basswiesn.app.routers.lab_workbench"
+    if workbench:
+        # Delegated playback is invisible to this function-local scanner;
+        # conversely, selecting a saved snapshot does not contact a radio.
+        hardware = route["handler"] == "replay"
+        database = route["handler"] in {"replay", "capture", "remove"}
+        policy = "{device_id}" in route["path"]
     legacy = application == "cloud" or route.get("legacy_manual_mount", False)
     if legacy:
         purpose = "Bose-/SoundTouch-Cloud-Kompatibilitaet"
@@ -302,6 +310,10 @@ def route_record(route: dict[str, Any], application: str, method: str) -> dict[s
         purpose = "Management-Abfrage oder Statusdarstellung"
     statuses = {int(route["status_code"] or 200)}
     statuses.update(route["http_exception_codes"])
+    if workbench:
+        statuses.add(409)  # require_lab dependency, including read-only routes
+        if "{device_id}" in route["path"]:
+            statuses.update({403, 404, 422})
     if route["path"] == "/{path:path}":
         statuses.update({200, 204})
     if legacy:

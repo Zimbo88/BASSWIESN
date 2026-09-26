@@ -4,6 +4,16 @@ This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
 test exists.
 
+## Unreleased LAB development
+
+The [listening workbench](docs/lab-workbench.md) adds cached playback diagnosis,
+metadata provenance/freshness, recent-station replay with explicit volume-1
+confirmation, local QR remote links, bounded snapshot comparison/export,
+listening CSV and saved stream-format inventory. Every new API requires LAB;
+opening the workbench does not contact radios. These changes are local
+development, **not included in the published 3.0.0 archive**. Radio acceptance
+remains pending. AirPlay, DLNA and production updater completion are unchanged.
+
 ## 3.0.0 — stable core and explicit LAB boundary
 
 The stable core is released with the following boundaries. Unfinished functions

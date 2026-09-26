@@ -1,5 +1,20 @@
 # Changelog
 
+## Unreleased — LAB only
+
+- Add a listening workbench that explains saved playback warnings without
+  guessing a cause or automatically restarting radios.
+- Show metadata origin/age and recently heard stations; replay uses today's
+  station mapping, explicit confirmation and the existing volume-1 safety path.
+- Generate private QR links to individual remotes locally.
+- Save, compare and export bounded cached-state snapshots with integrity checks;
+  these are diagnostic subsets, not hardware backups.
+- Export estimated listening intervals as spreadsheet-safe CSV and inspect saved
+  stream-format hints without probing streams.
+- Isolate cached test settings between software tests so temporary environment
+  overrides cannot contaminate later protection tests. Production protections
+  are unchanged.
+
 ## 3.0.0 - 2026-09-26
 
 ### Everyday use

@@ -31,6 +31,11 @@ def test_api_matrix_covers_mounted_applications_and_known_duplicate():
     assert {r["application"] for r in routes if r["path"] == "/api/dlna/servers"} == {"webgui", "https-webgui"}
     assert {r["application"] for r in routes if r["path"] == "/dlna/audio/{server_id}/{token}"} == {"cloud"}
     assert not any(r["path"].startswith("/api/dlna/dlna/") for r in routes)
+    workbench = [r for r in routes if r["path"].startswith("/api/lab/workbench/")]
+    assert len(workbench) == 22  # eleven endpoints, mounted for HTTP and HTTPS
+    assert {r["application"] for r in workbench} == {"webgui", "https-webgui"}
+    assert all(r["hardware_contact_possible"] == (r["handler"] == "replay") for r in workbench)
+    assert all(409 in r["expected_status_codes"] for r in workbench)
 
     for application in applications:
         rows = [route for route in routes if route["application"] == application]

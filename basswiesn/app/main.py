@@ -25,7 +25,7 @@ from basswiesn.app.services.playback_state import reconcile_open_play_history
 from basswiesn.app.services.filesystem_contract import ensure_runtime_directories
 from basswiesn.app.services.task_registry import start_owned_task, stop_owned_task
 from basswiesn.app.api import routes_devices
-from basswiesn.app.routers import airplay_bridge, api, catalogs, cloud, debug, devices, dlna, fulltest, media, multiroom, radio_reboots, research_state, setup, setup_rebuild, stations_presets, telemetry, update_admin
+from basswiesn.app.routers import airplay_bridge, api, catalogs, cloud, debug, devices, dlna, fulltest, lab_workbench, media, multiroom, radio_reboots, research_state, setup, setup_rebuild, stations_presets, telemetry, update_admin
 
 logger = logging.getLogger(__name__)
 
@@ -282,6 +282,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
     app.include_router(media.router)
     app.include_router(update_admin.router)
     app.include_router(dlna.router)
+    app.include_router(lab_workbench.router)
     app.include_router(fulltest.router)
     app.include_router(stations_presets.router)
     app.include_router(multiroom.router)
@@ -694,6 +695,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
               <div class="panel"><h3>Events</h3><label class="toggle-line"><input id="telemetry-debug-toggle" type="checkbox">Show raw XML/debug payloads</label><div id="telemetry-events" class="event-list"></div></div>
             </section>
             <section class="view" id="view-lab">
+              <section class="panel lab-only" id="lab-workbench"></section>
               <section class="panel" id="release-lab-boundary">
                 <h3 data-i18n="release_lab_title"></h3>
                 <p data-i18n="release_lab_boundary"></p>
@@ -760,6 +762,7 @@ def create_web_app(*, title: str = "basswiesn WebGUI", background_tasks: bool = 
         <script src="/static/app.js?v={settings.version}"></script>
         <script src="/static/js/dlna-library.js?v={settings.version}"></script>
         <script src="/static/js/update-admin.js?v={settings.version}"></script>
+        <script src="/static/js/lab-workbench.js?v={settings.version}"></script>
         </body></html>
         """
 

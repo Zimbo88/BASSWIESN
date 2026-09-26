@@ -30,9 +30,9 @@ PY
 STAGE_ROOT="$(mktemp -d)"
 ARCHIVE="$STAGE_ROOT/basswiesn-docker-release-${VERSION}.tar.gz"
 STAGE="$STAGE_ROOT/basswiesn-release"
-BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh .dockerignore CHANGELOG.md)
+BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE THIRD_PARTY_NOTICES.md .env.example install.sh .dockerignore CHANGELOG.md)
 PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py tools/check_update_host.py tools/prepare_update_host.py tools/prepare_update_service.py tools/install_update_helper.py tools/configure_update_env.py tools/verify_release_archive.py)
-PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md)
+PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md docs/lab-workbench.md)
 trap 'rm -rf "$STAGE_ROOT"' EXIT
 
 "$PYTHON" -m compileall -q basswiesn tests tools
@@ -63,6 +63,7 @@ if command -v node >/dev/null 2>&1; then
   node --check basswiesn/app/static/remote.js
   node --check basswiesn/app/static/reboots.js
   node --check basswiesn/app/static/js/translations.js
+  node --check basswiesn/app/static/js/lab-workbench.js
 else
   echo "node not found; skipping JavaScript syntax checks" >&2
 fi
