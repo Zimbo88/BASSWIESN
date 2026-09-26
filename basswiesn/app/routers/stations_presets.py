@@ -51,7 +51,7 @@ from basswiesn.app.services.preset_transactions import (
     transition_preset_mutation,
 )
 from basswiesn.app.services.action_journal import record_action
-from basswiesn.app.services.setup_rebuild.audio_safety import lock_audio_safety
+from basswiesn.app.services.setup_rebuild.audio_safety import load_audio_safety, lock_audio_safety
 from basswiesn.app.services.playback_safety_gate import (
     arm_playback_safety_gate,
     clear_playback_safety_gate,
@@ -1445,6 +1445,15 @@ async def play_station_on_device(device_id: str, station_id: int, payload: dict,
     if payload.get("dry_run", False):
         return {"dry_run": True, "device_id": device.device_id, "target": device.ip_address, "path": "/select", "xml": xml}
     enforce_ip_write_guard(db, device)
+    # A failed safe-playback attempt persists this stop. Normal station play
+    # must not bypass it, even when the caller omits safe_volume. Recovery is
+    # the separate identity/STOP/STANDBY/volume-readback verification, not a retry.
+    if load_audio_safety(db, device.device_id).locked:
+        raise HTTPException(status_code=409, detail={
+            "code": "audio_safety_locked",
+            "error": "Playback is locked. Run the audio safety check in Setup before trying again.",
+            "audio_safety": {"locked": True, "volume_limit": 1},
+        })
     safe_volume = payload.get("safe_volume")
     if safe_volume is not None:
         safe_volume = int(safe_volume)
@@ -1529,7 +1538,7 @@ async def play_station_on_device(device_id: str, station_id: int, payload: dict,
                 if not still_muted:
                     selected_volume, still_muted = await _set_mute_readback(client, True)
                 if selected_volume != safe_volume or not still_muted:
-                    raise OSError("post-select volume 1 and mute could not be restored")
+                    raise OSError("post-select safe volume and mute could not be restored")
                 confirmed_volume = selected_volume
                 verify_playback_safety_gate(
                     db,
@@ -1553,7 +1562,7 @@ async def play_station_on_device(device_id: str, station_id: int, payload: dict,
                 if not muted_before:
                     confirmed_volume, still_muted = await _set_mute_readback(client, False)
                     if confirmed_volume != safe_volume or still_muted:
-                        raise OSError("safe unmute at volume 1 could not be confirmed")
+                        raise OSError("unmute at the requested safe volume could not be confirmed")
                 write_masterlog("volume_safety_verified", device_id=device.device_id, radio_ip=device.ip_address, volume=confirmed_volume, stage="after_playback_select")
                 clear_playback_safety_gate(db, device.device_id)
                 safety_gate_armed = False
@@ -1710,7 +1719,9 @@ async def preset_status(
         radio_rows = preset_summaries_from_xml(radio_xml) if radio_xml else []
         radio_error = "" if snapshot is not None else "Radio noch nicht ausdrücklich gelesen"
     _runtime_row, runtime = load_runtime_state(db, device_id)
-    providers = live_providers or runtime.get("providers") or {}
+    # An explicit refresh reports this observation, even when both reads fail.
+    # Cached availability must not turn failed live reads into a green result.
+    providers = live_providers if probe else (runtime.get("providers") or {})
     stream_probes: dict[int, dict] = {}
     if probe:
         for row in local_rows:
@@ -1889,6 +1900,9 @@ async def preset_status(
         "radio_xml": radio_xml if radio_error else "",
         "sync_state": sync_state,
         "probe_performed": probe,
+        "verification_scope": "READ_ONLY_CONFIGURATION_AND_REACHABILITY",
+        "audio_playback_verified": False,
+        "physical_button_verified": False,
         "radio_snapshot_source": snapshot.path if snapshot is not None else "",
         "radio_observed_at": snapshot.created_at.isoformat() if snapshot is not None else None,
     }

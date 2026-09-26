@@ -633,7 +633,7 @@ class DisplayPreferenceUpdate(BaseModel):
 
 @router.get("/devices/{device_id}/metadata/display")
 async def display_metadata_preference(device_id: str, db: Session = Depends(get_db)) -> dict[str, Any]:
-    from basswiesn.app.services.station_metadata import load_display_preference
+    from basswiesn.app.services.station_metadata import display_observation, load_display_preference
     device_or_404(db, device_id)
     clock = load_clock_metadata_preference(db, device_id)
     preference = load_display_preference(db, device_id)
@@ -641,6 +641,7 @@ async def display_metadata_preference(device_id: str, db: Session = Depends(get_
             "scope": "LOCAL_PROVIDER_METADATA", "radio_write": False,
             "presentation": "COMPOSED_TITLE_LINE" if preference.mode == "CUSTOM" else "LEGACY_FIELDS",
             "native_station_header": "FIRMWARE_CONTROLLED",
+            "observation": display_observation(db, device_id),
             "probe_interval_seconds": 60, "hardware_validation": "OPEN"}
 
 

@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 WORKDIR /app
-LABEL org.opencontainers.image.version="2.6.5" \
+LABEL org.opencontainers.image.version="3.0.0" \
       org.opencontainers.image.source="https://github.com/Zimbo88/BASSWIESN"
 ARG APP_UID=10001
 ARG APP_GID=10001

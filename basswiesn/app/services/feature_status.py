@@ -160,6 +160,7 @@ def build_feature_status(db: Session) -> list[dict]:
     logo_mode_count = db.query(Setting).filter(Setting.key.like("station_art_mode:%")).count()
     logo_count = db.query(Station).filter(Station.image_url.is_not(None), Station.image_url != "").count()
     multiroom_configured = device_count >= 2
+    dlna_configured = any(key.startswith("dlna_server:") for key in rows)
 
     features = [
         _feature(
@@ -321,9 +322,20 @@ def build_feature_status(db: Session) -> list[dict]:
             security_status="Redaction vor Export",
         ),
         _feature(
-            feature_id="update_check", title="Update Check", category="Updates",
+            feature_id="official_update_check", title="Offizielle Release-Prüfung", category="Updates",
+            description="Prüft auf Wunsch die neueste stabile GitHub-Version. Installiert kein Update.", maturity="Kern",
+            enabled=True, available=offline != "strict", configured=True, restart_required=False,
+            blockers=["Strict Offline blockiert die GitHub-Prüfung"] if offline == "strict" else [],
+            requirements=["Manueller Start in den Einstellungen", "Internetzugang zu GitHub"],
+            settings_target=_target("system-settings", "update-check"), navigation_target=_target("system-settings"),
+            documentation=_doc("release-pipeline", "Releasepipeline"), safe_test_available=False,
+            security_status="Feste offizielle Quelle; kein Herunterladen, keine Installation",
+        ),
+        _feature(
+            feature_id="update_check", title="Eigene Manifest-Prüfung (LAB)", category="Updates",
             description="Prüft manuell ein konfiguriertes externes Release-Manifest.", maturity="Kern",
             enabled=update_enabled, available=update_enabled and bool(update_url), configured=bool(update_url), restart_required=False,
+            lab_only=True,
             blockers=[] if update_enabled and update_url else (["Updateprüfung deaktiviert"] if not update_enabled else ["Manifest-URL fehlt"]),
             requirements=["Update-Flag oder UI-Einstellung", "Manifest-URL", "Strict Offline kann externe Prüfung blockieren"],
             settings_target=_target("system-settings", "update-manifest-url"), navigation_target=_target("system-settings"),
@@ -331,9 +343,9 @@ def build_feature_status(db: Session) -> list[dict]:
         ),
         _feature(
             feature_id="local_update", title="Local Update", category="Updates",
-            description="Prüft lokale Archive und bereitet ein Update vor; vollständige UI-Ausführung fehlt.", maturity="Infrastruktur",
+            description="Lokale Archivvorbereitung; getrennt vom experimentellen Installer für offizielle Releases im LAB.", maturity="Infrastruktur",
             enabled=settings.update_allow_local_archive, available=False, configured=settings.update_allow_local_archive,
-            restart_required=True, ui_complete=False, blockers=["Vollständiger UI-Ablauf mit Neustart und Rollback fehlt"],
+            restart_required=True, ui_complete=False, lab_only=True, blockers=["Vollständiger UI-Ablauf mit Neustart und Rollback fehlt"],
             requirements=["Lokales Archiv", "SHA256", "Administrativer Neustart"], navigation_target=_target("system-settings"),
             documentation=_doc("activation-gaps", "Aktivierungslücken"), safe_test_available=True,
             security_status="Archivprüfung vor Prepare; kein automatischer Neustart",
@@ -360,15 +372,20 @@ def build_feature_status(db: Session) -> list[dict]:
             feature_id="local_media", title="Lokale Medien", category="Experimentell",
             description="Lokale Medienroots, Bibliothek und Playlist-Infrastruktur.", maturity="Experimentell",
             enabled=settings.media_enabled, available=settings.media_enabled and media_roots_valid, configured=bool(media_paths) and media_roots_valid,
-            restart_required=True, experimental=True, blockers=[] if settings.media_enabled and media_roots_valid else (["BASSWIESN_MEDIA_ENABLED=false"] if not settings.media_enabled else ["Keine gültige Medien-Root konfiguriert"]),
+            restart_required=True, experimental=True, lab_only=True, blockers=[] if settings.media_enabled and media_roots_valid else (["BASSWIESN_MEDIA_ENABLED=false"] if not settings.media_enabled else ["Keine gültige Medien-Root konfiguriert"]),
             requirements=["Explizite existierende Medien-Root", "Unterstütztes Audioformat"], settings_target=_target("system-settings"), navigation_target=_target("media"), documentation=_doc("activation-matrix", "Aktivierungsmatrix"), safe_test_available=True,
         ),
         _feature(
             feature_id="dlna", title="DLNA", category="Experimentell",
-            description="Manuelle, experimentelle Renderer-Erkennung ohne Hintergrundscan.", maturity="Experimentell",
-            enabled=settings.experimental_dlna, available=False, configured=settings.experimental_dlna, restart_required=True,
-            experimental=True, hardware_status="offen", blockers=[] if settings.experimental_dlna else ["BASSWIESN_EXPERIMENTAL_DLNA=false", "Hardwaretest offen"],
-            requirements=["Expliziter manueller Start", "Kompatibles Renderer-/Radioverhalten"], settings_target=_target("system-settings"), navigation_target=_target("media"), documentation=_doc("activation-matrix", "Aktivierungsmatrix"), safe_test_available=True,
+            description="Expliziter Medienserver, Ordnerbrowser und MP3-/AAC-Weitergabe über BASSWIESN.", maturity="Experimentell",
+            enabled=_bool(rows.get("dlna_enabled"), settings.experimental_dlna), available=True,
+            configured=dlna_configured, restart_required=False, lab_only=True,
+            experimental=True, hardware_status="offen",
+            blockers=[] if dlna_configured else ["Noch kein Medienserver verbunden."],
+            navigation_target=_target("media"), settings_target=_target("media", "dlna-enabled"),
+            documentation=_doc("activation-gaps", "Aktivierungslücken"),
+            safe_test_available=False, backend_present=True, ui_complete=True,
+            activation_method="Im LAB die Musikbibliothek aktivieren und einen Server ausdrücklich verbinden.",
         ),
         _feature(
             feature_id="announcements", title="Announcements / TTS", category="Experimentell",

@@ -181,8 +181,8 @@ def test_release_packaging_includes_public_runtime_docs_and_excludes_private_fil
     script = Path("tools/package_release.sh").read_text(encoding="utf-8")
 
     assert "BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh" in script
-    assert "PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py)" in script
-    assert "PUBLIC_DOCS=(docs/releases/2.6.5/RELEASE_NOTES_2.6.5.md docs/PI_OBSERVER.md)" in script
+    assert "PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py tools/check_update_host.py tools/prepare_update_host.py tools/prepare_update_service.py tools/install_update_helper.py tools/configure_update_env.py tools/verify_release_archive.py)" in script
+    assert "PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md)" in script
     assert "installation-specific hardware or filesystem data" in script
     assert "__pycache__" in script
     assert "package_private_rpi.sh" in script
@@ -192,6 +192,29 @@ def test_release_packaging_includes_public_runtime_docs_and_excludes_private_fil
     assert "SOURCE_DATE_EPOCH" in script
     assert "sha256sum" in script
     assert "RELEASE_REPORTS" not in script
+
+
+def test_package_refuses_existing_output_without_changing_release(tmp_path):
+    import subprocess
+
+    output = tmp_path / "prior-release"
+    output.mkdir()
+    archive = output / "basswiesn-docker-release-3.0.0.tar.gz"
+    archive.write_bytes(b"previous release must remain unchanged")
+    result = subprocess.run(["bash", "tools/package_release.sh", "--output-dir", str(output)],
+        capture_output=True, timeout=5)
+    assert result.returncode != 0
+    assert archive.read_bytes() == b"previous release must remain unchanged"
+    assert list(output.iterdir()) == [archive]
+    assert b"existing artifacts were not changed" in result.stderr
+
+
+def test_package_rejects_relative_output_and_unknown_arguments():
+    import subprocess
+
+    for arguments in (["--output-dir", "relative"], ["--force"]):
+        result = subprocess.run(["bash", "tools/package_release.sh", *arguments], capture_output=True, timeout=5)
+        assert result.returncode == 2
 
 
 def test_installer_grants_only_one_shot_filesystem_repair_capabilities():

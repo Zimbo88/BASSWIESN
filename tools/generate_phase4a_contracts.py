@@ -18,9 +18,11 @@ TEST_ROOT = Path("tests")
 ROUTE_METHODS = {"get", "post", "put", "patch", "delete", "api_route", "websocket"}
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 WEB_MODULES = {
+    "basswiesn.app.routers.airplay_bridge",
     "basswiesn.app.api.routes_devices",
     "basswiesn.app.routers.api",
     "basswiesn.app.routers.media",
+    "basswiesn.app.routers.dlna",
     "basswiesn.app.routers.fulltest",
     "basswiesn.app.routers.stations_presets",
     "basswiesn.app.routers.multiroom",
@@ -130,11 +132,13 @@ def http_exception_codes(node: ast.AST) -> set[int]:
     return result
 
 
-def router_prefix(tree: ast.Module) -> str:
+def router_prefix(tree: ast.Module, router_name: str = "router") -> str:
     for node in tree.body:
         if not isinstance(node, ast.Assign) or not isinstance(node.value, ast.Call):
             continue
         if expr(node.value.func) != "APIRouter":
+            continue
+        if not any(isinstance(target, ast.Name) and target.id == router_name for target in node.targets):
             continue
         for keyword in node.value.keywords:
             if keyword.arg == "prefix":
@@ -142,9 +146,9 @@ def router_prefix(tree: ast.Module) -> str:
     return ""
 
 
-def declarations(path: Path) -> list[dict[str, Any]]:
+def declarations(path: Path, *, router_name: str = "router") -> list[dict[str, Any]]:
     tree, source = parse_file(path)
-    prefix = router_prefix(tree)
+    prefix = router_prefix(tree, router_name)
     ranges = function_ranges(tree)
     result: list[dict[str, Any]] = []
     for node in ast.walk(tree):
@@ -156,7 +160,7 @@ def declarations(path: Path) -> list[dict[str, Any]]:
                 continue
             if not isinstance(decorator.func.value, ast.Name):
                 continue
-            if decorator.func.value.id not in {"router", "app"} or decorator.func.attr not in ROUTE_METHODS:
+            if decorator.func.value.id not in {router_name, "app"} or decorator.func.attr not in ROUTE_METHODS:
                 continue
             path_value = literal(decorator.args[0], "") if decorator.args else ""
             if not isinstance(path_value, str):
@@ -344,7 +348,8 @@ def build_api_inventory(root: Path) -> dict[str, Any]:
     sources = all_sources(root)
     declarations_by_app = {
         "webgui": web_routes(sources, root),
-        "cloud": declarations(root / "basswiesn/app/routers/cloud.py"),
+        "cloud": declarations(root / "basswiesn/app/routers/cloud.py")
+            + declarations(root / "basswiesn/app/routers/dlna.py", router_name="relay_router"),
         "diagnostics": declarations(root / "basswiesn/app/routers/debug.py"),
     }
     routes: list[dict[str, Any]] = []

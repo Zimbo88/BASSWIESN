@@ -108,6 +108,7 @@ const state = {
   stationFilter: "",
   presetFilter: "",
   applicationVersion: "",
+  publication: null,
   researchHealth: {
     deviceId: "", playback: null, provider: null, metadata: null,
     artwork: null, restrictions: null, reporting: null, airplay: null, timeline: null, clock: null,
@@ -125,18 +126,19 @@ function updateServerIdentity() {
   const element = document.getElementById("server-identity");
   if (!element) return;
   const version = state.applicationVersion;
-  const displayVersion = version ? (String(version).startsWith("v") ? version : `v${version}`) : "Version nicht verfügbar";
+  const displayVersion = version ? (String(version).startsWith("v") ? version : `v${version}`) : uiCopy("Version nicht verfügbar", "Version unavailable");
   const configured = state.systemSettings?.lan_host || state.setupWizardServer?.recommended_host || "";
   const host = isLanHost(configured) ? configured : "";
-  element.textContent = `${displayVersion} · ${host ? `Host ${host}` : "Host nicht gesetzt"}`;
-  element.title = host ? "Aktive BASSWIESN LAN Host-IP" : "Keine sichere LAN Host-IP erkannt oder gesetzt.";
+  const released = publicationDate();
+  element.textContent = `${displayVersion}${released ? ` · ${released}` : ""} · ${host ? `Host ${host}` : uiCopy("Host nicht gesetzt", "Host not set")}`;
+  element.title = host ? uiCopy("Aktive BASSWIESN LAN Host-IP", "Active BASSWIESN LAN host IP") : uiCopy("Keine sichere LAN Host-IP erkannt oder gesetzt.", "No safe LAN host IP detected or configured.");
 }
 
 function ensureIntegratedPanels() {
   if (!document.getElementById("preset-checker-grid")) {
     const panel = document.createElement("section");
     panel.className = "panel preset-checker easy-hidden";
-    panel.innerHTML = `<div class="panel-title-row"><div><h3 data-i18n="preset_checker">Preset Checker</h3><p class="muted-copy">Radio-Slots und BASSWIESN-Daten nur lesend vergleichen.</p></div><button class="command" id="preset-checker-refresh" type="button" data-i18n="refresh">Aktualisieren</button></div><p class="form-message" id="preset-checker-message"></p><div class="preset-checker-grid" id="preset-checker-grid"></div>`;
+    panel.innerHTML = `<div class="panel-title-row"><div><h3 data-i18n="preset_checker">Preset Checker</h3><p class="muted-copy" id="preset-checker-scope"></p></div><button class="command" id="preset-checker-refresh" type="button" data-i18n="refresh">Aktualisieren</button></div><p class="form-message" id="preset-checker-message"></p><div class="preset-checker-grid" id="preset-checker-grid"></div>`;
     const lastResult = document.getElementById("preset-result")?.closest(".panel");
     if (lastResult) lastResult.after(panel);
     else document.querySelector("#view-presets .preset-builder")?.after(panel);
@@ -170,12 +172,10 @@ function ensureIntegratedPanels() {
   }
   if (!document.getElementById("local-test-center")) {
     const panel = document.createElement("section");
-    panel.className = "panel local-test-center";
+    panel.className = "panel local-test-center lab-only";
     panel.id = "local-test-center";
     panel.innerHTML = `<div class="panel-title-row"><div><h3>BASSWIESN Release-Candidate Center</h3><p class="muted-copy">Health, Discovery, Events, Webhooks, Medien, Diagnose und LAB-Status ohne blockierende Geräteabfragen.</p></div><button class="command" id="local-test-refresh" type="button">Status laden</button></div><div class="button-row"><button class="command primary" id="local-health-run" type="button">Healthcheck starten</button><button class="command" id="local-ssdp-test" type="button">SSDP-Test</button><button class="command" id="local-diagnostic-preview" type="button">Diagnosevorschau</button><button class="command" id="local-backup-create" type="button">Backup erstellen</button></div><div id="local-test-summary" class="local-test-grid"></div><details><summary>Technische Details</summary><pre id="local-test-output">Noch nicht geladen.</pre></details>`;
-    const systemHealth = document.getElementById("system-health")?.closest(".panel");
-    if (systemHealth) systemHealth.after(panel);
-    else document.querySelector("#view-dashboard .metric-grid")?.after(panel);
+    document.getElementById("view-lab")?.append(panel);
   }
   if (!document.getElementById("events-webhooks-panel")) {
     const panel = document.createElement("section");
@@ -186,16 +186,16 @@ function ensureIntegratedPanels() {
   }
   if (!document.getElementById("media-library-local-panel")) {
     const panel = document.createElement("section");
-    panel.className = "panel feature-limited";
+    panel.className = "panel feature-limited lab-only";
     panel.id = "media-library-local-panel";
     panel.innerHTML = `<div class="panel-title-row"><div><h3>Lokale Medienbibliothek <span class="status-pill status-warning">experimentell</span></h3><p class="muted-copy">Nur konfigurierte Wurzelordner; Symlink-Ausbruch und Path Traversal werden blockiert.</p></div><button class="command" id="media-library-status-refresh" type="button">Status laden</button></div><div id="media-library-local-status" class="event-list"></div>`;
-    document.querySelector("#view-media")?.append(panel);
+    document.querySelector("#media-technical-details")?.append(panel);
   }
   const settingsForm = document.getElementById("system-settings-form");
   if (settingsForm && !document.getElementById("update-manifest-url")) {
     settingsForm.querySelector('button[type="submit"]')?.insertAdjacentHTML("beforebegin", `<label>BASSWIESN Host IP<input id="system-lan-host" name="lan_host" placeholder="LAN-IP des BASSWIESN Hosts"></label>`);
     settingsForm.querySelector('button[type="submit"]')?.insertAdjacentHTML("beforebegin", `<fieldset class="settings-section"><legend>Offline Mode</legend><label>Modus<select id="offline-mode" name="offline_mode"><option value="auto">automatisch</option><option value="strict">strikt lokal</option><option value="off">aus</option></select></label><label>Erlaubte Stream-Hosts<input id="offline-allowed-stream-hosts" name="offline_allowed_stream_hosts" placeholder="stream.example.org, radio.example.net"></label><p class="form-message" id="offline-status">Offline-Status wird geladen.</p><small>strict blockiert optionale externe BASSWIESN-Dienste. Das Radio und lokale Streams bleiben davon getrennt.</small></fieldset>`);
-    settingsForm.querySelector('button[type="submit"]')?.insertAdjacentHTML("beforebegin", `<fieldset class="settings-section"><legend data-i18n="updates">Updates</legend><label class="toggle-line"><input id="update-check-enabled" name="update_check_enabled" type="checkbox"><span data-i18n="enable_update_check">Updateprüfung aktivieren</span></label><label>Manifest URL<input id="update-manifest-url" name="update_manifest_url" type="url" placeholder="https://…/manifest.json"></label><label>Repository URL<input id="update-repo-url" name="update_repo_url" type="url" placeholder="https://…"></label><label>Kanal<select id="update-channel" name="update_channel"><option value="manual">manual</option><option value="stable">stable</option><option value="beta">beta</option></select></label><button class="command" id="update-check" type="button" data-i18n="check_updates">Nach Update suchen</button><p class="form-message" id="update-status"></p></fieldset>`);
+    settingsForm.querySelector('button[type="submit"]')?.insertAdjacentHTML("beforebegin", `<fieldset class="settings-section"><legend data-i18n="updates">Updates</legend><p data-i18n="official_update_hint"></p><button class="command" id="update-check" type="button" data-i18n="check_updates">Nach Update suchen</button><p class="form-message" id="update-status" role="status"></p><a id="official-release-link" target="_blank" rel="noopener noreferrer" hidden></a><p class="muted-copy" data-i18n="update_install_boundary"></p><details class="lab-only"><summary data-i18n="manifest_settings"></summary><label class="toggle-line"><input id="update-check-enabled" name="update_check_enabled" type="checkbox"><span data-i18n="enable_update_check">Updateprüfung aktivieren</span></label><label>Manifest URL<input id="update-manifest-url" name="update_manifest_url" type="url" placeholder="https://…/manifest.json"></label><label>Repository URL<input id="update-repo-url" name="update_repo_url" type="url" placeholder="https://…"></label><label>Kanal<select id="update-channel" name="update_channel"><option value="manual">manual</option><option value="stable">stable</option><option value="beta">beta</option></select></label></details></fieldset>`);
   }
 }
 
@@ -229,7 +229,9 @@ function renderLocalTestOverview(data = state.localTestOverview) {
     ["Events", String(data.events?.items?.length ?? 0)],
     ["Webhooks", data.webhooks?.enabled_globally ? "aktiviert" : "deaktiviert"],
     ["Medien", data.media?.enabled ? "aktiv" : "deaktiviert"],
-    ["DLNA", data.dlna?.enabled ? "aktiv" : "deaktiviert"],
+    ["DLNA", data.dlna?.implementation_status === "NOT_IMPLEMENTED"
+      ? uiCopy("Noch nicht implementiert", "Not implemented yet")
+      : uiCopy("Nicht verifiziert", "Not verified")],
     ["Announcements", data.announcements?.enabled ? "aktiv" : "deaktiviert"],
     ["LAB", data.lab?.enabled ? "aktiv" : "deaktiviert"],
   ];
@@ -332,9 +334,40 @@ function startOperationOverlay(title, device, seconds = 60) {
 
 function syncBodyScrollLock() {
   const modalOpen = Array.from(document.querySelectorAll(".modal-backdrop")).some((modal) => !modal.hidden);
+  // A top-layer popover would otherwise cover even a high-z-index modal.
+  // Close navigation before presenting confirmations or progress dialogs.
+  if (modalOpen) document.querySelector(".advanced-nav")?.removeAttribute("open");
   const drawerOpen = Boolean(document.querySelector(".advanced-nav[open]"));
   document.body.classList.toggle("modal-open", modalOpen);
   document.body.classList.toggle("nav-menu-open", drawerOpen);
+  syncNavigationMenu();
+}
+
+function syncNavigationMenu() {
+  const details = document.querySelector(".advanced-nav");
+  const menu = details?.querySelector(":scope > div");
+  if (!menu) return;
+  // Escape the sticky header's horizontally scrolling clipping context on
+  // supporting browsers. No copy of the controls and no second event handler.
+  if (typeof menu.showPopover === "function") {
+    if (details.open && !menu.matches(":popover-open")) menu.showPopover();
+    else if (!details.open && menu.matches(":popover-open")) menu.hidePopover();
+  }
+  const viewport = window.visualViewport;
+  const height = viewport?.height || window.innerHeight;
+  const offset = viewport?.offsetTop || 0;
+  const top = Math.max(12 + offset, Math.min(details.getBoundingClientRect().bottom + 8,
+    offset + height - Math.min(menu.scrollHeight, height - 24) - 12));
+  menu.style.setProperty("--nav-menu-top", `${top}px`);
+  menu.style.setProperty("--nav-menu-height", `${Math.max(80, offset + height - top - 12)}px`);
+}
+
+function closeNavigationMenu(restoreFocus = false) {
+  const details = document.querySelector(".advanced-nav");
+  if (!details?.open) return;
+  details.open = false;
+  syncBodyScrollLock();
+  if (restoreFocus) details.querySelector("summary")?.focus();
 }
 
 document.getElementById("operation-overlay-close")?.addEventListener("click", () => {
@@ -386,11 +419,14 @@ async function refreshStations(selectedStationId = "") {
 }
 
 async function loadPresetsForSelectedDevice(probe = false) {
+  probe = probe === true; // A DOM change event is not permission for a live probe.
   const deviceId = selectedDeviceId();
   if (!deviceId) {
     state.presets = [];
     state.presetStatus = null;
     renderPresetSlots();
+    renderPresetChecker();
+    if (probe) throw new Error(uiCopy("Bitte zuerst ein Radio auswählen.", "Select a radio first."));
     return;
   }
   try {
@@ -400,27 +436,98 @@ async function loadPresetsForSelectedDevice(probe = false) {
   }
   try {
     state.presetStatus = await getJson(`/api/presets/${encodeURIComponent(deviceId)}/status${probe ? "?probe=true" : ""}`);
-  } catch {
+  } catch (error) {
     state.presetStatus = null;
+    renderPresetChecker();
+    if (probe) throw error;
   }
   renderPresetSlots();
   renderPresetChecker();
 }
 
+function presetCheckLabel(id) {
+  const labels = {
+    radio_readback: ["Radio-Rücklesen", "Radio readback"], slot_content: ["Speicherplatz", "Slot content"],
+    local_mapping: ["Lokale Zuordnung", "Local mapping"], radio_slot: ["Radio-Speicherplatz", "Radio slot"],
+    location: ["Senderadresse", "Station address"], source: ["Quelle", "Source"],
+    source_account: ["Quellenkonto", "Source account"], local_source_account_storage: ["Alte Kontozuordnung", "Legacy account mapping"],
+    station_mapping: ["Senderzuordnung", "Station mapping"], codec: ["Format-Einschätzung", "Format assessment"],
+    stream_reachability: ["Stream-Erreichbarkeit", "Stream reachability"], provider_availability: ["Provider-Bereitschaft", "Provider readiness"],
+    hardware_button_playability: ["Physische Presettaste", "Physical preset button"], mutation: ["Letzte Änderung", "Last change"],
+  };
+  return labels[id] ? uiCopy(...labels[id]) : uiCopy("Weitere Prüfung", "Additional check");
+}
+
+function presetCheckStatus(value) {
+  const labels = { VALID: ["Bestätigt", "Confirmed"], WARNING: ["Hinweis", "Attention"],
+    BROKEN: ["Problem erkannt", "Issue detected"], UNKNOWN: ["Nicht geprüft / unklar", "Unverified / unclear"] };
+  return uiCopy(...(labels[String(value).toUpperCase()] || labels.UNKNOWN));
+}
+
+function presetCheckExplanation(check) {
+  const status = String(check.status || "UNKNOWN").toUpperCase();
+  const valid = status === "VALID";
+  if (check.id === "hardware_button_playability") return uiCopy("Nur durch Drücken am Radio und Hörprobe prüfbar.", "Requires a physical button press and listening test.");
+  if (check.id === "provider_availability") return valid
+    ? uiCopy("Das Radio meldet den Provider als verfügbar. Das beweist noch keine Audiowiedergabe.", "The radio reports the provider as available. This does not prove audio playback.")
+    : status === "BROKEN" ? uiCopy("Das Radio meldet den Provider als nicht verfügbar.", "The radio reports the provider as unavailable.")
+      : uiCopy("Es liegt keine belastbare Provider-Beobachtung vor. Das ist noch kein Fehlernachweis.", "No reliable provider observation is available. This is not proof of a fault.");
+  if (check.id === "stream_reachability") return valid
+    ? uiCopy("Die Stream-Adresse antwortet per HTTP. Dekodierung und Ton wurden nicht getestet.", "The stream address responds over HTTP. Decoding and audio were not tested.")
+    : status === "BROKEN" ? uiCopy("Die Stream-Anfrage ist fehlgeschlagen. Die Adresse oder Erreichbarkeit prüfen.", "The stream request failed. Check the address and connectivity.")
+      : uiCopy("Mit Aktualisieren eine neue Erreichbarkeitsprüfung starten.", "Use Refresh to run a new reachability check.");
+  if (check.id === "radio_readback") return valid
+    ? uiCopy("Die Presets wurden für diese Prüfung vom Radio zurückgelesen.", "Presets were read back from the radio for this check.")
+    : status === "BROKEN" ? uiCopy("Das aktuelle Rücklesen ist fehlgeschlagen; keine bestätigte Zustandsaussage.", "The current readback failed; the radio state is not confirmed.")
+      : uiCopy("Nur gespeicherte Daten vorhanden; mit Aktualisieren live prüfen.", "Only stored information is available; use Refresh for a live check.");
+  if (check.id === "codec") return valid
+    ? uiCopy("Die URL-/Formatmerkmale passen zum bekannten Vertrag. Kein Dekodier- oder Hörtest.", "URL/format hints match the known contract. No decoding or listening test was performed.")
+    : uiCopy("Das Format ist für diesen Preset-Vertrag nicht bestätigt oder ungeeignet.", "The format is unconfirmed or unsuitable for this preset contract.");
+  const messages = {
+    slot_content: ["Dieser Speicherplatz ist auf beiden Seiten leer.", "This slot is empty on both sides."],
+    local_mapping: ["Am Radio gespeichert, aber ohne lokale Zuordnung.", "Stored on the radio, but not mapped locally."],
+    radio_slot: ["Lokal zugeordnet, aber am Radio nicht gespeichert.", "Mapped locally, but not stored on the radio."],
+    location: valid ? ["Beide Senderadressen stimmen überein.", "The station addresses match."]
+      : ["Die gespeicherten Adressen unterscheiden sich; vor einem Überschreiben vergleichen.", "Stored addresses differ; compare them before overwriting."],
+    source: valid ? ["Die Quelle verwendet einen bestätigten BASSWIESN-Vertrag.", "The source uses a confirmed BASSWIESN contract."]
+      : ["Der Quellenvertrag ist nicht bestätigt, veraltet oder fehlt.", "The source contract is unconfirmed, obsolete or missing."],
+    source_account: valid ? ["Die wirksame Kontozuordnung stimmt überein.", "The effective account mapping matches."]
+      : ["Die Kontozuordnungen unterscheiden sich.", "The account mappings differ."],
+    local_source_account_storage: ["Ein alter lokaler Kontowert wird ignoriert. LOCAL_INTERNET_RADIO verwendet einen leeren Wert.", "A legacy local account value is ignored. LOCAL_INTERNET_RADIO uses an empty value."],
+    station_mapping: valid ? ["Die lokale Senderzuordnung ist vorhanden.", "The local station mapping exists."]
+      : ["Der lokale Sender oder seine Zuordnung fehlt.", "The local station or its mapping is missing."],
+    mutation: ["Die letzte Änderung wurde als abweichend gespeichert. Vor weiteren Änderungen vergleichen.", "The last change was recorded as divergent. Compare state before further changes."],
+  };
+  return messages[check.id] ? uiCopy(...messages[check.id]) : presetCheckStatus(status);
+}
+
 function renderPresetChecker() {
   const grid = document.getElementById("preset-checker-grid");
   if (!grid) return;
+  const scope = document.getElementById("preset-checker-scope");
+  if (scope) scope.textContent = uiCopy("Prüft gespeicherte Presets, Provider und Stream-Erreichbarkeit. Verändert nichts und startet keine Wiedergabe.", "Checks stored presets, providers and stream reachability. Changes nothing and does not start playback.");
   const slots = state.presetStatus?.slots || [];
-  const labels = { valid: "VALID", warning: "WARNING", broken: "BROKEN", unknown: "UNKNOWN" };
+  grid.setAttribute("aria-label", uiCopy("Preset-Konfiguration und Prüfnachweise", "Preset configuration and evidence"));
   grid.innerHTML = slots.length ? slots.map((slot) => {
-    const radioLocation = slot.radio?.location || "–";
-    const basswiesnLocation = slot.basswiesn?.location || "–";
     const sync = state.presetStatus?.sync_state || {};
     const source = slot.basswiesn?.source || "–";
-    const stream = slot.basswiesn?.stream_url || "–";
-    const checks = (slot.checks || []).map((check) => `<li class="preset-check preset-${escapeHtml(String(check.status || "unknown").toLowerCase())}"><strong>${escapeHtml(check.id || "check")}: ${escapeHtml(check.status || "UNKNOWN")}</strong><span>${escapeHtml(check.message || "")}</span></li>`).join("");
-    return `<article class="preset-compare-card preset-${escapeHtml(slot.state)}"><header><strong>Preset ${slot.button}</strong>${statusPill(labels[slot.state] || slot.verdict || "UNKNOWN")}</header><p>${escapeHtml(slot.message || "")}</p><div class="preset-compare-columns"><section><b>Radio</b><span>${escapeHtml(slot.radio?.title || "–")}</span><small>${escapeHtml(slot.radio?.source || "–")} · Readback ${escapeHtml(text(state.presetStatus?.radio_error ? "fehlt" : "vorhanden"))}</small></section><section><b>BASSWIESN</b><span>${escapeHtml(slot.basswiesn?.title || "–")}</span><small>${escapeHtml(slot.basswiesn?.provider || source)} · Logo ${escapeHtml(slot.basswiesn?.logo_mode || "radio_symbol")}</small></section></div><p class="preset-dependency-line"><strong>Quelle:</strong> ${escapeHtml(source)} · <strong>Stream:</strong> ${escapeHtml(stream)}</p><small>Letzter Sync: ${escapeHtml(text(sync.updated_at || sync.last_success_at, "unbekannt"))}</small><details><summary>${escapeHtml(i18nT("details"))}</summary><ul class="preset-check-list">${checks}</ul><p>${escapeHtml((slot.changed_fields || []).join(", ") || labels[slot.state] || "–")}</p><div class="preset-raw-grid"><section><b>Radio location/XML</b><pre>${escapeHtml(radioLocation)}</pre></section><section><b>BASSWIESN location/XML</b><pre>${escapeHtml(basswiesnLocation)}</pre></section></div></details></article>`;
-  }).join("") : `<div class="empty">${escapeHtml(state.presetStatus?.radio_error || i18nT("unknown"))}</div>`;
+    const allChecks = slot.checks || [];
+    const checks = allChecks.map((check) => `<li class="preset-check preset-${escapeHtml(String(check.status || "unknown").toLowerCase())}"><strong>${escapeHtml(presetCheckLabel(check.id))}: ${escapeHtml(presetCheckStatus(check.status))}</strong><span>${escapeHtml(presetCheckExplanation(check))}</span></li>`).join("");
+    const summaries = ["radio_readback", "provider_availability", "stream_reachability"].map(id => {
+      const check = allChecks.find(item => item.id === id);
+      return check ? `<div><dt>${escapeHtml(presetCheckLabel(id))}</dt><dd>${escapeHtml(presetCheckStatus(check.status))}</dd></div>` : "";
+    }).join("");
+    const verdict = ["valid", "warning", "broken", "unknown"].includes(slot.state) ? slot.state : "unknown";
+    return `<article class="preset-compare-card preset-${verdict}">
+      <header><strong>Preset ${escapeHtml(slot.button)}</strong><span class="status-pill">${escapeHtml(presetCheckStatus(verdict))}</span></header>
+      <div class="preset-compare-columns"><section><b>Radio</b><span>${escapeHtml(slot.radio?.title || "–")}</span><small>${escapeHtml(slot.radio?.source || "–")}</small></section><section><b>BASSWIESN</b><span>${escapeHtml(slot.basswiesn?.title || "–")}</span><small>${escapeHtml(source)}</small></section></div>
+      <dl class="preset-evidence-summary">${summaries}</dl>
+      <small>${escapeHtml(uiCopy("Ton und physische Presettaste: nicht getestet.", "Audio and physical preset button: not tested."))}</small>
+      <details><summary>${escapeHtml(uiCopy("Prüfdetails", "Check details"))}</summary><ul class="preset-check-list">${checks}</ul>
+      <p class="preset-dependency-line"><strong>Stream:</strong> ${escapeHtml(slot.basswiesn?.stream_url || "–")}</p>
+      <p>${escapeHtml(uiCopy("Letzter gespeicherter Abgleich", "Last recorded synchronization"))}: ${escapeHtml(text(sync.updated_at || sync.last_success_at, uiCopy("nicht protokolliert", "not recorded")))}</p>
+      <details><summary>${escapeHtml(uiCopy("Technische Adressen", "Technical addresses"))}</summary><div class="preset-raw-grid"><section><b>Radio</b><pre>${escapeHtml(slot.radio?.location || "–")}</pre></section><section><b>BASSWIESN</b><pre>${escapeHtml(slot.basswiesn?.location || "–")}</pre></section></div></details></details></article>`;
+  }).join("") : `<div class="empty">${escapeHtml(state.presetStatus?.radio_error ? uiCopy("Radio konnte nicht zurückgelesen werden. Bitte Verbindung prüfen und erneut aktualisieren.", "Could not read back the radio. Check connectivity and refresh again.") : uiCopy("Radio auswählen und mit Aktualisieren prüfen.", "Select a radio and use Refresh to check it."))}</div>`;
 }
 
 function featureFilterMatches(feature) {
@@ -518,14 +625,16 @@ function formatCloudRouteResult(result) {
 }
 
 function markRiskPanels() {
-  const limitedNeedles = ["plan only", "manual only", "research", "candidate", "not fully", "lab", "bridge only"];
   document.querySelectorAll(".panel").forEach((panel) => {
     if (panel.classList.contains("danger-panel")) {
       panel.classList.add("feature-risk");
       return;
     }
-    const sample = panel.textContent.toLowerCase();
-    if (limitedNeedles.some((needle) => sample.includes(needle))) panel.classList.add("feature-limited");
+    // Visual risk is explicit state, never a translated substring. "lab"
+    // also occurs inside "available" and incorrectly warned on healthy UI.
+    if (["limited", "experimental", "planned"].includes(panel.dataset.capabilityStatus)) {
+      panel.classList.add("feature-limited");
+    }
   });
 }
 
@@ -563,14 +672,36 @@ function renderDevices() {
   const healthFor = (d) => state.deviceHealth.find((item) => item.device_id === d.device_id) || d.policy || {};
   const policyLine = (d) => {
     const h = healthFor(d);
-    if (!h.device_id) return "";
-    const safe = statusPill("gemeinsame Gerätepolicy");
-    const circuit = statusPill(`Circuit ${text(h.circuit_state, "unbekannt")}`, h.circuit_state === "open" ? "pending" : h.circuit_state === "closed" ? "ready" : "");
-    const next = h.next_planned_poll ? ` · nächste Prüfung ${escapeHtml(h.next_planned_poll)}` : "";
-    const reason = h.last_skip_reason ? ` · ${escapeHtml(h.last_skip_reason)}` : "";
-    return `<small class="policy-line easy-hidden">${safe}${circuit} · ${escapeHtml(text(h.suspected_state, "Zustand unbekannt"))} · Backoff ${escapeHtml(text(h.current_backoff_seconds, 0))}s${next}${reason}</small>`;
+    if (!h.device_id || isProtected(d)) return "";
+    // A closed breaker permits requests; it does not prove current reachability
+    // or audible playback. Keep that distinction in the everyday summary.
+    const labels = {
+      open: uiCopy("Automatische Anfragen pausiert", "Automatic requests paused"),
+      half_open: uiCopy("Einzelne Wiederholungsprüfung erlaubt", "One retry check allowed"),
+      closed: uiCopy("Geräteanfragen freigegeben", "Device requests allowed"),
+    };
+    const label = labels[h.circuit_state] || uiCopy("Verbindungsprüfung ausstehend", "Connection check pending");
+    const stamp = (value) => value ? formatObservedAt(value) : uiCopy("nicht beobachtet", "not observed");
+    const last = `${uiCopy("Letzte Antwort", "Last response")}: ${stamp(h.last_successful_lifesign)}`;
+    const next = h.circuit_state !== "closed" && h.next_planned_poll
+      ? ` · ${uiCopy("Nächste Prüfung", "Next check")}: ${stamp(h.next_planned_poll)}` : "";
+    const backoff = Number(h.current_backoff_seconds);
+    const detail = [
+      ["Circuit", text(h.circuit_state, "UNKNOWN")],
+      [uiCopy("Vermuteter Zustand", "Suspected state"), text(h.suspected_state, "UNKNOWN")],
+      [uiCopy("Warteintervall", "Retry interval"), Number.isFinite(backoff) && backoff >= 0 ? `${backoff}s` : "UNKNOWN"],
+      [uiCopy("Grund", "Reason"), text(h.last_skip_reason, "—")],
+    ].map(([name, value]) => `<div><dt>${escapeHtml(name)}</dt><dd><code>${escapeHtml(value)}</code></dd></div>`).join("");
+    return `<div class="policy-line easy-hidden"><small>${statusPill(label, h.circuit_state === "open" ? "pending" : "")} ${escapeHtml(last + next)}</small><details class="lab-only"><summary>${escapeHtml(uiCopy("Technische Verbindungsdetails", "Technical connection details"))}</summary><dl>${detail}</dl></details></div>`;
   };
-  const badges = (d) => { const s = state.deviceStatuses.find((item) => item.device_id === d.device_id); if (!s) return `<div class="device-status-badges easy-hidden">${statusPill("Status unbekannt / noch nicht geprüft")}</div>`; const flag = (label, value, yes, no) => statusPill(`${label} ${value === null ? "unbekannt / noch nicht geprüft" : value ? yes : no}`, value === true ? "ready" : ""); const sshLabel = s.ssh === "available" ? "SSH verfügbar" : s.ssh === "unavailable" ? "SSH nicht verfügbar" : "SSH noch nicht geprüft"; return `<div class="device-status-badges easy-hidden">${statusPill(sshLabel, s.ssh === "available" ? "ready" : "")}${flag("Persistent SSH", s.persistent_ssh, "ja", "nein")}${flag("remote_services", s.remote_services, "aktiv", "fehlt")}${flag("Host Redirect", s.host_redirect, "ja", "nein")}</div>`; };
+  const badges = (d) => {
+    if (isProtected(d)) return "";
+    const s = state.deviceStatuses.find(item => item.device_id === d.device_id) || {};
+    const unknown = uiCopy("nicht geprüft", "not checked");
+    const flag = (label, value) => statusPill(`${label}: ${typeof value !== "boolean" ? unknown : value ? uiCopy("vorhanden", "present") : uiCopy("nicht vorhanden", "absent")}`);
+    const sshLabel = s.ssh === "available" ? uiCopy("SSH-Prüfung erfolgreich", "SSH check succeeded") : s.ssh === "not_verified" ? uiCopy("SSH-Prüfung nicht möglich", "SSH check unavailable") : uiCopy("SSH nicht geprüft", "SSH not checked");
+    return `<details class="device-status-badges easy-hidden"><summary>${escapeHtml(uiCopy("Erweiterte Geräteprüfung", "Advanced device check"))}</summary><div>${statusPill(sshLabel)}${flag(uiCopy("SSH-Startmarker", "SSH startup marker"), s.persistent_ssh)}${flag("remote_services", s.remote_services)}${flag(uiCopy("Host-Umleitung", "Host redirect"), s.host_redirect)}</div><p class="muted-copy">${escapeHtml(uiCopy("Nur lesen. Marker sind kein Nachweis für den nächsten Neustart oder das korrekte Umleitungsziel.", "Read only. Markers do not prove the next startup or a correct redirect destination."))}</p><small>${escapeHtml(s.observed_at ? `${s.stale ? uiCopy("Veraltet", "Stale") : uiCopy("Geprüft", "Checked")}: ${s.observed_at}` : unknown)}</small><button class="command" data-check-readiness="${escapeHtml(d.device_id)}" type="button">${escapeHtml(uiCopy("Jetzt nur lesend prüfen", "Run read-only check"))}</button><p class="form-message" data-readiness-message></p></details>`;
+  };
   const offlineLine = (d) => d.reachable === false ? `<small>offline · zuletzt gesehen ${escapeHtml(text(d.last_seen_at, "unbekannt"))}${d.offline_reason ? ` · ${escapeHtml(d.offline_reason)}` : ""}</small>` : "";
   const repairButton = (d) => !isProtected(d) && ["mixed", "bose", "other"].includes(d.configured_for) ? `<button class="command" data-view-jump="setup" type="button">Setup reparieren</button>` : "";
   const checkButton = (d) => isProtected(d) ? `<span class="protected-label">vollständig geschützt</span>` : `<button class="command" data-check-device="${escapeHtml(d.device_id)}" type="button">erneut prüfen</button>`;
@@ -698,9 +829,32 @@ function researchValue(label, value, detail = "") {
 }
 
 function formatObservedAt(value) {
-  if (!value) return "noch nicht beobachtet";
+  if (!value) return uiCopy("noch nicht beobachtet", "not observed yet");
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? String(value) : parsed.toLocaleString();
+}
+
+function renderDiagnosticTimeline(timeline = {}) {
+  const box = document.getElementById("diagnostics-timeline");
+  const items = timeline.items || [];
+  if (box) {
+    // Polling must not collapse an event while someone is reading its evidence.
+    const opened = new Set([...box.querySelectorAll("details[open][data-event-id]")].map(node => node.dataset.eventId));
+    box.innerHTML = items.length ? items.map(item => {
+      const id = String(item.event_id || item.id || "");
+      const severity = ["info", "warning", "error"].includes(String(item.severity).toLowerCase()) ? String(item.severity).toLowerCase() : "info";
+      const evidence = item.redacted === true && Array.isArray(item.evidence) ? item.evidence : [];
+      const payload = evidence.length
+        ? `<pre class="timeline-evidence">${escapeHtml(JSON.stringify(evidence, null, 2))}</pre>`
+        : `<p>${escapeHtml(uiCopy("Für dieses Ereignis sind keine bereinigten Detaildaten gespeichert.", "No redacted detail data is stored for this event."))}</p>`;
+      return `<details class="timeline-event severity-${severity}" data-event-id="${escapeHtml(id)}" ${opened.has(id) ? "open" : ""}>
+        <summary><time datetime="${escapeHtml(item.occurred_at || "")}">${escapeHtml(formatObservedAt(item.occurred_at))}</time><strong>${escapeHtml(item.domain)} · ${escapeHtml(item.code)}</strong><span>${escapeHtml(i18nPhraseT(item.message || ""))}</span><span class="timeline-detail-label">${escapeHtml(uiCopy("Bericht ansehen", "View report"))}</span></summary>
+        <p>${escapeHtml(uiCopy("Gespeicherte, bereinigte Beobachtung. Öffnen startet keine neue Prüfung am Radio.", "Stored, redacted observation. Opening this report does not probe the radio."))}</p>
+        <small>${escapeHtml(uiCopy("Konfidenz", "Confidence"))}: ${escapeHtml(item.confidence ?? "–")}%${item.correlation_id ? ` · ${escapeHtml(uiCopy("Korrelation", "Correlation"))}: ${escapeHtml(item.correlation_id)}` : ""}</small>${payload}</details>`;
+    }).join("") : `<div class="empty">${escapeHtml(uiCopy("Noch keine Diagnoseereignisse gespeichert.", "No diagnostic events recorded yet."))}</div>`;
+  }
+  const count = document.getElementById("timeline-count");
+  if (count) count.textContent = `${items.length} ${items.length === 1 ? uiCopy("Ereignis", "event") : uiCopy("Ereignisse", "events")}`;
 }
 
 function renderResearchHealth() {
@@ -819,13 +973,7 @@ function renderResearchHealth() {
     delete clockStatus.dataset.layoutManaged;
   }
 
-  const timelineBox = document.getElementById("diagnostics-timeline");
-  const items = timeline.items || [];
-  if (timelineBox) timelineBox.innerHTML = items.length
-    ? items.map((item) => `<article class="timeline-event severity-${escapeHtml(String(item.severity || "info").toLowerCase())}"><time datetime="${escapeHtml(item.occurred_at || "")}">${escapeHtml(formatObservedAt(item.occurred_at))}</time><strong>${escapeHtml(item.domain)} · ${escapeHtml(item.code)}</strong><span>${escapeHtml(item.message)}</span><small>Konfidenz ${escapeHtml(item.confidence ?? 0)}%${item.correlation_id ? ` · Korrelation ${escapeHtml(item.correlation_id)}` : ""}</small></article>`).join("")
-    : `<div class="empty">Noch keine korrelierten Diagnoseereignisse gespeichert.</div>`;
-  const timelineCount = document.getElementById("timeline-count");
-  if (timelineCount) timelineCount.textContent = `${items.length} ${items.length === 1 ? "Ereignis" : "Ereignisse"}`;
+  renderDiagnosticTimeline(timeline);
 }
 
 async function loadResearchHealth() {
@@ -1048,6 +1196,27 @@ function renderScheduleMembers() {
     : `<div class="empty">Add devices first.</div>`;
 }
 
+let listeningPeriod = "7d";
+
+function listeningHtml() {
+  const listening = state.playStats?.listening;
+  const period = listening?.periods?.[listeningPeriod];
+  const labels = { today: uiCopy("Heute (UTC)", "Today (UTC)"), "7d": uiCopy("Letzte 7 Tage", "Last 7 days"), "30d": uiCopy("Letzte 30 Tage", "Last 30 days"), all: uiCopy("Gesamter Zeitraum", "All time") };
+  const options = Object.entries(labels).map(([key, label]) => `<option value="${key}" ${key === listeningPeriod ? "selected" : ""}>${label}</option>`).join("");
+  const ranking = (items, label) => {
+    if (!items?.length) return "";
+    const max = Math.max(1, ...items.map(item => item.seconds));
+    return `<section><h4>${escapeHtml(label)}</h4>${items.slice(0, 6).map(item => `<div class="listening-row"><div><strong>${escapeHtml(item.name)}</strong><span>${escapeHtml(formatDuration(item.seconds))}</span></div><meter min="0" max="${max}" value="${item.seconds}" aria-label="${escapeHtml(item.name)}"></meter><small>${item.sessions} ${uiCopy("erfasste Sitzungen", "recorded sessions")}</small></div>`).join("")}</section>`;
+  };
+  return `<div class="listening-summary"><label for="listening-period">${uiCopy("Zeitraum", "Period")}</label><select id="listening-period">${options}</select><p class="muted-copy">${uiCopy("Geschätzte Wiedergabezeit aus bestätigten Radiozuständen. Mehrere Radios zählen getrennt; kein Nachweis für durchgehend hörbaren Ton. Tagesgrenze: UTC.", "Estimated playback time from confirmed radio states. Radios count separately; this does not prove uninterrupted audible output. Day boundary: UTC.")}</p>${period?.sessions ? `<div class="listening-total"><strong>${escapeHtml(formatDuration(period.seconds))}</strong><span>${period.sessions} ${uiCopy("erfasste Sitzungen", "recorded sessions")}</span></div>${ranking(period.by_device, uiCopy("Nach Radio", "By radio"))}${ranking(period.by_station, uiCopy("Häufig gehörte Sender", "Most listened stations"))}` : `<div class="empty">${uiCopy("Noch keine bestätigte Wiedergabe in diesem Zeitraum.", "No confirmed playback in this period yet.")}</div>`}</div>`;
+}
+
+document.getElementById("dashboard-play-stats")?.addEventListener("change", (event) => {
+  if (event.target.id !== "listening-period" || !["today", "7d", "30d", "all"].includes(event.target.value)) return;
+  listeningPeriod = event.target.value;
+  renderPlayback();
+});
+
 function renderPlayback() {
   const historyBox = document.getElementById("dashboard-play-history");
   if (historyBox) {
@@ -1080,7 +1249,7 @@ function renderPlayback() {
     const timerHtml = state.playStats?.timer ? detailButton("trigger", "timer", "Wecker Timer", `${text(state.playStats.timer.plays, 0)} Starts · ${text(state.playStats.timer.success_rate_percent, 0)}% Erfolg`, formatDuration(state.playStats.timer.seconds || 0)) : "";
     const server = state.playStats?.server || {};
     const serverHtml = detailButton("server", "", "Server", `${formatDuration(server.current_uptime_seconds || 0)} aktuell · ${text(server.restart_count, 0)} Starts`, `Gesamt ${text(server.total_runtime_hours, 0)}h · erster Start ${text(server.first_boot, "unbekannt")}`);
-    statsBox.innerHTML = state.playHistory.length || state.playStats ? serverHtml + lifetimeHtml + todayHtml + activeHtml + deviceHtml + stationHtml + presetHtml + triggerHtml + timerHtml : `<div class="empty">Noch keine Wiedergabe erfasst. Starte einen Stream oder ein Preset.</div>`;
+    statsBox.innerHTML = listeningHtml() + `<details class="easy-hidden"><summary>${uiCopy("Weitere Auswertungen", "More statistics")}</summary>${serverHtml + lifetimeHtml + todayHtml + activeHtml + deviceHtml + stationHtml + presetHtml + triggerHtml + timerHtml}</details>`;
   }
   renderPlaybackStatsDetail();
 }
@@ -1263,6 +1432,15 @@ function renderSystemSettings() {
   if (webLang) {
     webLang.innerHTML = (settings.web_languages || []).map((lang) => `<option value="${escapeHtml(lang.code)}">${escapeHtml(lang.label)}</option>`).join("");
     webLang.value = settings.web_language || "en";
+    let notice = document.getElementById("web-language-coverage-note");
+    if (!notice) {
+      notice = document.createElement("small");
+      notice.id = "web-language-coverage-note";
+      notice.dataset.authoredCopy = "";
+      webLang.insertAdjacentElement("afterend", notice);
+    }
+    notice.textContent = window.BasswiesnI18n.languageNotice(settings.web_language);
+    notice.hidden = !notice.textContent;
   }
   const deviceLangSelect = document.getElementById("device-language-select");
   if (deviceLangSelect) {
@@ -1329,543 +1507,7 @@ function uiCopy(de, en) {
   return language === "de" ? de : en;
 }
 
-const ABOUT_COPY = {
-  de: {
-    kicker: "Entwicklung",
-    title: "Über BASSWIESN",
-    heading: "SoundTouch soll lokal weiterleben",
-    paragraphs: [
-      "BASSWIESN entstand aus weit mehr als 400 Stunden Reverse Engineering, Disassembly, Firmwareanalyse und Tests an meinen eigenen Bose SoundTouch Radios.",
-      "Das Ziel war nie, die alte Bose-App einfach zu kopieren. Das Ziel war eine Software, die lokal funktioniert, nachvollziehbar arbeitet, endnutzerfreundlich ist und sicher prüft, bevor sie Erfolg meldet.",
-      "BASSWIESN soll bekannte Abläufe verständlicher machen und SoundTouch-Geräte auch ohne Hersteller-Cloud sinnvoll weiter nutzbar halten.",
-      "Ich liebe diese Radios. Ich besitze selbst viele davon und habe sie über Jahre hinweg Freunden, Familie und Bekannten empfohlen.",
-      "Dann kam der Mai 2026. Die Bose-Cloud wurde abgeschaltet. Plötzlich fragten mich viele, warum diese teuren Radios nicht mehr funktionieren.",
-      "Danach begann das Reverse Engineering: probieren, testen, analysieren. Aus diesem Prozess entstand nach und nach BASSWIESN.",
-      "Mittlerweile läuft BASSWIESN auf rund 30 Raspberry Pi 5 im Freundes- und Bekanntenkreis. Die Geräte laufen einfach weiter, und größere kritische Fehler sind mir derzeit nicht bekannt.",
-      "Für meinen Einsatz funktioniert BASSWIESN zuverlässig. Ich veröffentliche dieses Release, weil Entwickler vielleicht Teile daraus weiterentwickeln oder in eigene Projekte übernehmen möchten. Eine Erwähnung reicht mir völlig.",
-      "Danke. Grüße aus Bayern, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Version", "", "Firmware", "27.0.x", "Verifizierte Geräte", "Arbeitsgrundsätze"],
-    principles: ["sichere Abläufe", "niedrige Testlautstärke", "Rücklesen vor Erfolgsmeldungen", "kein Blindvertrauen in Befehle"],
-    backups: "Backup und Restore sind verfügbar; die Oberfläche zeigt den jeweils nachgewiesenen Umfang.",
-    disclaimer: "Markenhinweis: SoundTouch und Bose sind eingetragene Marken ihrer jeweiligen Eigentümer. BASSWIESN ist ein unabhängiges, inoffizielles Projekt und steht nicht in Verbindung mit der Bose Corporation."
-  },
-  en: {
-    kicker: "Development",
-    title: "About BASSWIESN",
-    heading: "SoundTouch should keep living locally",
-    paragraphs: [
-      "BASSWIESN grew out of more than 400 hours of reverse engineering, disassembly, firmware analysis and tests on my own Bose SoundTouch radios.",
-      "The goal was never to simply copy the old Bose app. The goal was software that works locally, is understandable, is friendly for end users and verifies safely before reporting success.",
-      "BASSWIESN should make known workflows easier to understand and keep SoundTouch devices useful without the manufacturer cloud.",
-      "I love these radios. I own many of them and recommended them to friends, family and acquaintances for years.",
-      "Then May 2026 arrived. The Bose cloud was shut down, and people suddenly asked why these expensive radios no longer worked.",
-      "After that came reverse engineering: trying, testing and analyzing. BASSWIESN gradually grew out of that process.",
-      "Today BASSWIESN runs on about 30 Raspberry Pi 5 systems among friends and acquaintances. The devices simply keep running, and I am not aware of major critical errors at the moment.",
-      "For my use, BASSWIESN works reliably. I am publishing this release because other developers may want to evolve parts of it or reuse them in their own projects. A mention is enough for me.",
-      "Thank you. Greetings from Bavaria, Mathias Zimmermann."
-    ],
-    project: "Project",
-    facts: ["Version", "", "Firmware", "27.0.x", "Verified devices", "Working principles"],
-    principles: ["safe workflows", "low test volume", "read back before reporting success", "no blind trust in commands"],
-    backups: "Backup and restore are available; the interface shows the exact scope that can be verified.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  fr: {
-    kicker: "Développement",
-    title: "À propos de BASSWIESN",
-    heading: "SoundTouch doit continuer à vivre en local",
-    paragraphs: [
-      "BASSWIESN est né de plus de 400 heures de rétro-ingénierie, de désassemblage, d'analyse de firmware et de tests sur mes propres radios Bose SoundTouch.",
-      "Le but n'a jamais été de copier simplement l'ancienne application Bose. Le but était un logiciel local, compréhensible, accessible aux utilisateurs et capable de vérifier prudemment avant d'annoncer un succès.",
-      "BASSWIESN doit rendre les procédures connues plus claires et garder les appareils SoundTouch utiles sans le cloud du fabricant.",
-      "J'aime ces radios. J'en possède beaucoup et je les ai recommandées pendant des années à des amis, à ma famille et à des connaissances.",
-      "Puis mai 2026 est arrivé. Le cloud Bose a été arrêté, et beaucoup de personnes m'ont demandé pourquoi ces radios coûteuses ne fonctionnaient plus.",
-      "Ensuite a commencé la rétro-ingénierie: essayer, tester, analyser. BASSWIESN est né progressivement de ce processus.",
-      "Aujourd'hui, BASSWIESN fonctionne sur environ 30 Raspberry Pi 5 chez des amis et des connaissances. Les appareils continuent simplement à fonctionner, et je ne connais actuellement aucun problème critique majeur.",
-      "Pour mon usage, BASSWIESN fonctionne de manière fiable. Je publie cette version parce que d'autres développeurs pourront peut-être faire évoluer certaines parties ou les réutiliser dans leurs propres projets. Une mention me suffit.",
-      "Merci. Salutations de Bavière, Mathias Zimmermann."
-    ],
-    project: "Projet",
-    facts: ["Version", "", "Firmware", "27.0.x", "Appareils vérifiés", "Principes de travail"],
-    principles: ["procédures sûres", "volume de test bas", "relire avant d'annoncer le succès", "pas de confiance aveugle dans les commandes"],
-    backups: "La sauvegarde et la restauration sont disponibles; l’interface indique la portée vérifiable.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  it: {
-    kicker: "Sviluppo",
-    title: "Informazioni su BASSWIESN",
-    heading: "SoundTouch deve continuare a vivere in locale",
-    paragraphs: [
-      "BASSWIESN nasce da oltre 400 ore di reverse engineering, disassemblaggio, analisi firmware e test sui miei Bose SoundTouch.",
-      "L'obiettivo non era copiare la vecchia app Bose, ma creare un software locale, comprensibile, adatto agli utenti finali e capace di verificare prima di dichiarare un successo.",
-      "BASSWIESN rende più chiari i flussi conosciuti e mantiene utili i dispositivi SoundTouch anche senza il cloud del produttore.",
-      "Amo queste radio. Ne possiedo molte e le ho consigliate per anni ad amici, famiglia e conoscenti.",
-      "Poi è arrivato maggio 2026. Il cloud Bose è stato spento e molte persone hanno iniziato a chiedermi perché radio costose non funzionassero più.",
-      "Da lì sono iniziati tentativi, test e analisi. BASSWIESN è cresciuto poco alla volta da quel processo.",
-      "Oggi BASSWIESN gira su circa 30 Raspberry Pi 5 tra amici e conoscenti. I dispositivi continuano a funzionare e al momento non conosco errori critici importanti.",
-      "Per il mio uso BASSWIESN funziona in modo affidabile. Pubblico questa release perché altri sviluppatori possano migliorarne parti o riutilizzarle nei propri progetti. Una citazione mi basta.",
-      "Grazie. Saluti dalla Baviera, Mathias Zimmermann."
-    ],
-    project: "Progetto",
-    facts: ["Versione", "", "Firmware", "27.0.x", "Dispositivi verificati", "Principi di lavoro"],
-    principles: ["flussi sicuri", "volume di test basso", "rilettura prima del successo", "nessuna fiducia cieca nei comandi"],
-    backups: "Backup e ripristino sono disponibili; l’interfaccia mostra l’ambito verificabile.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  es: {
-    kicker: "Desarrollo",
-    title: "Acerca de BASSWIESN",
-    heading: "SoundTouch debe seguir funcionando en local",
-    paragraphs: [
-      "BASSWIESN nació de más de 400 horas de ingeniería inversa, desensamblado, análisis de firmware y pruebas con mis propias radios Bose SoundTouch.",
-      "El objetivo nunca fue copiar la antigua app de Bose, sino crear un software local, comprensible, amable para usuarios finales y que verifique antes de informar éxito.",
-      "BASSWIESN debe aclarar los procesos conocidos y mantener útiles los dispositivos SoundTouch sin depender del cloud del fabricante.",
-      "Me encantan estas radios. Tengo muchas y durante años las recomendé a amigos, familiares y conocidos.",
-      "Después llegó mayo de 2026. El cloud de Bose se apagó y muchas personas me preguntaron por qué estas radios caras habían dejado de funcionar.",
-      "Luego empezó la ingeniería inversa: probar, testear y analizar. BASSWIESN creció poco a poco a partir de ese proceso.",
-      "Hoy BASSWIESN funciona en unos 30 Raspberry Pi 5 entre amigos y conocidos. Los dispositivos siguen funcionando y actualmente no conozco errores críticos importantes.",
-      "Para mi uso, BASSWIESN funciona de forma fiable. Publico esta versión porque otros desarrolladores quizá quieran evolucionar partes o reutilizarlas en sus propios proyectos. Una mención es suficiente.",
-      "Gracias. Saludos desde Baviera, Mathias Zimmermann."
-    ],
-    project: "Proyecto",
-    facts: ["Versión", "", "Firmware", "27.0.x", "Dispositivos verificados", "Principios de trabajo"],
-    principles: ["flujos seguros", "volumen de prueba bajo", "leer de vuelta antes de informar éxito", "no confiar ciegamente en comandos"],
-    backups: "La copia de seguridad y la restauración están disponibles; la interfaz muestra el alcance verificable.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  nl: {
-    kicker: "Ontwikkeling",
-    title: "Over BASSWIESN",
-    heading: "SoundTouch moet lokaal blijven leven",
-    paragraphs: [
-      "BASSWIESN is ontstaan uit meer dan 400 uur reverse engineering, disassembly, firmware-analyse en tests met mijn eigen Bose SoundTouch-radio's.",
-      "Het doel was nooit om de oude Bose-app simpelweg te kopiëren, maar software te maken die lokaal werkt, begrijpelijk is, prettig is voor eindgebruikers en veilig controleert voordat succes wordt gemeld.",
-      "BASSWIESN moet bekende workflows duidelijker maken en SoundTouch-apparaten bruikbaar houden zonder de cloud van de fabrikant.",
-      "Ik hou van deze radio's. Ik bezit er zelf veel en heb ze jarenlang aanbevolen aan vrienden, familie en kennissen.",
-      "Toen kwam mei 2026. De Bose-cloud werd uitgeschakeld en plots vroegen veel mensen waarom deze dure radio's niet meer werkten.",
-      "Daarna begon het reverse engineering: proberen, testen en analyseren. BASSWIESN groeide stap voor stap uit dat proces.",
-      "Vandaag draait BASSWIESN op ongeveer 30 Raspberry Pi 5-systemen bij vrienden en kennissen. De apparaten blijven gewoon werken en ik ken momenteel geen grote kritieke fouten.",
-      "Voor mijn gebruik werkt BASSWIESN betrouwbaar. Ik publiceer deze release omdat andere ontwikkelaars misschien onderdelen willen doorontwikkelen of hergebruiken. Een vermelding is genoeg.",
-      "Dank je. Groeten uit Beieren, Mathias Zimmermann."
-    ],
-    project: "Project",
-    facts: ["Versie", "", "Firmware", "27.0.x", "Geverifieerde apparaten", "Werkprincipes"],
-    principles: ["veilige workflows", "laag testvolume", "teruglezen vóór succesmelding", "geen blind vertrouwen in commando's"],
-    backups: "Back-up en herstel zijn beschikbaar; de interface toont de aantoonbare reikwijdte.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  ja: {
-    kicker: "開発",
-    title: "BASSWIESN について",
-    heading: "SoundTouch をローカルで使い続けるために",
-    paragraphs: [
-      "BASSWIESN は、私自身の Bose SoundTouch ラジオで行った 400 時間を超えるリバースエンジニアリング、逆アセンブル、ファームウェア解析、テストから生まれました。",
-      "目的は古い Bose アプリを単にコピーすることではありません。ローカルで動き、動作が追いやすく、利用者に扱いやすく、成功を表示する前に安全に確認するソフトウェアを作ることでした。",
-      "BASSWIESN は既知の手順を分かりやすくし、メーカーのクラウドなしでも SoundTouch 機器を実用的に使い続けられるようにするためのものです。",
-      "私はこのラジオが好きです。自分でも多く所有し、何年も友人や家族、知人に勧めてきました。",
-      "そして 2026 年 5 月、Bose クラウドが停止しました。高価なラジオがなぜ動かないのか、多くの人に聞かれるようになりました。",
-      "その後は、試し、テストし、解析する日々でした。その過程から少しずつ BASSWIESN が生まれました。",
-      "現在、BASSWIESN は友人や知人の環境で約 30 台の Raspberry Pi 5 上で動いています。機器はそのまま動き続けており、現時点で大きな重大問題は把握していません。",
-      "私の用途では BASSWIESN は安定して動いています。他の開発者が一部を発展させたり、自分のプロジェクトに取り込んだりできるよう、このリリースを公開します。言及してもらえれば十分です。",
-      "ありがとうございます。バイエルンより、Mathias Zimmermann。"
-    ],
-    project: "プロジェクト",
-    facts: ["バージョン", "", "ファームウェア", "27.0.x", "検証済み機器", "作業原則"],
-    principles: ["安全な手順", "低いテスト音量", "成功表示の前に読み戻す", "コマンドを盲信しない"],
-    backups: "バックアップと復元を利用でき、検証可能な範囲が画面に表示されます。",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  }
-};
-
-const ABOUT_COPY_EXTENDED = {
-  pt: {
-    kicker: "Desenvolvimento",
-    title: "Sobre o BASSWIESN",
-    heading: "SoundTouch deve continuar a viver localmente",
-    paragraphs: [
-      "O BASSWIESN nasceu de mais de 400 horas de engenharia inversa, desmontagem, análise de firmware e testes nos meus próprios rádios Bose SoundTouch.",
-      "O objetivo nunca foi simplesmente copiar a antiga aplicação Bose. O objetivo foi criar um software que funciona localmente, trabalha de forma compreensível, é amigável para o utilizador final e verifica com segurança antes de indicar sucesso.",
-      "O BASSWIESN deve tornar os processos conhecidos mais claros e manter os dispositivos SoundTouch úteis mesmo sem a cloud do fabricante.",
-      "Eu adoro estes rádios. Tenho muitos deles e recomendei-os durante anos a amigos, família e conhecidos.",
-      "Depois chegou maio de 2026. A cloud da Bose foi desligada. De repente, muitas pessoas perguntaram-me porque é que estes rádios caros já não funcionavam.",
-      "Depois começou a engenharia inversa: experimentar, testar, analisar. Deste processo nasceu pouco a pouco o BASSWIESN.",
-      "Hoje o BASSWIESN corre em cerca de 30 Raspberry Pi 5 no meu círculo de amigos e conhecidos. Os dispositivos simplesmente continuam a funcionar, e neste momento não conheço erros críticos maiores.",
-      "Para o meu uso, o BASSWIESN funciona de forma fiável. Publico esta release porque outros programadores talvez queiram evoluir partes dela ou reutilizá-las nos seus próprios projetos. Uma menção é suficiente para mim.",
-      "Obrigado. Saudações da Baviera, Mathias Zimmermann."
-    ],
-    project: "Projeto",
-    facts: ["Versão", "", "Firmware", "27.0.x", "Dispositivos verificados", "Princípios de trabalho"],
-    principles: ["processos seguros", "volume de teste baixo", "read-back antes de indicar sucesso", "não confiar cegamente em comandos"],
-    backups: "Backup e restauração estão disponíveis; a interface mostra o escopo verificável.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  da: {
-    kicker: "Udvikling",
-    title: "Om BASSWIESN",
-    heading: "SoundTouch skal fortsætte lokalt",
-    paragraphs: [
-      "BASSWIESN voksede ud af mere end 400 timers reverse engineering, disassembly, firmwareanalyse og tests på mine egne Bose SoundTouch-radioer.",
-      "Målet var aldrig bare at kopiere den gamle Bose-app. Målet var software, der virker lokalt, arbejder forståeligt, er brugervenlig for slutbrugere og kontrollerer sikkert, før den melder succes.",
-      "BASSWIESN skal gøre kendte arbejdsgange tydeligere og holde SoundTouch-enheder nyttige også uden producentens cloud.",
-      "Jeg elsker disse radioer. Jeg ejer selv mange af dem og har anbefalet dem til venner, familie og bekendte i årevis.",
-      "Så kom maj 2026. Bose-cloud blev lukket. Pludselig spurgte mange mig, hvorfor disse dyre radioer ikke længere virkede.",
-      "Derefter begyndte reverse engineering: prøve, teste, analysere. Ud af denne proces voksede BASSWIESN gradvist.",
-      "I dag kører BASSWIESN på omkring 30 Raspberry Pi 5 hos venner og bekendte. Enhederne fortsætter bare med at virke, og større kritiske fejl kender jeg i øjeblikket ikke til.",
-      "Til mit brug fungerer BASSWIESN pålideligt. Jeg udgiver denne release, fordi udviklere måske vil videreudvikle dele af den eller bruge dem i egne projekter. En omtale er helt nok for mig.",
-      "Tak. Hilsen fra Bayern, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Version", "", "Firmware", "27.0.x", "Verificerede enheder", "Arbejdsprincipper"],
-    principles: ["sikre arbejdsgange", "lav testlydstyrke", "read-back før succesmelding", "ingen blind tillid til kommandoer"],
-    backups: "Backup og gendannelse er tilgængelige; brugerfladen viser det verificerbare omfang.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  sv: {
-    kicker: "Utveckling",
-    title: "Om BASSWIESN",
-    heading: "SoundTouch ska fortsätta leva lokalt",
-    paragraphs: [
-      "BASSWIESN växte fram ur mer än 400 timmar reverse engineering, disassembly, firmwareanalys och tester på mina egna Bose SoundTouch-radioapparater.",
-      "Målet var aldrig att bara kopiera den gamla Bose-appen. Målet var programvara som fungerar lokalt, arbetar begripligt, är vänlig för slutanvändare och kontrollerar säkert innan framgång rapporteras.",
-      "BASSWIESN ska göra kända arbetsflöden tydligare och hålla SoundTouch-enheter användbara även utan tillverkarens moln.",
-      "Jag älskar dessa radioapparater. Jag äger själv många av dem och har rekommenderat dem till vänner, familj och bekanta i flera år.",
-      "Sedan kom maj 2026. Bose-molnet stängdes av. Plötsligt frågade många mig varför dessa dyra radioapparater inte längre fungerade.",
-      "Efter det började reverse engineering: prova, testa, analysera. Ur den processen växte BASSWIESN gradvis fram.",
-      "I dag kör BASSWIESN på omkring 30 Raspberry Pi 5 hos vänner och bekanta. Enheterna fortsätter helt enkelt att fungera, och större kritiska fel känner jag för närvarande inte till.",
-      "För min användning fungerar BASSWIESN tillförlitligt. Jag publicerar denna release eftersom utvecklare kanske vill vidareutveckla delar av den eller använda dem i egna projekt. Ett omnämnande räcker helt för mig.",
-      "Tack. Hälsningar från Bayern, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Version", "", "Firmware", "27.0.x", "Verifierade enheter", "Arbetsprinciper"],
-    principles: ["säkra arbetsflöden", "låg testvolym", "återläsning före framgångsmeddelande", "ingen blind tillit till kommandon"],
-    backups: "Säkerhetskopiering och återställning finns; gränssnittet visar verifierbar omfattning.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  no: {
-    kicker: "Utvikling",
-    title: "Om BASSWIESN",
-    heading: "SoundTouch skal fortsette å leve lokalt",
-    paragraphs: [
-      "BASSWIESN vokste ut av mer enn 400 timer med reverse engineering, disassembly, fastvareanalyse og tester på mine egne Bose SoundTouch-radioer.",
-      "Målet var aldri å bare kopiere den gamle Bose-appen. Målet var programvare som fungerer lokalt, arbeider forståelig, er vennlig for sluttbrukere og kontrollerer trygt før den melder suksess.",
-      "BASSWIESN skal gjøre kjente arbeidsflyter mer forståelige og holde SoundTouch-enheter nyttige også uten produsentens sky.",
-      "Jeg elsker disse radioene. Jeg eier selv mange av dem og har anbefalt dem til venner, familie og bekjente i årevis.",
-      "Så kom mai 2026. Bose-skyen ble slått av. Plutselig spurte mange meg hvorfor disse dyre radioene ikke lenger fungerte.",
-      "Deretter begynte reverse engineering: prøve, teste, analysere. Ut av denne prosessen vokste BASSWIESN gradvis frem.",
-      "I dag kjører BASSWIESN på rundt 30 Raspberry Pi 5 hos venner og bekjente. Enhetene fortsetter bare å fungere, og større kritiske feil kjenner jeg for tiden ikke til.",
-      "For min bruk fungerer BASSWIESN pålitelig. Jeg publiserer denne releasen fordi utviklere kanskje vil videreutvikle deler av den eller bruke dem i egne prosjekter. En omtale holder helt for meg.",
-      "Takk. Hilsen fra Bayern, Mathias Zimmermann."
-    ],
-    project: "Prosjekt",
-    facts: ["Versjon", "", "Fastvare", "27.0.x", "Verifiserte enheter", "Arbeidsprinsipper"],
-    principles: ["sikre arbeidsflyter", "lavt testvolum", "tilbake-lesing før suksessmelding", "ingen blind tillit til kommandoer"],
-    backups: "Sikkerhetskopi og gjenoppretting er tilgjengelig; grensesnittet viser verifiserbart omfang.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  fi: {
-    kicker: "Kehitys",
-    title: "Tietoja BASSWIESNistä",
-    heading: "SoundTouchin pitää jatkaa elämää paikallisesti",
-    paragraphs: [
-      "BASSWIESN syntyi yli 400 tunnin reverse engineeringistä, disassemblauksesta, laiteohjelmistoanalyysistä ja testeistä omilla Bose SoundTouch -radioillani.",
-      "Tavoite ei koskaan ollut vain kopioida vanhaa Bose-sovellusta. Tavoite oli ohjelmisto, joka toimii paikallisesti, toimii ymmärrettävästi, on loppukäyttäjälle ystävällinen ja tarkistaa turvallisesti ennen onnistumisesta ilmoittamista.",
-      "BASSWIESN tekee tunnetuista työnkuluista selkeämpiä ja pitää SoundTouch-laitteet mielekkäästi käyttökelpoisina myös ilman valmistajan pilveä.",
-      "Rakastan näitä radioita. Omistan itse monta niistä ja suosittelin niitä vuosien ajan ystäville, perheelle ja tuttaville.",
-      "Sitten tuli toukokuu 2026. Bose-pilvi suljettiin. Yhtäkkiä monet kysyivät minulta, miksi nämä kalliit radiot eivät enää toimi.",
-      "Sen jälkeen alkoi reverse engineering: kokeilua, testausta, analysointia. Tästä prosessista BASSWIESN syntyi vähitellen.",
-      "Nykyään BASSWIESN toimii noin 30 Raspberry Pi 5:llä ystävien ja tuttavien luona. Laitteet vain jatkavat toimintaansa, enkä tällä hetkellä tunne suurempia kriittisiä virheitä.",
-      "Omassa käytössäni BASSWIESN toimii luotettavasti. Julkaisen tämän releasen, koska kehittäjät voivat ehkä jatkokehittää osia siitä tai hyödyntää niitä omissa projekteissaan. Maininta riittää minulle täysin.",
-      "Kiitos. Terveisiä Baijerista, Mathias Zimmermann."
-    ],
-    project: "Projekti",
-    facts: ["Versio", "", "Laiteohjelmisto", "27.0.x", "Varmennetut laitteet", "Työperiaatteet"],
-    principles: ["turvalliset työnkulut", "matala testivolyymi", "takaisinluku ennen onnistumisilmoitusta", "ei sokeaa luottamusta komentoihin"],
-    backups: "Varmuuskopiointi ja palautus ovat käytettävissä; käyttöliittymä näyttää varmennetun laajuuden.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  pl: {
-    kicker: "Rozwój",
-    title: "O BASSWIESN",
-    heading: "SoundTouch powinien nadal działać lokalnie",
-    paragraphs: [
-      "BASSWIESN powstał z ponad 400 godzin reverse engineeringu, disassembly, analizy firmware i testów na moich własnych radiach Bose SoundTouch.",
-      "Celem nigdy nie było po prostu skopiowanie starej aplikacji Bose. Celem było oprogramowanie, które działa lokalnie, pracuje w sposób zrozumiały, jest przyjazne dla użytkownika końcowego i bezpiecznie sprawdza stan przed zgłoszeniem sukcesu.",
-      "BASSWIESN ma czynić znane procesy bardziej zrozumiałymi i utrzymać urządzenia SoundTouch sensownie użyteczne także bez chmury producenta.",
-      "Uwielbiam te radia. Sam mam ich wiele i przez lata polecałem je przyjaciołom, rodzinie i znajomym.",
-      "Potem przyszedł maj 2026. Chmura Bose została wyłączona. Nagle wiele osób pytało mnie, dlaczego te drogie radia już nie działają.",
-      "Potem zaczęła się inżynieria odwrotna: próby, testy, analiza. Z tego procesu stopniowo powstał BASSWIESN.",
-      "Obecnie BASSWIESN działa na około 30 Raspberry Pi 5 u przyjaciół i znajomych. Urządzenia po prostu działają dalej, a większych krytycznych błędów obecnie nie znam.",
-      "W moim zastosowaniu BASSWIESN działa niezawodnie. Publikuję to wydanie, ponieważ programiści mogą chcieć rozwijać jego części lub wykorzystać je we własnych projektach. Wzmianka w zupełności mi wystarczy.",
-      "Dziękuję. Pozdrowienia z Bawarii, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Wersja", "", "Firmware", "27.0.x", "Zweryfikowane urządzenia", "Zasady pracy"],
-    principles: ["bezpieczne procesy", "niska głośność testowa", "odczyt zwrotny przed zgłoszeniem sukcesu", "bez ślepego zaufania do poleceń"],
-    backups: "Kopia zapasowa i przywracanie są dostępne; interfejs pokazuje możliwy do potwierdzenia zakres.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  cs: {
-    kicker: "Vývoj",
-    title: "O BASSWIESN",
-    heading: "SoundTouch má dál žít lokálně",
-    paragraphs: [
-      "BASSWIESN vznikl z více než 400 hodin reverse engineeringu, disassembly, analýzy firmware a testů na mých vlastních rádiích Bose SoundTouch.",
-      "Cílem nikdy nebylo jen zkopírovat starou aplikaci Bose. Cílem byl software, který funguje lokálně, pracuje srozumitelně, je přívětivý pro koncové uživatele a bezpečně ověřuje stav před oznámením úspěchu.",
-      "BASSWIESN má známé postupy zpřehlednit a udržet zařízení SoundTouch smysluplně použitelná i bez cloudu výrobce.",
-      "Miluji tato rádia. Sám jich mnoho vlastním a roky jsem je doporučoval přátelům, rodině a známým.",
-      "Pak přišel květen 2026. Cloud Bose byl vypnut. Najednou se mě mnoho lidí ptalo, proč tato drahá rádia už nefungují.",
-      "Poté začal reverse engineering: zkoušení, testování, analýza. Z tohoto procesu postupně vznikl BASSWIESN.",
-      "Dnes BASSWIESN běží asi na 30 Raspberry Pi 5 u přátel a známých. Zařízení prostě fungují dál a větší kritické chyby mi momentálně nejsou známy.",
-      "Pro mé použití funguje BASSWIESN spolehlivě. Tuto release zveřejňuji, protože vývojáři možná budou chtít části dále rozvíjet nebo je použít ve vlastních projektech. Zmínka mi úplně stačí.",
-      "Děkuji. Pozdravy z Bavorska, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Verze", "", "Firmware", "27.0.x", "Ověřená zařízení", "Pracovní zásady"],
-    principles: ["bezpečné postupy", "nízká testovací hlasitost", "zpětné čtení před oznámením úspěchu", "žádná slepá důvěra v příkazy"],
-    backups: "Záloha a obnova jsou dostupné; rozhraní zobrazuje ověřitelný rozsah.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  }
-};
-
-Object.assign(ABOUT_COPY, ABOUT_COPY_EXTENDED);
-Object.assign(ABOUT_COPY, {
-  sk: {
-    kicker: "Vývoj",
-    title: "O BASSWIESN",
-    heading: "SoundTouch má ďalej žiť lokálne",
-    paragraphs: [
-      "BASSWIESN vznikol z viac než 400 hodín reverse engineeringu, disassembly, analýzy firmvéru a testov na mojich vlastných rádiách Bose SoundTouch.",
-      "Cieľom nikdy nebolo jednoducho skopírovať starú aplikáciu Bose. Cieľom bol softvér, ktorý funguje lokálne, pracuje zrozumiteľne, je prívetivý pre koncového používateľa a bezpečne overuje stav pred oznámením úspechu.",
-      "BASSWIESN má známe postupy spraviť zrozumiteľnejšími a udržať zariadenia SoundTouch zmysluplne použiteľné aj bez cloudu výrobcu.",
-      "Milujem tieto rádiá. Sám ich vlastním veľa a roky som ich odporúčal priateľom, rodine a známym.",
-      "Potom prišiel máj 2026. Bose cloud bol vypnutý. Zrazu sa ma veľa ľudí pýtalo, prečo tieto drahé rádiá už nefungujú.",
-      "Potom začal reverse engineering: skúšanie, testovanie, analyzovanie. Z tohto procesu postupne vznikol BASSWIESN.",
-      "Dnes BASSWIESN beží približne na 30 Raspberry Pi 5 u priateľov a známych. Zariadenia jednoducho bežia ďalej a väčšie kritické chyby mi momentálne nie sú známe.",
-      "Pre moje použitie funguje BASSWIESN spoľahlivo. Túto release zverejňujem, pretože vývojári možno budú chcieť časti ďalej rozvíjať alebo ich použiť vo vlastných projektoch. Zmienka mi úplne stačí.",
-      "Ďakujem. Pozdravy z Bavorska, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Verzia", "", "Firmvér", "27.0.x", "Overené zariadenia", "Pracovné zásady"],
-    principles: ["bezpečné postupy", "nízka testovacia hlasitosť", "read-back pred oznámením úspechu", "žiadna slepá dôvera v príkazy"],
-    backups: "Záloha a obnova sú dostupné; rozhranie zobrazuje overiteľný rozsah.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  hu: {
-    kicker: "Fejlesztés",
-    title: "A BASSWIESN névjegye",
-    heading: "A SoundTouch helyben éljen tovább",
-    paragraphs: [
-      "A BASSWIESN több mint 400 óra reverse engineeringből, disassemblyből, firmware-elemzésből és a saját Bose SoundTouch rádióimon végzett tesztekből született.",
-      "A cél soha nem az volt, hogy egyszerűen lemásoljam a régi Bose alkalmazást. A cél olyan szoftver volt, amely helyben működik, átláthatóan dolgozik, felhasználóbarát, és biztonságosan ellenőriz, mielőtt sikert jelez.",
-      "A BASSWIESN érthetőbbé teszi az ismert folyamatokat, és a SoundTouch eszközöket gyártói felhő nélkül is értelmesen használható állapotban tartja.",
-      "Szeretem ezeket a rádiókat. Nekem is sok van belőlük, és éveken át ajánlottam őket barátoknak, családnak és ismerősöknek.",
-      "Aztán eljött 2026 májusa. A Bose felhőt leállították. Hirtelen sokan kérdezték tőlem, miért nem működnek többé ezek a drága rádiók.",
-      "Ezután kezdődött a reverse engineering: próbálgatás, tesztelés, elemzés. Ebből a folyamatból nőtt ki lépésről lépésre a BASSWIESN.",
-      "Ma a BASSWIESN körülbelül 30 Raspberry Pi 5 rendszeren fut barátoknál és ismerősöknél. Az eszközök egyszerűen tovább működnek, és nagyobb kritikus hibáról jelenleg nem tudok.",
-      "Az én használatomban a BASSWIESN megbízhatóan működik. Azért teszem közzé ezt a release-t, mert fejlesztők talán továbbfejlesztenék egyes részeit, vagy saját projektjeikben használnák fel. Egy említés nekem teljesen elég.",
-      "Köszönöm. Üdvözlet Bajorországból, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Verzió", "", "Firmware", "27.0.x", "Ellenőrzött eszközök", "Munkaprincipiumok"],
-    principles: ["biztonságos folyamatok", "alacsony teszthangerő", "visszaolvasás sikerjelzés előtt", "nincs vak bizalom a parancsokban"],
-    backups: "A biztonsági mentés és visszaállítás elérhető; a felület a bizonyítható hatókört mutatja.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  ro: {
-    kicker: "Dezvoltare",
-    title: "Despre BASSWIESN",
-    heading: "SoundTouch trebuie să continue local",
-    paragraphs: [
-      "BASSWIESN a apărut din peste 400 de ore de inginerie inversă, dezasamblare, analiză firmware și teste pe propriile mele radiouri Bose SoundTouch.",
-      "Scopul nu a fost niciodată să copiez pur și simplu vechea aplicație Bose. Scopul a fost un software care funcționează local, lucrează transparent, este prietenos pentru utilizatori și verifică sigur înainte să raporteze succes.",
-      "BASSWIESN trebuie să facă fluxurile cunoscute mai ușor de înțeles și să păstreze dispozitivele SoundTouch utile și fără cloud-ul producătorului.",
-      "Îmi plac aceste radiouri. Dețin multe dintre ele și le-am recomandat ani la rând prietenilor, familiei și cunoscuților.",
-      "Apoi a venit mai 2026. Cloud-ul Bose a fost oprit. Dintr-odată, mulți oameni m-au întrebat de ce aceste radiouri scumpe nu mai funcționează.",
-      "Apoi a început ingineria inversă: încercare, testare, analiză. Din acest proces a apărut treptat BASSWIESN.",
-      "Între timp, BASSWIESN rulează pe aproximativ 30 de Raspberry Pi 5 la prieteni și cunoscuți. Dispozitivele pur și simplu continuă să funcționeze, iar erori critice mari nu cunosc în acest moment.",
-      "Pentru folosirea mea, BASSWIESN funcționează fiabil. Public această versiune deoarece dezvoltatorii ar putea continua anumite părți sau le-ar putea folosi în propriile proiecte. O mențiune este suficientă pentru mine.",
-      "Mulțumesc. Salutări din Bavaria, Mathias Zimmermann."
-    ],
-    project: "Proiect",
-    facts: ["Versiune", "", "Firmware", "27.0.x", "Dispozitive verificate", "Principii de lucru"],
-    principles: ["fluxuri sigure", "volum de test scăzut", "read-back înainte de raportarea succesului", "fără încredere oarbă în comenzi"],
-    backups: "Backupul și restaurarea sunt disponibile; interfața arată domeniul verificabil.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  bg: {
-    kicker: "Разработка",
-    title: "За BASSWIESN",
-    heading: "SoundTouch трябва да продължи да живее локално",
-    paragraphs: [
-      "BASSWIESN възникна от повече от 400 часа reverse engineering, disassembly, анализ на firmware и тестове върху моите собствени Bose SoundTouch радиа.",
-      "Целта никога не беше просто да се копира старата Bose апликация. Целта беше софтуер, който работи локално, действа разбираемо, е удобен за крайния потребител и проверява безопасно, преди да съобщи успех.",
-      "BASSWIESN трябва да направи познатите процеси по-разбираеми и да запази SoundTouch устройствата смислено използваеми дори без cloud на производителя.",
-      "Обичам тези радиа. Самият аз притежавам много от тях и години наред ги препоръчвах на приятели, семейство и познати.",
-      "После дойде май 2026. Bose cloud беше изключен. Изведнъж много хора ме питаха защо тези скъпи радиа вече не работят.",
-      "След това започна reverse engineering: пробване, тестване, анализиране. От този процес постепенно възникна BASSWIESN.",
-      "Междувременно BASSWIESN работи на около 30 Raspberry Pi 5 при приятели и познати. Устройствата просто продължават да работят, а по-големи критични грешки в момента не са ми известни.",
-      "За моята употреба BASSWIESN работи надеждно. Публикувам тази release, защото разработчици може би ще искат да развият части от нея или да ги използват в собствени проекти. Едно споменаване ми е напълно достатъчно.",
-      "Благодаря. Поздрави от Бавария, Mathias Zimmermann."
-    ],
-    project: "Проект",
-    facts: ["Версия", "", "Firmware", "27.0.x", "Проверени устройства", "Работни принципи"],
-    principles: ["сигурни процеси", "ниска тестова сила на звука", "read-back преди съобщаване на успех", "без сляпо доверие в команди"],
-    backups: "Архивирането и възстановяването са налични; интерфейсът показва проверимия обхват.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  }
-});
-
-Object.assign(ABOUT_COPY, {
-  hr: {
-    kicker: "Razvoj",
-    title: "O BASSWIESN-u",
-    heading: "SoundTouch treba nastaviti živjeti lokalno",
-    paragraphs: [
-      "BASSWIESN je nastao iz više od 400 sati reverznog inženjeringa, disassemblyja, analize firmwarea i testiranja na mojim vlastitim Bose SoundTouch radijima.",
-      "Cilj nikada nije bio jednostavno kopirati staru Bose aplikaciju. Cilj je bio stvoriti softver koji radi lokalno, ponaša se razumljivo, ostaje pristupačan krajnjem korisniku i sigurno provjerava stanje prije nego što prijavi uspjeh.",
-      "BASSWIESN treba poznate procese učiniti jasnijima i održati SoundTouch uređaje smisleno uporabljivima i bez proizvođačeva clouda.",
-      "Volim ove radije. Imam ih mnogo i godinama sam ih preporučivao prijateljima, obitelji i poznanicima.",
-      "Zatim je došao svibanj 2026. Bose cloud je ugašen. Odjednom su me mnogi pitali zašto ti skupi radiji više ne rade.",
-      "Nakon toga krenuo je reverzni inženjering: isprobavanje, testiranje, analiziranje. Iz tog procesa BASSWIESN je postupno rastao.",
-      "Danas BASSWIESN radi na približno 30 Raspberry Pi 5 sustava kod prijatelja i poznanika. Uređaji jednostavno nastavljaju raditi, a za veće kritične greške trenutačno ne znam.",
-      "Za moju uporabu BASSWIESN radi pouzdano. Objavljujem ovu verziju jer bi drugi programeri možda htjeli dalje razvijati neke dijelove ili ih upotrijebiti u vlastitim projektima. Spominjanje mi je sasvim dovoljno.",
-      "Hvala. Pozdrav iz Bavarske, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Verzija", "", "Firmware", "27.0.x", "Provjereni uređaji", "Radna načela"],
-    principles: ["sigurni postupci", "niska testna glasnoća", "read-back prije prijave uspjeha", "bez slijepog povjerenja u naredbe"],
-    backups: "Sigurnosna kopija i vraćanje su dostupni; sučelje prikazuje provjerljivi opseg.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  sl: {
-    kicker: "Razvoj",
-    title: "O BASSWIESN",
-    heading: "SoundTouch naj se lokalno uporablja naprej",
-    paragraphs: [
-      "BASSWIESN je nastal iz več kot 400 ur reverznega inženiringa, disassemblyja, analize firmwarea in testov na mojih lastnih radijskih napravah Bose SoundTouch.",
-      "Cilj nikoli ni bil preprosto kopirati stare aplikacije Bose. Cilj je bil ustvariti programsko opremo, ki deluje lokalno, je razumljiva, prijazna do končnega uporabnika in varno preveri stanje, preden prijavi uspeh.",
-      "BASSWIESN mora znane postopke narediti jasnejše in ohraniti naprave SoundTouch smiselno uporabne tudi brez oblaka proizvajalca.",
-      "Te radie imam rad. Sam jih imam veliko in sem jih leta priporočal prijateljem, družini in znancem.",
-      "Nato je prišel maj 2026. Bose oblak je bil izklopljen. Nenadoma me je veliko ljudi spraševalo, zakaj ti dragi radii ne delujejo več.",
-      "Potem se je začel reverzni inženiring: preizkušanje, testiranje, analiziranje. Iz tega procesa je BASSWIESN postopoma zrasel.",
-      "Danes BASSWIESN deluje na približno 30 Raspberry Pi 5 pri prijateljih in znancih. Naprave preprosto delujejo naprej, večjih kritičnih napak pa trenutno ne poznam.",
-      "Za mojo uporabo BASSWIESN deluje zanesljivo. To izdajo objavljam, ker bodo drugi razvijalci morda želeli razvijati posamezne dele naprej ali jih uporabiti v svojih projektih. Omemba mi popolnoma zadostuje.",
-      "Hvala. Pozdravi iz Bavarske, Mathias Zimmermann."
-    ],
-    project: "Projekt",
-    facts: ["Različica", "", "Firmware", "27.0.x", "Preverjene naprave", "Delovna načela"],
-    principles: ["varni postopki", "nizka testna glasnost", "read-back pred prijavo uspeha", "brez slepega zaupanja v ukaze"],
-    backups: "Varnostno kopiranje in obnovitev sta na voljo; vmesnik prikaže preverljiv obseg.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  el: {
-    kicker: "Ανάπτυξη",
-    title: "Σχετικά με το BASSWIESN",
-    heading: "Το SoundTouch πρέπει να συνεχίσει να λειτουργεί τοπικά",
-    paragraphs: [
-      "Το BASSWIESN γεννήθηκε από περισσότερες από 400 ώρες reverse engineering, disassembly, ανάλυσης firmware και δοκιμών στα δικά μου ραδιόφωνα Bose SoundTouch.",
-      "Ο στόχος δεν ήταν ποτέ να αντιγραφεί απλώς η παλιά εφαρμογή Bose. Ο στόχος ήταν λογισμικό που λειτουργεί τοπικά, παραμένει κατανοητό, είναι φιλικό για τον τελικό χρήστη και ελέγχει με ασφάλεια πριν αναφέρει επιτυχία.",
-      "Το BASSWIESN πρέπει να κάνει τις γνωστές διαδικασίες πιο σαφείς και να κρατήσει τις συσκευές SoundTouch ουσιαστικά χρήσιμες χωρίς το cloud του κατασκευαστή.",
-      "Αγαπώ αυτά τα ραδιόφωνα. Έχω πολλά από αυτά και για χρόνια τα σύστηνα σε φίλους, οικογένεια και γνωστούς.",
-      "Ύστερα ήρθε ο Μάιος του 2026. Το Bose cloud απενεργοποιήθηκε. Ξαφνικά πολλοί με ρωτούσαν γιατί αυτά τα ακριβά ραδιόφωνα δεν λειτουργούσαν πια.",
-      "Μετά άρχισε το reverse engineering: δοκιμές, έλεγχοι, ανάλυση. Από αυτή τη διαδικασία μεγάλωσε σταδιακά το BASSWIESN.",
-      "Σήμερα το BASSWIESN λειτουργεί σε περίπου 30 Raspberry Pi 5 σε φίλους και γνωστούς. Οι συσκευές συνεχίζουν απλώς να λειτουργούν, και αυτή τη στιγμή δεν γνωρίζω μεγάλα κρίσιμα σφάλματα.",
-      "Για τη δική μου χρήση το BASSWIESN λειτουργεί αξιόπιστα. Δημοσιεύω αυτή την έκδοση επειδή άλλοι προγραμματιστές ίσως θελήσουν να εξελίξουν μέρη της ή να τα χρησιμοποιήσουν στα δικά τους έργα. Μια αναφορά μού αρκεί απολύτως.",
-      "Ευχαριστώ. Χαιρετισμούς από τη Βαυαρία, Mathias Zimmermann."
-    ],
-    project: "Έργο",
-    facts: ["Έκδοση", "", "Firmware", "27.0.x", "Επαληθευμένες συσκευές", "Αρχές εργασίας"],
-    principles: ["ασφαλείς διαδικασίες", "χαμηλή ένταση δοκιμής", "read-back πριν από αναφορά επιτυχίας", "όχι τυφλή εμπιστοσύνη σε εντολές"],
-    backups: "Η δημιουργία και η επαναφορά backup είναι διαθέσιμες· η διεπαφή δείχνει το επαληθεύσιμο εύρος.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  tr: {
-    kicker: "Geliştirme",
-    title: "BASSWIESN hakkında",
-    heading: "SoundTouch yerel olarak yaşamaya devam etmeli",
-    paragraphs: [
-      "BASSWIESN, kendi Bose SoundTouch radyolarımda yapılan 400 saatten fazla tersine mühendislik, disassembly, firmware analizi ve testten doğdu.",
-      "Amaç hiçbir zaman eski Bose uygulamasını basitçe kopyalamak değildi. Amaç yerel çalışan, anlaşılır davranan, son kullanıcı için dostça olan ve başarı bildirmeden önce güvenli şekilde doğrulayan bir yazılım oluşturmaktı.",
-      "BASSWIESN bilinen süreçleri daha anlaşılır yapmalı ve SoundTouch cihazlarını üretici bulutu olmadan da anlamlı şekilde kullanılabilir tutmalıdır.",
-      "Bu radyoları seviyorum. Kendim de birçoğuna sahibim ve yıllarca arkadaşlarıma, aileme ve tanıdıklarıma tavsiye ettim.",
-      "Sonra Mayıs 2026 geldi. Bose bulutu kapatıldı. Birden çok kişi bana bu pahalı radyoların neden artık çalışmadığını sordu.",
-      "Ardından tersine mühendislik başladı: denemek, test etmek, analiz etmek. BASSWIESN bu süreçten adım adım büyüdü.",
-      "Bugün BASSWIESN arkadaşlar ve tanıdıklar arasında yaklaşık 30 Raspberry Pi 5 üzerinde çalışıyor. Cihazlar basitçe çalışmaya devam ediyor ve şu anda büyük kritik hatalar bilmiyorum.",
-      "Kendi kullanımımda BASSWIESN güvenilir çalışıyor. Bu sürümü yayımlıyorum çünkü başka geliştiriciler bazı parçaları ilerletmek veya kendi projelerinde kullanmak isteyebilir. Benim için bir atıf tamamen yeterli.",
-      "Teşekkürler. Bavyera'dan selamlar, Mathias Zimmermann."
-    ],
-    project: "Proje",
-    facts: ["Sürüm", "", "Firmware", "27.0.x", "Doğrulanmış cihazlar", "Çalışma ilkeleri"],
-    principles: ["güvenli süreçler", "düşük test ses düzeyi", "başarı bildirmeden önce read-back", "komutlara kör güven yok"],
-    backups: "Yedekleme ve geri yükleme kullanılabilir; arayüz doğrulanabilir kapsamı gösterir.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  ru: {
-    kicker: "Разработка",
-    title: "О BASSWIESN",
-    heading: "SoundTouch должен продолжать работать локально",
-    paragraphs: [
-      "BASSWIESN появился из более чем 400 часов reverse engineering, disassembly, анализа прошивки и тестов на моих собственных радио Bose SoundTouch.",
-      "Цель никогда не состояла в том, чтобы просто скопировать старое приложение Bose. Целью было программное обеспечение, которое работает локально, ведет себя понятно, удобно для конечного пользователя и безопасно проверяет состояние перед сообщением об успехе.",
-      "BASSWIESN должен сделать известные процессы понятнее и сохранить устройства SoundTouch осмысленно полезными даже без облака производителя.",
-      "Я люблю эти радио. У меня самого их много, и я годами рекомендовал их друзьям, семье и знакомым.",
-      "Потом наступил май 2026 года. Облако Bose было отключено. Внезапно многие начали спрашивать меня, почему эти дорогие радио больше не работают.",
-      "Затем начался reverse engineering: пробовать, тестировать, анализировать. Из этого процесса BASSWIESN постепенно вырос.",
-      "Сегодня BASSWIESN работает примерно на 30 Raspberry Pi 5 у друзей и знакомых. Устройства просто продолжают работать, и о крупных критических ошибках на данный момент мне неизвестно.",
-      "Для моего применения BASSWIESN работает надежно. Я публикую этот релиз, потому что другие разработчики, возможно, захотят развивать его части дальше или использовать их в собственных проектах. Упоминания для меня вполне достаточно.",
-      "Спасибо. Привет из Баварии, Mathias Zimmermann."
-    ],
-    project: "Проект",
-    facts: ["Версия", "", "Прошивка", "27.0.x", "Проверенные устройства", "Принципы работы"],
-    principles: ["безопасные процессы", "низкая тестовая громкость", "read-back перед сообщением об успехе", "нет слепого доверия командам"],
-    backups: "Резервное копирование и восстановление доступны; интерфейс показывает проверяемый объём.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  uk: {
-    kicker: "Розробка",
-    title: "Про BASSWIESN",
-    heading: "SoundTouch має продовжувати працювати локально",
-    paragraphs: [
-      "BASSWIESN виник із понад 400 годин reverse engineering, disassembly, аналізу firmware та тестів на моїх власних радіо Bose SoundTouch.",
-      "Мета ніколи не полягала в тому, щоб просто скопіювати старий застосунок Bose. Метою було програмне забезпечення, яке працює локально, поводиться зрозуміло, є дружнім для кінцевого користувача і безпечно перевіряє стан перед повідомленням про успіх.",
-      "BASSWIESN має зробити відомі процеси зрозумілішими і зберегти пристрої SoundTouch змістовно корисними навіть без хмари виробника.",
-      "Я люблю ці радіо. У мене самого їх багато, і я роками радив їх друзям, родині та знайомим.",
-      "Потім настав травень 2026 року. Хмару Bose вимкнули. Раптом багато людей почали питати мене, чому ці дорогі радіо більше не працюють.",
-      "Після цього почався reverse engineering: пробувати, тестувати, аналізувати. Із цього процесу BASSWIESN поступово виріс.",
-      "Сьогодні BASSWIESN працює приблизно на 30 Raspberry Pi 5 у друзів і знайомих. Пристрої просто продовжують працювати, і про великі критичні помилки наразі мені невідомо.",
-      "Для мого використання BASSWIESN працює надійно. Я публікую цей реліз, тому що інші розробники, можливо, захочуть розвивати його частини далі або використовувати їх у власних проєктах. Згадки для мене цілком достатньо.",
-      "Дякую. Вітання з Баварії, Mathias Zimmermann."
-    ],
-    project: "Проєкт",
-    facts: ["Версія", "", "Firmware", "27.0.x", "Перевірені пристрої", "Принципи роботи"],
-    principles: ["безпечні процеси", "низька тестова гучність", "read-back перед повідомленням про успіх", "без сліпої довіри до команд"],
-    backups: "Резервне копіювання та відновлення доступні; інтерфейс показує перевірений обсяг.",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  },
-  zh: {
-    kicker: "开发",
-    title: "关于 BASSWIESN",
-    heading: "让 SoundTouch 在本地继续运行",
-    paragraphs: [
-      "BASSWIESN 源自超过 400 小时的逆向工程、反汇编、固件分析，以及我用自己的 Bose SoundTouch 收音机进行的测试。",
-      "目标从来不是简单复制旧的 Bose 应用。目标是创建一套可在本地运行、行为可理解、对最终用户友好，并且在报告成功之前会安全回读验证的软件。",
-      "BASSWIESN 应当让已知流程更清晰，并让 SoundTouch 设备即使没有厂商云也能有意义地继续使用。",
-      "我喜欢这些收音机。我自己拥有很多台，也多年向朋友、家人和熟人推荐它们。",
-      "然后到了 2026 年 5 月。Bose 云被关闭。突然很多人问我，为什么这些昂贵的收音机不再工作。",
-      "随后开始了逆向工程：尝试、测试、分析。BASSWIESN 就是在这个过程中一步步成长起来的。",
-      "如今，BASSWIESN 在朋友和熟人那里大约 30 台 Raspberry Pi 5 上运行。设备继续正常工作，目前我不知道有重大关键错误。",
-      "对我自己的使用来说，BASSWIESN 运行可靠。我发布这个版本，是因为其他开发者也许想继续改进其中某些部分，或在自己的项目中使用它们。对我来说，一个提及就完全足够了。",
-      "谢谢。来自巴伐利亚的问候，Mathias Zimmermann。"
-    ],
-    project: "项目",
-    facts: ["版本", "", "Firmware", "27.0.x", "已验证设备", "工作原则"],
-    principles: ["安全流程", "低测试音量", "报告成功前 read-back", "不盲目信任命令"],
-    backups: "备份和恢复可用；界面会显示能够验证的确切范围。",
-    disclaimer: "Trademark Disclaimer: SoundTouch and Bose are registered trademarks of their respective owners. BASSWIESN is an independent unofficial project and is not affiliated with Bose Corporation."
-  }
-});
+const ABOUT_COPY = window.BasswiesnAbout.labels;
 
 const FIRST_RUN_COPY = {
   de: {
@@ -1912,23 +1554,56 @@ function renderAboutContent() {
   if (!box) return;
   const lang = state.systemSettings?.web_language || document.documentElement.lang || "en";
   const copy = ABOUT_COPY[lang] || ABOUT_COPY.en;
-  const devices = ["Bose SoundTouch 10", "Bose SoundTouch 20", "Bose SoundTouch 30", "Bose SoundTouch Portable"];
+  const storyLang = ["de", "en"].includes(lang) ? lang : "en";
+  const story = window.BasswiesnAbout.stories[storyLang];
   const version = state.applicationVersion;
-  const displayVersion = version ? (String(version).startsWith("v") ? version : `v${version}`) : "Version nicht verfügbar";
+  const displayVersion = version ? (String(version).startsWith("v") ? version : `v${version}`) : uiCopy("Version nicht verfügbar", "Version unavailable");
   document.querySelector("#view-about .section-kicker").textContent = `${copy.kicker} · ${displayVersion}`;
   document.querySelector("#view-about h2").textContent = copy.title;
   box.innerHTML = `
-    <h3>${escapeHtml(copy.heading)}</h3>
-    ${copy.paragraphs.map((item) => `<p>${escapeHtml(item)}</p>`).join("")}
-    <p>${escapeHtml(copy.project)}:<br><a class="about-github-link" href="https://github.com/Zimbo88/basswiesn" target="_blank" rel="noopener">https://github.com/Zimbo88/basswiesn</a></p>
     <div class="about-fact-grid">
       <article><span>${escapeHtml(copy.facts[0])}</span><strong>${escapeHtml(displayVersion)}</strong></article>
+      <article><span>${escapeHtml(uiCopy("Öffentlich veröffentlicht", "Publicly released"))}</span><strong id="about-release-date">${escapeHtml(publicationDate() || uiCopy("Datum noch nicht bekannt", "Date not yet known"))}</strong><small>${escapeHtml(uiCopy("GitHub-Veröffentlichung, nicht Build-Datum", "GitHub publication, not the build date"))}</small></article>
       <article><span>${escapeHtml(copy.facts[2])}</span><strong>${escapeHtml(copy.facts[3])}</strong></article>
-      <article><span>${escapeHtml(copy.facts[4])}</span><ul>${devices.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
-      <article><span>${escapeHtml(copy.facts[5])}</span><ul>${copy.principles.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul></article>
+      <article><span>${escapeHtml(uiCopy("Lizenz", "License"))}</span><strong>MIT</strong><a href="https://github.com/Zimbo88/BASSWIESN/blob/main/LICENSE" target="_blank" rel="noopener">${escapeHtml(uiCopy("Lizenztext", "License text"))}</a></article>
     </div>
+    <div class="button-row about-links"><a class="command" href="https://github.com/Zimbo88/BASSWIESN" target="_blank" rel="noopener">${escapeHtml(copy.project)}</a><a class="command" href="https://github.com/Zimbo88/BASSWIESN/releases" target="_blank" rel="noopener">${escapeHtml(uiCopy("Veröffentlichungen", "Releases"))}</a><button class="command" id="about-publication-refresh" type="button">${escapeHtml(uiCopy("Releasedatum bei GitHub prüfen", "Check release date on GitHub"))}</button></div>
+    <p class="form-message" id="about-publication-message" role="status"></p>
+    ${lang !== storyLang ? `<p class="about-language-note" data-authored-copy>${escapeHtml(window.BasswiesnAbout.fallbackNotices[lang] || window.BasswiesnAbout.fallbackNotices.en)}</p>` : ""}
+    <article class="about-story" lang="${storyLang}" data-authored-copy>${story.map((block, index) => block.kind === "heading" ? `<h3>${escapeHtml(block.text)}</h3>` : `<p${index >= story.length - 2 ? ' class="about-signature"' : ""}>${escapeHtml(block.text)}</p>`).join("")}</article>
+    <aside class="about-technical-note"><h3>${escapeHtml(uiCopy("Technischer Entwicklungsstand", "Technical development status"))}</h3><p>${escapeHtml(uiCopy("Der persönliche Text oben bleibt unverändert. Native Apple-Wiedergabe ist auf einer SM2-Geräteklasse nachgewiesen, ein zuverlässiger nativer Weg für alle Modelle jedoch nicht. Das AP2-Modul in BASSWIESN ist noch in Entwicklung; Audioausgabe und Mehrgerätebetrieb sind noch nicht freigegeben.", "The personal statement above is unchanged. Native Apple playback has been verified on one SM2 device class, but a reliable native path for all models has not. The BASSWIESN AP2 module is still in development; audio output and multi-device use have not been approved for release."))}</p></aside>
     <p>${escapeHtml(copy.backups)}</p>
+    <p>${escapeHtml(uiCopy("Für die Weiterverwendung gelten die MIT-Lizenz und die jeweiligen Drittanbieter-Lizenzhinweise. Der persönliche Text ersetzt diese Bedingungen nicht.", "Reuse is governed by the MIT license and the applicable third-party license notices. The personal statement does not replace those terms."))}</p>
     <p class="about-disclaimer">${escapeHtml(copy.disclaimer)}</p>`;
+  document.getElementById("about-publication-refresh").addEventListener("click", refreshPublication);
+}
+
+function publicationDate() {
+  if (state.publication?.version !== state.applicationVersion || state.publication?.publication_status !== "PUBLISHED") return "";
+  const stamp = state.publication.published_at;
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(stamp || "")) return "";
+  const date = new Date(stamp);
+  if (!Number.isFinite(date.getTime())) return "";
+  // Publication day is UTC, never shifted by the browser's timezone.
+  return new Intl.DateTimeFormat(state.systemSettings?.web_language || "en", {dateStyle: "medium", timeZone: "UTC"}).format(date);
+}
+
+async function refreshPublication(event) {
+  const button = event.currentTarget;
+  button.disabled = true;
+  const message = document.getElementById("about-publication-message");
+  message.textContent = uiCopy("Offizielles GitHub-Release wird geprüft …", "Checking the official GitHub release …");
+  try {
+    const result = await postJson("/api/version/publication-refresh", {});
+    if (result.version === state.applicationVersion) state.publication = result;
+    document.getElementById("about-release-date").textContent = publicationDate() || uiCopy("Datum noch nicht bekannt", "Date not yet known");
+    updateServerIdentity();
+    message.textContent = result.refresh_status === "OK"
+      ? uiCopy("Veröffentlichungsdatum geprüft. Es wurde kein Update installiert.", "Publication date verified. No update was installed.")
+      : uiCopy("Veröffentlichungsdatum konnte nicht bestätigt werden. Ein bereits bekanntes Datum bleibt erhalten.", "Could not verify the publication date. Any previously known date is retained.");
+  } catch {
+    message.textContent = uiCopy("GitHub-Prüfung fehlgeschlagen. BASSWIESN bleibt unverändert.", "GitHub check failed. BASSWIESN is unchanged.");
+  } finally { button.disabled = false; }
 }
 
 function renderFirstRunWarning() {
@@ -2002,6 +1677,7 @@ function translateCoreUi() {
   }
   const aliases = { setup:"setup", radios:"radios", favoriten:"presets", favorites:"presets", einstellungen:"settings", settings:"settings", diagnose:"diagnostics", diagnostics:"diagnostics", labor:"lab", lab:"lab", scan:"scan", scannen:"scan", verify:"verify", prüfen:"verify", apply:"apply", anwenden:"apply", complete:"complete", abschließen:"complete", presets:"presets", sources:"sources", quellen:"sources", volume:"volume", lautstärke:"volume", playing:"playing", wiedergabe:"playing", capabilities:"capabilities", "runtime state":"runtime_state", "support bundle":"support_bundle", logs:"logs", protokolle:"logs", status:"status", cloud:"cloud", ssh:"ssh", "remote services":"remote_services", sprache:"language", language:"language", "guided hints":"guided_hints", "ip write guard":"write_guard", theme:"theme", design:"theme" };
   document.querySelectorAll("h2,h3,h4,button,summary,label,legend,span,b").forEach((element) => {
+    if (element.closest("[data-authored-copy]")) return;
     [...element.childNodes].filter((node) => node.nodeType === Node.TEXT_NODE).forEach((node) => {
       const raw = node.nodeValue.trim();
       const key = aliases[raw.toLowerCase()];
@@ -2019,7 +1695,7 @@ function translateCoreUi() {
 
 function translateExactUiPhrases(root = document.body) {
   if (!window.BasswiesnI18n?.dynamic || !root) return;
-  const skipSelector = "script,style,code,pre,textarea";
+  const skipSelector = "script,style,code,pre,textarea,[data-authored-copy]";
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
     acceptNode(node) {
       const parent = node.parentElement;
@@ -2069,6 +1745,9 @@ function applyUiPreferences() {
   document.body.classList.toggle("easy-mode", mode === "easy");
   document.body.classList.toggle("standard-mode", mode === "standard");
   document.body.classList.toggle("lab-mode", mode === "lab");
+  if (mode !== "lab" && document.querySelector(".nav-button.is-active.lab-only")) {
+    document.querySelector('.nav-button[data-view="controls"]')?.click();
+  }
   document.body.classList.remove("normal-mode");
   document.body.classList.toggle("guided-hints", hints);
   const modeSetting = document.getElementById("ui-mode-setting");
@@ -2089,21 +1768,43 @@ function applyUiPreferences() {
   }
   const save = document.querySelector("#system-settings-form button[type=submit]");
   if (save) save.textContent = i18nT("save_settings");
+  renderKeyCommands();
+  syncRadioEntryLinks();
+  renderPresetChecker();
   translateCoreUi();
 }
 
 function safeStartStorageKey(deviceId) {
-  return `basswiesn_safe_start_volume_enabled_${deviceId || "none"}`;
+  return `basswiesn_remote_safe_start_${deviceId || "none"}`;
 }
 
 function syncSafeStartControl() {
+  syncRadioEntryLinks();
   const deviceId = document.getElementById("key-device-select")?.value || "";
   const checkbox = document.getElementById("key-safe-volume-enabled");
   const field = document.getElementById("key-safe-volume-field");
   if (!checkbox) return;
-  const stored = localStorage.getItem(safeStartStorageKey(deviceId));
-  checkbox.checked = stored === null ? state.systemSettings?.ui_mode !== "easy" : stored === "true";
+  let stored = null;
+  try { stored = localStorage.getItem(safeStartStorageKey(deviceId)); } catch { /* Storage may be unavailable. */ }
+  checkbox.checked = stored === "true";
   if (field) field.hidden = !checkbox.checked;
+}
+
+function syncRadioEntryLinks() {
+  for (const [selectId, linkId, fragment, de, en] of [
+    ["key-device-select", "controls-remote-link", "", "Kompakte Fernbedienung öffnen", "Open compact remote"],
+    ["key-device-select", "controls-display-link", "#remote-display-panel", "Anzeigeinhalte und Reihenfolge", "Display content and order"],
+    ["settings-device-select", "settings-display-link", "#remote-display-panel", "Anzeigeinhalte und Reihenfolge", "Display content and order"],
+  ]) {
+    const link = document.getElementById(linkId);
+    if (!link) continue;
+    const selected = document.getElementById(selectId)?.value;
+    const device = state.devices.find(item => item.device_id === selected);
+    link.textContent = uiCopy(de, en);
+    link.hidden = !device || Boolean(device.protected);
+    if (!link.hidden) link.href = `/remote/${encodeURIComponent(selected)}${fragment}`;
+    else link.removeAttribute("href");
+  }
 }
 
 function selectedSafeStartVolume() {
@@ -2114,6 +1815,7 @@ function selectedSafeStartVolume() {
 }
 
 function applyCapabilityUi() {
+  syncRadioEntryLinks();
   const activeDeviceId = document.querySelector('.view.is-active select[name="device_id"]')?.value || "";
   const relevant = state.deviceCapabilities.filter((item) => !activeDeviceId || item.device_id === activeDeviceId);
   const supported = (feature) => relevant.some((item) => item.features?.[feature]);
@@ -2787,12 +2489,19 @@ function renderKeyCommands() {
   }
   const grid = document.getElementById("key-command-grid");
   if (grid) {
-    const first = ["POWER", "SOURCE", "TV", "AUX_INPUT", "BLUETOOTH", "PRESET_1", "PRESET_2", "PRESET_3", "PRESET_4", "PRESET_5", "PRESET_6", "PREVIOUS", "PLAY_PAUSE", "NEXT", "PREV_TRACK", "PLAY", "PAUSE", "NEXT_TRACK", "VOLUME_UP", "MUTE", "VOLUME_DOWN", "STOP", "SHUFFLE", "REPEAT"];
+    const first = ["PREV_TRACK", "PLAY_PAUSE", "NEXT_TRACK", "STOP", "MUTE", "POWER", "PRESET_1", "PRESET_2", "PRESET_3", "PRESET_4", "PRESET_5", "PRESET_6"];
     const byKey = new Map(state.keyCommands.map((cmd) => [cmd.key, cmd]));
-    const ordered = [...first.map((key) => byKey.get(key)).filter(Boolean), ...state.keyCommands.filter((cmd) => !first.includes(cmd.key))];
+    const ordered = first.map((key) => byKey.get(key)).filter(Boolean);
     const iconFor = (key, label) => ({ POWER: "⏻", SOURCE: "SRC", TV: "TV", AUX_INPUT: "AUX", BLUETOOTH: "BT", PLAY_PAUSE: "▶/Ⅱ", PREVIOUS: "⏮", PREV_TRACK: "⏮", SKIP_BACK: "⏪", NEXT: "⏭", NEXT_TRACK: "⏭", SKIP_FORWARD: "⏩", PLAY: "▶", PAUSE: "Ⅱ", STOP: "■", VOLUME_UP: "+", VOLUME_DOWN: "−", MUTE: "M", SHUFFLE: "S", REPEAT: "R" }[key] || (key.startsWith("PRESET_") ? key.replace("PRESET_", "") : label));
     const classFor = (key) => key === "POWER" ? "remote-power" : key === "PLAY_PAUSE" ? "remote-play-pause" : key.startsWith("PRESET_") ? "remote-preset" : key.includes("VOLUME") || key === "MUTE" ? "remote-volume" : "";
-    grid.innerHTML = ordered.map((cmd) => `<button class="command ${classFor(cmd.key)}" data-key-command="${escapeHtml(cmd.key)}" title="${escapeHtml(cmd.label)}" type="button"><span class="remote-icon">${escapeHtml(iconFor(cmd.key, cmd.label))}</span><small>${escapeHtml(cmd.label)}</small></button>`).join("");
+    const labels = { PREV_TRACK: uiCopy("Zurück", "Previous"), PLAY_PAUSE: uiCopy("Wiedergabe / Pause", "Play / pause"), NEXT_TRACK: uiCopy("Weiter", "Next"), STOP: uiCopy("Stopp", "Stop"), MUTE: uiCopy("Stumm", "Mute"), POWER: uiCopy("Ein / Standby", "On / standby") };
+    const render = (commands) => commands.map((cmd) => { const label = labels[cmd.key] || cmd.label; return `<button class="command ${classFor(cmd.key)}" data-key-command="${escapeHtml(cmd.key)}" title="${escapeHtml(label)}" type="button"><span class="remote-icon">${escapeHtml(iconFor(cmd.key, label))}</span><small>${escapeHtml(label)}</small></button>`; }).join("");
+    grid.innerHTML = render(ordered);
+    document.getElementById("key-extra-grid").innerHTML = render(state.keyCommands.filter((cmd) => !first.includes(cmd.key) && !["VOLUME_UP", "VOLUME_DOWN"].includes(cmd.key)));
+    document.querySelector("#key-extra-commands summary").textContent = uiCopy("Weitere Tasten", "More buttons");
+    document.getElementById("key-volume-slider").setAttribute("aria-label", uiCopy("Lautstärke", "Volume"));
+    document.querySelector('#view-controls [data-key-command="VOLUME_DOWN"]').setAttribute("aria-label", uiCopy("Leiser", "Volume down"));
+    document.querySelector('#view-controls [data-key-command="VOLUME_UP"]').setAttribute("aria-label", uiCopy("Lauter", "Volume up"));
   }
 }
 
@@ -2844,6 +2553,14 @@ function renderRegistry() {
 }
 
 let serviceStatusRefreshRunning = false;
+let pageLeaving = false;
+window.addEventListener("pagehide", () => { pageLeaving = true; });
+window.addEventListener("pageshow", () => { pageLeaving = false; });
+function reportPageRequestFailure(error, de, en) {
+  // Reload/navigation cancels outstanding reads. Handle the rejection without
+  // displaying an error on the departing page or replaying any write.
+  if (!pageLeaving) showApiError(error, uiCopy(de, en));
+}
 async function refreshServiceStatus() {
   if (serviceStatusRefreshRunning) return;
   serviceStatusRefreshRunning = true;
@@ -2878,6 +2595,10 @@ async function refreshServiceStatus() {
       state.requests = [];
     }
     renderRequests();
+  } catch (error) {
+    setStatus("cloud-state", false, uiCopy("nicht bestätigt", "not confirmed"), "warn");
+    setStatus("debug-state", false, uiCopy("nicht bestätigt", "not confirmed"), "warn");
+    throw error;
   } finally {
     serviceStatusRefreshRunning = false;
   }
@@ -2886,6 +2607,7 @@ async function refreshServiceStatus() {
 async function loadAll() {
   const seq = ++state.refreshSeq;
   const stillCurrent = () => seq === state.refreshSeq;
+  try { state.systemSettings = await getJson("/api/system/settings"); } catch { state.systemSettings = null; }
   try {
     const health = await getJson("/api/health");
     state.applicationVersion = typeof health.version === "string" ? health.version : "";
@@ -2894,6 +2616,7 @@ async function loadAll() {
     state.applicationVersion = "";
     setStatus("web-state", false);
   }
+  try { state.publication = await getJson("/api/version"); } catch { state.publication = null; }
   updateServerIdentity();
   renderAboutContent();
   try { await detectSetupWizardServer(); } catch { /* browser-host fallback remains available */ }
@@ -2936,7 +2659,6 @@ async function loadAll() {
   renderReferenceSetups();
   try { state.stereoResearch = await getJson("/api/stereo-pairing/research"); } catch { state.stereoResearch = null; }
   renderStereoResearch();
-  try { state.systemSettings = await getJson("/api/system/settings"); } catch { state.systemSettings = null; }
   try { state.offlineStatus = await getJson("/api/offline/status"); } catch { state.offlineStatus = null; }
   try { state.featureStatus = await getJson("/api/features/status"); } catch { state.featureStatus = null; }
   renderSystemSettings();
@@ -3081,18 +2803,29 @@ document.addEventListener("click", (event) => {
 });
 
 document.querySelectorAll(".advanced-nav").forEach((details) => {
+  const menu = details.querySelector(":scope > div");
+  if (menu && typeof menu.showPopover === "function") menu.setAttribute("popover", "manual");
   details.addEventListener("toggle", () => {
     syncBodyScrollLock();
   });
 });
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeNavigationMenu(true);
+});
+document.addEventListener("pointerdown", (event) => {
+  if (!event.target.closest?.(".advanced-nav")) closeNavigationMenu();
+});
+window.addEventListener("resize", syncNavigationMenu);
+window.visualViewport?.addEventListener("resize", syncNavigationMenu);
+window.visualViewport?.addEventListener("scroll", syncNavigationMenu);
 
 document.getElementById("device-form").addEventListener("submit", saveDeviceForm);
 document.getElementById("setup-device-form").addEventListener("submit", saveDeviceForm);
 document.getElementById("preset-device-select").addEventListener("change", loadPresetsForSelectedDevice);
-document.getElementById("key-device-select")?.addEventListener("change", syncSafeStartControl);
+document.getElementById("key-device-select")?.addEventListener("change", () => { syncSafeStartControl(); controlsIdle(); runControls(); });
 document.getElementById("key-safe-volume-enabled")?.addEventListener("change", (event) => {
   const deviceId = document.getElementById("key-device-select")?.value || "";
-  localStorage.setItem(safeStartStorageKey(deviceId), event.currentTarget.checked ? "true" : "false");
+  try { localStorage.setItem(safeStartStorageKey(deviceId), event.currentTarget.checked ? "true" : "false"); } catch { /* Storage may be unavailable. */ }
   const field = document.getElementById("key-safe-volume-field");
   if (field) field.hidden = !event.currentTarget.checked;
 });
@@ -3178,19 +2911,27 @@ document.getElementById("scan-results")?.addEventListener("click", (event) => {
 
 document.getElementById("system-settings-form")?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
+  const formElement = event.currentTarget;
+  const form = new FormData(formElement);
   const payload = Object.fromEntries(form.entries());
   for (const name of ["lab_mode", "guided_hints", "show_startup_warning", "ip_write_guard", "update_check_enabled"]) {
     if (event.currentTarget.elements[name]) payload[name] = event.currentTarget.elements[name].checked ? "true" : "false";
   }
-  const result = await postJson("/api/system/settings", payload);
-  state.systemSettings = result;
-  try { state.offlineStatus = await getJson("/api/offline/status"); } catch { state.offlineStatus = null; }
-  renderSystemSettings();
-  applyUiPreferences();
-  syncSetupControls();
-  document.documentElement.lang = result.web_language || "en";
-  document.getElementById("system-settings-output").textContent = JSON.stringify({ ...result, ui_note: i18nT("language_saved_note") }, null, 2);
+  setFormBusy(formElement, true, uiCopy("Wird gespeichert…", "Saving…"));
+  try {
+    const result = await postJson("/api/system/settings", payload);
+    state.systemSettings = result;
+    try { state.offlineStatus = await getJson("/api/offline/status"); } catch { state.offlineStatus = null; }
+    renderSystemSettings();
+    applyUiPreferences();
+    syncSetupControls();
+    document.documentElement.lang = result.web_language || "en";
+    document.getElementById("system-settings-output").textContent = JSON.stringify({ ...result, ui_note: i18nT("language_saved_note") }, null, 2);
+  } catch (error) {
+    reportPageRequestFailure(error, "Speichern nicht bestätigt. Einstellungen erneut lesen, bevor du es noch einmal versuchst.", "Save not confirmed. Read the settings again before trying again.");
+  } finally {
+    setFormBusy(formElement, false);
+  }
 });
 
 document.getElementById("ui-mode-switch")?.addEventListener("change", async (event) => {
@@ -4375,116 +4116,117 @@ document.addEventListener("click", (event) => {
 });
 
 
-async function sendKeyCommand(key, button = null) {
-  const deviceId = document.getElementById("key-device-select")?.value;
-  const device = state.devices.find((item) => item.device_id === deviceId);
+const controlsState = { busy: false, volume: null, deviceId: "" };
+
+function controlsIdle() {
+  controlsState.volume = null;
+  controlsState.deviceId = "";
+  document.getElementById("key-volume-label").textContent = "—";
+  document.getElementById("key-volume-slider").disabled = true;
+  document.getElementById("key-now-playing").textContent = "";
+}
+
+async function readControlsState(deviceId) {
+  const value = await getJson(`/api/devices/${encodeURIComponent(deviceId)}/remote-state`);
+  if (value.verified !== true || value.device_id !== deviceId || !Number.isInteger(value.volume) || value.volume < 0 || value.volume > 100) throw new Error("invalid_radio_readback");
+  if (document.getElementById("key-device-select").value !== deviceId) return null;
+  controlsState.deviceId = deviceId;
+  controlsState.volume = value.volume;
+  document.getElementById("key-volume-label").textContent = `${value.volume}%`;
+  document.getElementById("key-volume-slider").value = value.volume;
+  const now = value.now_playing || {};
+  const labels = { PLAY_STATE: uiCopy("Wiedergabe", "Playing"), PAUSE_STATE: uiCopy("Pausiert", "Paused"),
+    STOP_STATE: uiCopy("Gestoppt", "Stopped"), BUFFERING_STATE: uiCopy("Lädt", "Buffering") };
+  const status = value.source === "STANDBY" ? "Standby" : labels[value.play_status] || uiCopy("Zustand unbekannt", "State unknown");
+  document.getElementById("key-now-playing").textContent = [status, now.stationName || now.itemName, now.artist, now.track].filter(Boolean).join(" · ");
+  return value;
+}
+
+async function runControls(action) {
+  if (controlsState.busy) return;
+  const deviceId = document.getElementById("key-device-select").value;
+  if (!deviceId || state.devices.find(item => item.device_id === deviceId)?.protected) return;
+  controlsState.busy = true;
+  const panel = document.getElementById("view-controls");
+  panel.querySelectorAll("button,input,select").forEach(node => { node.disabled = true; });
   const status = document.getElementById("key-command-status");
-  if (!deviceId || !key) return;
-  let confirmation = "";
-  if (key === "POWER") {
-    if (!window.confirm(`Power/Standby für ${text(device?.name, deviceId)} senden?`)) return;
-    confirmation = "YES";
-  }
-  if (button) button.disabled = true;
-  status.textContent = `${key} wird an ${text(device?.name, deviceId)} gesendet…`;
+  status.textContent = uiCopy("Bitte warten …", "Please wait …");
   status.className = "friendly-status is-working";
+  let sent = false;
   try {
-    const safeVolume = selectedSafeStartVolume();
-    const payload = { key, confirmation, trigger: "webui" };
-    if (safeVolume !== null) payload.safe_volume = safeVolume;
-    const result = await postJson(`/api/devices/${encodeURIComponent(deviceId)}/key`, payload);
-    document.getElementById("key-command-output").textContent = JSON.stringify(result, null, 2);
-    status.textContent = `${text(device?.name, "Radio")} hat den Befehl ${key} angenommen.`;
+    const result = action ? await action(deviceId) : null;
+    sent = Boolean(action);
+    const readback = await readControlsState(deviceId);
+    if (!readback) return;
+    document.getElementById("key-command-output").textContent = JSON.stringify({ result, readback }, null, 2);
+    status.textContent = sent ? uiCopy("Befehl gesendet; aktueller Zustand zurückgelesen.", "Command sent; current state read back.")
+      : uiCopy("Aktueller Zustand zurückgelesen.", "Current state read back.");
     status.className = "friendly-status is-ok";
-    if (key.startsWith("PRESET_")) {
-      await postJson("/api/play-history/start", { device_id: deviceId, station_name: key.replace("_", " "), trigger: key.toLowerCase(), source: "PRESET" });
-    } else if (["STOP", "PAUSE", "PLAY_PAUSE"].includes(key)) {
-      await postJson("/api/play-history/event", { device_id: deviceId, trigger: "stop", station_name: key });
-    }
-    state.playHistory = await getJson("/api/play-history");
-    state.playStats = await getJson("/api/stats/playback");
-    renderPlayback();
   } catch (error) {
+    controlsIdle();
     document.getElementById("key-command-output").textContent = String(error);
-    const stillPlaying = ["STOP", "PAUSE"].includes(key)
-      && /spielt laut Readback aber weiter|did not confirm/.test(error?.message || "");
-    status.textContent = stillPlaying
-      ? `${text(device?.name, "Radio")} spielt laut Readback weiter. Kein falscher ${key}-Erfolg; Power/Standby ist eine getrennte Aktion.`
-      : `${text(device?.name, "Radio")} konnte nicht gesteuert werden.`;
+    status.textContent = sent ? uiCopy("Befehl gesendet, Rücklesen fehlgeschlagen. Nicht automatisch erneut senden.", "Command sent, readback failed. Do not retry automatically.")
+      : uiCopy("Aktion nicht bestätigt. Details aufklappen und Zustand erneut lesen.", "Action not confirmed. Expand details and read the state again.");
     status.className = "friendly-status is-error";
-    showApiError(error, `${key} wurde nicht bestätigt`);
   } finally {
-    if (button) button.disabled = false;
-    if (button && ["VOLUME_UP", "VOLUME_DOWN"].includes(key)) button.blur();
+    controlsState.busy = false;
+    panel.querySelectorAll("button,input,select").forEach(node => { node.disabled = false; });
+    document.getElementById("key-volume-slider").disabled = controlsState.volume === null;
   }
 }
 
-document.getElementById("key-command-form")?.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  await sendKeyCommand(form.get("key"), event.submitter);
-});
-
-const volumeHold = { timer: null, activeKey: "", busy: false, suppressClick: false };
-
-function isTouchVolumeEvent(event) {
-  return event.pointerType === "touch" || event.pointerType === "pen" || window.matchMedia("(hover: none)").matches;
-}
-
-function stopVolumeHold() {
-  if (volumeHold.timer) window.clearInterval(volumeHold.timer);
-  volumeHold.timer = null;
-  volumeHold.activeKey = "";
-  volumeHold.busy = false;
-  document.querySelectorAll(".remote-volume.is-holding").forEach((button) => button.classList.remove("is-holding"));
-}
-
-async function sendHeldVolume(key, button) {
-  if (volumeHold.busy) return;
-  volumeHold.busy = true;
-  try {
-    await sendKeyCommand(key, button);
-  } finally {
-    volumeHold.busy = false;
-  }
-}
-
-document.getElementById("key-command-grid")?.addEventListener("pointerdown", async (event) => {
-  const button = event.target.closest("[data-key-command]");
-  if (!button || !["VOLUME_UP", "VOLUME_DOWN"].includes(button.dataset.keyCommand)) return;
-  event.preventDefault();
-  stopVolumeHold();
-  const key = button.dataset.keyCommand;
-  volumeHold.activeKey = key;
-  button.classList.add("is-holding");
-  await sendHeldVolume(key, button);
-  if (isTouchVolumeEvent(event)) {
-    volumeHold.suppressClick = true;
-    stopVolumeHold();
-    return;
-  }
-  volumeHold.timer = window.setInterval(() => sendHeldVolume(key, button), 320);
-});
-
-["pointerup", "pointerleave", "pointercancel", "lostpointercapture", "touchend", "touchcancel"].forEach((name) => {
-  document.getElementById("key-command-grid")?.addEventListener(name, () => {
-    if (volumeHold.activeKey) volumeHold.suppressClick = true;
-    stopVolumeHold();
+async function sendKeyCommand(key) {
+  if (!key || controlsState.busy) return;
+  const deviceId = document.getElementById("key-device-select").value;
+  const device = state.devices.find(item => item.device_id === deviceId);
+  if (key === "POWER" && !window.confirm(uiCopy("Ein / Standby senden: ", "Send on / standby: ") + text(device?.name, deviceId) + "?")) return;
+  await runControls(async (target) => {
+    const payload = {key, trigger: "webui"};
+    if (key === "POWER") payload.confirmation = "YES";
+    const safe = selectedSafeStartVolume();
+    if (safe !== null) payload.safe_volume = safe;
+    return postJson(`/api/devices/${encodeURIComponent(target)}/key`, payload);
   });
-});
+  // The backend's observed playback lifecycle owns session history. In
+  // particular PLAY_PAUSE is not proof that a session was stopped.
+}
 
-["visibilitychange", "pagehide"].forEach((name) => {
-  window.addEventListener(name, stopVolumeHold);
+document.getElementById("key-command-form")?.addEventListener("submit", event => event.preventDefault());
+document.getElementById("view-devices")?.addEventListener("click", async event => {
+  const button = event.target.closest("[data-check-readiness]");
+  if (!button || button.disabled) return;
+  button.disabled = true;
+  const message = button.closest("details").querySelector("[data-readiness-message]");
+  message.textContent = uiCopy("Identität und Status werden gelesen …", "Reading identity and status …");
+  try {
+    const value = await postJson(`/api/devices/${encodeURIComponent(button.dataset.checkReadiness)}/diagnostics/readiness`, {confirm_read_only: true});
+    state.deviceStatuses = state.deviceStatuses.filter(item => item.device_id !== value.device_id).concat(value);
+    renderDevices();
+    document.querySelectorAll("[data-check-readiness]").forEach(node => { if (node.dataset.checkReadiness === value.device_id) node.closest("details").open = true; });
+  } catch {
+    message.textContent = uiCopy("Prüfung nicht bestätigt. Es wurde nichts aktiviert oder geändert.", "Check not confirmed. Nothing was enabled or changed.");
+  } finally { button.disabled = false; }
 });
-
-document.getElementById("key-command-grid")?.addEventListener("click", async (event) => {
+document.getElementById("view-controls")?.addEventListener("click", event => {
   const button = event.target.closest("[data-key-command]");
-  if (!button) return;
-  if (volumeHold.suppressClick && ["VOLUME_UP", "VOLUME_DOWN"].includes(button.dataset.keyCommand)) {
-    volumeHold.suppressClick = false;
-    return;
-  }
-  await sendKeyCommand(button.dataset.keyCommand, button);
+  if (button) sendKeyCommand(button.dataset.keyCommand);
+});
+document.getElementById("key-volume-slider")?.addEventListener("change", event => {
+  const value = Number(event.currentTarget.value);
+  if (controlsState.volume === null || !Number.isInteger(value) || value < 0 || value > 100) return;
+  runControls(target => postJson(`/api/devices/${encodeURIComponent(target)}/settings/volume`, {value, dry_run: false}));
+});
+document.getElementById("reload-controls")?.addEventListener("click", () => runControls());
+document.getElementById("controls-multiroom")?.addEventListener("click", () => {
+  const selected = document.getElementById("key-device-select").value;
+  if (!selected || controlsState.busy) return;
+  document.getElementById("multiroom-master").value = selected;
+  document.querySelector('#multiroom-form input[name="preserve_volumes"]').checked = true;
+  document.getElementById("multiroom-start-volumes-enabled").checked = false;
+  state.multiroomPendingPayload = null;
+  document.querySelectorAll('#multiroom-members input[type="checkbox"]').forEach(node => { node.checked = false; });
+  renderMultiroomMembers();
+  document.querySelector('[data-view="multiroom"]').click();
 });
 
 document.getElementById("display-settings-form")?.addEventListener("submit", async (event) => {
@@ -4569,20 +4311,34 @@ document.addEventListener("click", async (event) => {
   const deviceId = selectedDeviceId();
   try {
     if (id === "preset-checker-refresh") {
-      document.getElementById("preset-checker-message").textContent = "Radio, Provider und Streams werden read-only geprüft …";
+      document.getElementById("preset-checker-message").textContent = uiCopy("Konfiguration und Erreichbarkeit werden geprüft …", "Checking configuration and reachability …");
       await loadPresetsForSelectedDevice(true);
-      document.getElementById("preset-checker-message").textContent = "Prüfung abgeschlossen. UNKNOWN bedeutet: Es fehlt belastbare Evidence – nicht automatisch ein Fehler.";
+      document.getElementById("preset-checker-message").textContent = uiCopy("Prüfung beendet. Konfiguration und Erreichbarkeit stehen unten; Ton und physische Presettasten wurden nicht getestet.", "Check finished. Configuration and reachability results are below; audio and physical preset buttons were not tested.");
     } else if (id === "update-check") {
+      if (button.disabled) return;
       const output = document.getElementById("update-status");
+      const releaseLink = document.getElementById("official-release-link");
+      releaseLink.hidden = true;
+      releaseLink.removeAttribute("href");
       output.textContent = i18nT("loading");
-      state.systemSettings = await postJson("/api/system/settings", {
-        update_check_enabled: document.getElementById("update-check-enabled")?.checked ? "true" : "false",
-        update_manifest_url: document.getElementById("update-manifest-url")?.value || "",
-        update_repo_url: document.getElementById("update-repo-url")?.value || "",
-        update_channel: document.getElementById("update-channel")?.value || "manual",
-      });
-      const result = await postJson("/api/update/check", {});
-      output.textContent = `${result.message}${result.remote_version ? ` (${result.remote_version})` : ""}`;
+      button.disabled = true;
+      try {
+        const result = await postJson("/api/update/official/check", {});
+        window.dispatchEvent(new CustomEvent("basswiesn:official-release", { detail: result }));
+        const messages = {
+          update_available: uiCopy("Eine neuere Version ist verfügbar.", "A newer version is available."),
+          up_to_date: uiCopy("Keine neuere stabile Version verfügbar.", "No newer stable version is available."),
+          local_version_unknown: uiCopy("Die lokale Entwicklungsversion ist nicht vergleichbar.", "The local development version cannot be compared."),
+          blocked_by_offline_mode: uiCopy("Die Prüfung ist im strikten Offline-Modus gesperrt.", "The check is blocked in strict offline mode."),
+          rate_limited: uiCopy("GitHub begrenzt gerade die Anfragen. Bitte später erneut versuchen.", "GitHub is rate-limiting requests. Please try again later.")
+        };
+        output.textContent = `${messages[result.status] || uiCopy("Updateprüfung fehlgeschlagen. Bitte später erneut versuchen.", "Update check failed. Please try again later.")}${result.remote_version ? ` (${result.remote_version})` : ""}`;
+        if (/^https:\/\/github\.com\/Zimbo88\/BASSWIESN\/releases\/tag\/v\d+\.\d+\.\d+$/.test(result.release_url || "")) {
+          releaseLink.href = result.release_url;
+          releaseLink.textContent = uiCopy("Veröffentlichung auf GitHub öffnen", "Open release on GitHub");
+          releaseLink.hidden = false;
+        }
+      } finally { button.disabled = false; }
     } else if (id === "provider-status-load") {
       const selected = document.getElementById("telemetry-device-select")?.value;
       if (!selected) return;
@@ -4749,7 +4505,7 @@ async function refreshAll(event) {
   }
 }
 
-["refresh-all", "reload-devices", "reload-stations", "reload-preset-data", "reload-debug", "setup-refresh", "reload-multiroom", "reload-device-settings", "reload-schedules", "reload-telemetry", "reload-system-settings", "reload-media", "reload-backup", "reload-controls", "reload-display", "reload-health", "reload-features"].forEach((id) => {
+["refresh-all", "reload-devices", "reload-stations", "reload-preset-data", "reload-debug", "setup-refresh", "reload-multiroom", "reload-device-settings", "reload-schedules", "reload-telemetry", "reload-system-settings", "reload-media", "reload-backup", "reload-display", "reload-health", "reload-features"].forEach((id) => {
   const button = document.getElementById(id);
   if (button) button.addEventListener("click", refreshAll);
 });
@@ -5063,7 +4819,7 @@ const pageHelp = {
   schedules: ["Wecker Timer", "Speichert zeitgesteuerte Sender-, Preset-, Lautstärke- und Multiroom-Aktionen.", ["Zeit wählen", "Radio und Sender oder Preset wählen", "Wecker Timer speichern"], "Prüfe Start, Ende und Wochentage besonders sorgfältig."],
   "device-settings": ["Radio-Einstellungen", "Ändert unterstützte Einstellungen wie Bass, Sprache, Uhr und Energiesparen.", ["Radio wählen", "Wert einstellen", "Am Radio bestätigen lassen"], "Angebotene Werte werden aus Firmwarewissen und Gerätefähigkeiten begrenzt."],
   display: ["Display", "Steuert normale Wiedergabemetadaten und zeigt getrennt, welche Uhr- und WLAN-Daten verfügbar sind.", ["Radio wählen", "Anzeigeart wählen", "Speichern oder Sender starten"], "Künstlicher Text wird nicht als falscher Sendername an das Display geschickt."],
-  media: ["Musikbibliothek", "Bereitet DLNA-, NAS- und lokale Medienquellen für SoundTouch vor.", ["Radio und Server wählen", "Ordner oder Titel-ID ermitteln", "Quelle auswählen und PlaybackRequest senden"], "Das Radio benötigt die Server-UUID, die Source (z. B. STORED_MUSIC/UPNP), eine Container-ID für Ordner/Album und eine Item-ID für den Titel. Der bestätigte Ablauf ist /listMediaServers → /selectLocalSource → /navigate → /playbackRequest."],
+  media: ["Musikbibliothek", "Ordner eines freigegebenen Medienservers durchsuchen und MP3-/AAC-Titel zur Senderliste hinzufügen.", ["Medienserver ausdrücklich verbinden", "Ordner öffnen und Titel übernehmen", "In der Senderliste ein Radio auswählen und starten"], "Importieren startet kein Radio und verändert keine Presets. Keine automatische Netzwerksuche. Die technischen Radio-Proben sind im LAB-Bereich."],
   "system-settings": ["BASSWIESN", "Legt Sprache, Zeitzone und allgemeine Standardwerte dieser Oberfläche fest.", ["Standard wählen", "Speichern", "Oberfläche aktualisieren"], "Diese Einstellungen sind von den Einstellungen eines einzelnen Radios getrennt."],
   backup: ["Sicherung", "Sichert Radiozustände und bereitet einen kontrollierten Wiederherstellungsweg vor.", ["Radio wählen", "Sicherung erstellen", "Vor Restore vergleichen"], "Vollständige Restores nur auf dasselbe Gerät und dieselbe Firmware anwenden."],
   config: ["Technik", "Zeigt die von BASSWIESN verwendeten lokalen Cloud-, Registry- und Gerätepfade.", ["Bereich wählen", "Status lesen", "Nur bestätigte Änderungen ausführen"], "Dieser Bereich ist für Diagnose; normale Bedienung findet auf den Hauptseiten statt."],
@@ -5231,7 +4987,7 @@ loadAll().then(() => {
   maybeShowFirstRunWarning();
   refreshLocalTestOverview().catch(() => {});
   refreshMediaLibraryPanel().catch(() => {});
-});
+}).catch(error => reportPageRequestFailure(error, "Oberfläche konnte nicht vollständig geladen werden.", "The interface could not be loaded completely."));
 window.setInterval(() => {
-  if (!document.hidden) refreshServiceStatus();
+  if (!document.hidden) refreshServiceStatus().catch(error => reportPageRequestFailure(error, "Dienststatus nicht bestätigt.", "Service status not confirmed."));
 }, 30_000);

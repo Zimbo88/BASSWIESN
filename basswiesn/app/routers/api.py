@@ -58,6 +58,8 @@ from basswiesn.app.services.network_security import (
 )
 from basswiesn.app.services.protected_devices import is_device_access_protected, is_protected_ip, reject_protected_device_access, reject_protected_write_ip
 from basswiesn.app.services.feature_status import build_feature_status
+from basswiesn.app.services.release_publication import publication_info, refresh_publication
+from basswiesn.app.services.device_readiness import cached_readiness, probe_readiness
 from basswiesn.app.services.action_journal import record_transport_attempt
 from basswiesn.app.services.support_export import SupportBundleTooLarge, build_support_bundle as build_deterministic_support_bundle, redact_payload, redact_text, tail_text
 from basswiesn.app.services.filesystem_contract import filesystem_status
@@ -92,10 +94,18 @@ async def health() -> dict[str, str | bool]:
 
 
 @router.get("/version", response_model=VersionResponse)
-async def api_version() -> dict[str, str]:
+async def api_version(db: Session = Depends(get_db)) -> dict:
     settings = get_settings()
     build_type = "Release Candidate" if "-rc" in settings.version else "Stable Release"
-    return {"version": settings.version, "build_type": build_type}
+    return {"version": settings.version, "build_type": build_type,
+            **publication_info(db, settings.version)}
+
+
+@router.post("/version/publication-refresh")
+async def version_publication_refresh(db: Session = Depends(get_db)) -> dict:
+    """Explicit official-publication lookup; no installation or radio action."""
+    version = get_settings().version
+    return {"version": version, **await refresh_publication(db, version)}
 
 
 @router.get("/features/status")
@@ -153,6 +163,7 @@ async def readiness(db: Session = Depends(get_db)) -> dict[str, str | bool | dic
         "ready": ready,
         "status": readiness_status,
         "version": settings.version,
+        "update_validation_mode": settings.update_validation_mode,
         "checks": {
             "database": "ok" if database_ok else "failed",
             "storage": storage,
@@ -164,26 +175,16 @@ async def readiness(db: Session = Depends(get_db)) -> dict[str, str | bool | dic
 
 @router.get("/devices/status-badges")
 async def device_status_badges(db: Session = Depends(get_db)) -> list[dict]:
-    """Return passive UI placeholders without opening radio transports.
+    """DB-only: opening the dashboard never contacts a radio."""
+    return [cached_readiness(db, device.device_id) for device in db.query(Device).order_by(Device.name).all()]
 
-    SSH, marker and hosts-file checks are invasive diagnostics and belong to
-    explicit LAB/setup actions.  A normal dashboard load must remain DB-only,
-    especially when a protected device is present.
-    """
 
-    return [
-        {
-            "device_id": device.device_id,
-            "ssh": "unknown",
-            "persistent_ssh": None,
-            "remote_services": None,
-            "factory_fix": None,
-            "host_redirect": None,
-            "observed_at": None,
-            "provenance": "NOT_PROBED",
-        }
-        for device in db.query(Device).order_by(Device.name).all()
-    ]
+@router.post("/devices/{device_id}/diagnostics/readiness")
+async def device_readiness_probe(device_id: str, payload: dict, db: Session = Depends(get_db)) -> dict:
+    if payload.get("confirm_read_only") is not True:
+        raise HTTPException(status_code=400, detail={"error": "explicit_read_only_confirmation_required"})
+    return await probe_readiness(_device_or_404(db, device_id), db,
+                                client_factory=SoundTouchClient, ssh_runner=_run_ssh_readonly_command)
 
 
 @router.get("/devices/ui-capabilities")
@@ -1951,6 +1952,7 @@ async def record_play_history_event(payload: dict, db: Session = Depends(get_db)
 
 @router.get("/stats/playback")
 async def playback_stats(db: Session = Depends(get_db)) -> dict:
+    from basswiesn.app.services.listening_stats import listening_summary, observed_interval, overlap_seconds
     all_rows = db.query(PlayHistory).order_by(PlayHistory.started_at.desc()).all()
     rows = [row for row in all_rows if _is_user_playback_row(row)]
     devices = {row.device_id: row for row in db.query(Device).all()}
@@ -1971,35 +1973,34 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
     today_stats = {"starts": 0, "stops": 0, "errors": 0}
     aggregate_seconds = {"today": 0, "week": 0, "month": 0, "year": 0, "decade": 0, "lifetime": 0}
     timer = {"plays": 0, "successes": 0, "seconds": 0}
+    station_names = {}
+    tolerance = get_settings().playback_keepalive_interval_seconds + 60
+    period_boundaries = {key: datetime.combine(value, datetime.min.time(), tzinfo=UTC) for key, value in
+                         (("today", today), ("week", week_start), ("month", month_start), ("year", year_start), ("decade", decade_start))}
     for row in rows:
-        seconds = _duration_seconds(row)
+        interval_start, interval_end = observed_interval(row, now=now, tolerance=tolerance)
+        seconds = max(0, int((interval_end - interval_start).total_seconds()))
         started_at = row.started_at or utc_now()
         started_date = started_at.date()
         device_key = row.device_id or "unknown"
         identity = identity_for_history(db, row)
         station_key = identity.station_display_name
+        station_names[row.id] = station_key
         trigger_type = getattr(row, "trigger_type", "") or _trigger_type(row.trigger)
         success = bool(getattr(row, "success", 1))
         year_bucket = yearly.setdefault(started_at.year, {"year": started_at.year, "plays": 0, "seconds": 0})
         year_bucket["plays"] += 1
         year_bucket["seconds"] += seconds
         aggregate_seconds["lifetime"] += seconds
+        for period, boundary in period_boundaries.items():
+            aggregate_seconds[period] += overlap_seconds(interval_start, interval_end, boundary)
         if started_date == today:
-            aggregate_seconds["today"] += seconds
             if row.trigger == "stop":
                 today_stats["stops"] += 1
             elif not success or "failed" in (row.trigger or "") or "error" in (row.trigger or ""):
                 today_stats["errors"] += 1
             else:
                 today_stats["starts"] += 1
-        if started_date >= week_start:
-            aggregate_seconds["week"] += seconds
-        if started_date >= month_start:
-            aggregate_seconds["month"] += seconds
-        if started_date >= year_start:
-            aggregate_seconds["year"] += seconds
-        if started_date >= decade_start:
-            aggregate_seconds["decade"] += seconds
         current_device = devices.get(device_key)
         current_name = current_device.name if current_device else (row.device_name or "")
         device_bucket = by_device.setdefault(device_key, {"device_id": device_key, "device_name": current_name, "current_device_name": current_name, "device_name_snapshot": row.device_name or "", "device_ip": (current_device.ip_address if current_device else "") or getattr(row, "device_ip", "") or "", "plays": 0, "seconds": 0, "first_usage": "", "last_played_at": "", "last_source": "", "failures": 0, "volume_last": None})
@@ -2090,6 +2091,8 @@ async def playback_stats(db: Session = Depends(get_db)) -> dict:
             current_uptime = 0
     total_runtime = int(server_rows.get("server:total_runtime_seconds") or 0) + current_uptime
     return {
+        "listening": listening_summary(rows, now=now, tolerance=tolerance,
+                                       device_names={key: device.name for key, device in devices.items()}, station_names=station_names),
         "today": today_stats,
         "lifetime": {"total_plays": len(rows), "total_seconds": aggregate_seconds["lifetime"], "internal_events_excluded": len(all_rows) - len(rows)},
         "aggregate": {f"{key}_hours": round(value / 3600, 2) for key, value in aggregate_seconds.items()},

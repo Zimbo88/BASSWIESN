@@ -10,6 +10,7 @@ from basswiesn.app.routers import multiroom
 from basswiesn.app.routers import stations_presets
 from basswiesn.app.routers import media
 from basswiesn.app.services import offline_preflight
+from basswiesn.app.services import feature_status
 from basswiesn.app.services.logo_validation import validate_logo_reference
 
 
@@ -42,6 +43,24 @@ def test_feature_documentation_route_is_whitelisted():
     assert known.status_code == 200
     assert "Production path" in known.text
     assert unknown.status_code in {404, 400}
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_dlna_card_separates_explicit_backend_from_hardware_proof(monkeypatch, enabled):
+    settings = feature_status.get_settings().model_copy(update={"experimental_dlna": enabled})
+    monkeypatch.setattr(feature_status, "get_settings", lambda: settings)
+    with app_db.SessionLocal() as db:
+        row = next(item for item in feature_status.build_feature_status(db) if item["id"] == "dlna")
+    assert row["enabled"] is enabled
+    assert row["available"] is True
+    assert row["configured"] is False
+    assert row["backend_present"] is True
+    assert row["safe_test_available"] is False
+    assert row["restart_required"] is False
+    assert row["settings_target"]["view"] == "media"
+    assert row["blockers"]
+    assert row["hardware_status"] == "offen"
+    assert "MP3-/AAC" in row["description"]
 
 
 def test_offline_preflight_classifies_without_network_request(monkeypatch):

@@ -1,5 +1,37 @@
 # Changelog
 
+## 3.0.0 - 2026-09-26
+
+### Everyday use
+
+- Make the mobile More menu fit the screen and keep it out of confirmation dialogs.
+- Add light, dark and system appearance, shared with the compact remote.
+- Put volume, playback and presets first; read back the radio state after each command.
+- Make display settings and the compact remote easier to find. Keep technical output collapsed and internal test tools in LAB.
+- Explain whether cached station data contains artist/title, is stale or has not been observed. Opening this status does not contact the radio or the stream.
+- Add Korean, Thai and Traditional Chinese core interface text and safety prompts. Recognize device-language aliases without changing the radio language; clearly identify partial translations and English fallback.
+- Fix the preset checker's source parsing and separate configuration checks from real listening tests.
+- Respect a saved audio-safety lock when starting a station. Explain how to run the safety check before retrying; previews remain available without contacting the radio.
+- Let diagnostic timeline entries reveal stored, sanitized details without probing a radio.
+- Group estimated listening time by period, radio and station; correctly split sessions at midnight.
+- Add an explicit read-only device check. Expired observations become unknown; marker checks do not claim verified startup or routing.
+- Replace the technical device-policy line with request/retry status and the last observed response. Keep protocol details collapsed in LAB; permitted requests do not mean confirmed connectivity.
+- Check for an official GitHub update in Settings. Experimental installation is LAB-only, with a separate administrator code over HTTPS after explicit host-service enrollment.
+- Back up application data before switching versions and restore the previous version with its matching data if startup fails. A browser disconnect reads the saved job status instead of starting another installation.
+- Add installer permission checks and isolated tests for the update service, backups and rollback. Production updater acceptance remains open; ordinary installation does not enroll the privileged service.
+- In LAB, browse a selected DLNA media server and add MP3/AAC tracks to Stations without changing presets. The bounded relay is tested with synthetic media on an isolated Pi container; radio-audio acceptance is still separate.
+- Accept valid DLNA folders when a server does not report the total number of entries. Independent ReadyMedia browsing, track metadata and audio relay checks passed with synthetic test media.
+- Include the author's unchanged German statement, an English translation and the real publication date when known.
+- Keep the unfinished AirPlay 2 bridge disabled. There is no production AP2 receiver, automatic network-address allocation or claimed Apple multi-speaker support in this release.
+
+### Release boundary
+
+The stable core is released independently of the unfinished LAB work. LAB does
+not bypass identity checks, protected targets, backup/readback requirements or
+administrator authorization. DLNA audio and the production updater remain
+experimental; AirPlay receiver integration remains disabled. No new firmware
+patch or claimed fix for unexplained receiver freezes is included.
+
 ## 2.6.5 - 2026-09-19
 
 ### Display and station metadata

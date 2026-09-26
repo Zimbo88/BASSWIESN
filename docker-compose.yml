@@ -15,6 +15,12 @@ services:
     volumes:
       - ./data:/app/data
       - ./data/secrets/setup-rebuild:/app/secrets/setup-rebuild:ro
+      # Disabled by default. Administrator onboarding sets the fixed host socket
+      # directory; never mount docker.sock or the helper's private credentials.
+      - type: bind
+        source: ${BASSWIESN_UPDATE_CONTROL_DIR:-./data/update-disabled}
+        target: /run/basswiesn-update
+        read_only: true
     init: true
     read_only: true
     tmpfs:

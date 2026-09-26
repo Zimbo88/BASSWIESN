@@ -8,7 +8,7 @@ from urllib.parse import quote, unquote, urlparse
 from sqlalchemy.orm import Session
 
 from basswiesn.app.config import get_settings, is_safe_radio_host
-from basswiesn.app.models import Setting
+from basswiesn.app.models import Setting, Station
 from basswiesn.app.services.stream_compat import analyze_stream_url
 
 
@@ -29,6 +29,22 @@ class StationDescriptor:
     stream_format: str = ""
     stream_mime: str = ""
     compatibility_warning: str = ""
+
+
+def station_by_contract_key(db: Session, station_id: str) -> Station | None:
+    """Resolve stored identity without fetching a descriptor or probing a stream."""
+    station = db.query(Station).filter(Station.provider_station_id == str(station_id)).one_or_none()
+    if station is None and str(station_id).isdigit():
+        station = db.query(Station).filter(Station.id == int(station_id)).one_or_none()
+    if station is None:
+        for candidate in db.query(Station).order_by(Station.id).all():
+            descriptor = StationDescriptor(candidate.name, candidate.stream_url, candidate.image_url,
+                candidate.provider_station_id, stream_url_resolved=candidate.stream_url_resolved,
+                stream_format=candidate.stream_format, stream_mime=candidate.stream_mime,
+                compatibility_warning=candidate.compatibility_warning)
+            if station_contract_key(descriptor) == str(station_id):
+                return candidate
+    return station
 
 
 def encode_orion_data(descriptor: StationDescriptor) -> str:

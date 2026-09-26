@@ -2,6 +2,7 @@ import xml.etree.ElementTree as ET
 from urllib.parse import parse_qs, urlparse
 
 import httpx
+import pytest
 from fastapi.testclient import TestClient
 
 from basswiesn.app import db as app_db
@@ -513,7 +514,8 @@ def test_play_station_fails_closed_when_no_stream_source_is_ready(monkeypatch):
     assert calls == []
 
 
-def test_play_station_confirms_safe_volume_before_and_after_select(monkeypatch):
+@pytest.mark.parametrize("safe_volume", [0, 1, 5])
+def test_play_station_confirms_safe_volume_before_and_after_select(monkeypatch, safe_volume):
     calls = []
 
     class Client:
@@ -556,15 +558,16 @@ def test_play_station_confirms_safe_volume_before_and_after_select(monkeypatch):
     with TestClient(create_web_app()) as client:
         response = client.post(
             f"/api/devices/PLAYSAFE/stations/{station_id}/play",
-            json={"dry_run": False, "safe_volume": 1, "trigger": "webui"},
+            json={"dry_run": False, "safe_volume": safe_volume, "trigger": "webui"},
         )
 
     assert response.status_code == 200
-    assert response.json()["confirmed_volume"] == 1
+    assert response.json()["confirmed_volume"] == safe_volume
     select_index = next(index for index, item in enumerate(calls) if item[0] == "post" and item[1] == "/select")
-    assert ("post", "/volume", "<volume>1</volume>") in calls[:select_index]
-    assert calls[select_index + 1 :].count(("post", "/volume", "<volume>1</volume>")) >= 1
-    assert Client.volume == 1
+    expected_volume = ("post", "/volume", f"<volume>{safe_volume}</volume>")
+    assert expected_volume in calls[:select_index]
+    assert calls[select_index + 1 :].count(expected_volume) >= 1
+    assert Client.volume == safe_volume
 
 
 def test_play_station_treats_invalid_source_after_select_as_failure(monkeypatch):

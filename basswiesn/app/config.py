@@ -167,6 +167,8 @@ class Settings(BaseModel):
     web_base_url: str = "http://127.0.0.1:1328"
     debug_base_url: str = "http://127.0.0.1:1860"
     test_mode: bool = False
+    # Internal updater validation: always paired with Docker network isolation.
+    update_validation_mode: bool = False
     release_manifest_required: bool = False
     disable_setup_confirmations: bool = False
     masterlog_enabled: bool = True
@@ -284,6 +286,7 @@ def get_settings() -> Settings:
         # an older installation must not make an upgraded server advertise an
         # obsolete release number.
         version=__version__,
+        update_validation_mode=_env_bool("BASSWIESN_UPDATE_VALIDATION_MODE", False),
         lan_host=lan_host,
         lan_host_configured=bool(configured_lan_host),
         lan_host_candidates=configured_lan_candidates,

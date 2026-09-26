@@ -41,17 +41,42 @@ from basswiesn.app.services.protected_devices import (
 router = APIRouter(prefix="/api", tags=["media"])
 
 WEB_LANGUAGES = [
+    {"code": "ko", "label": "한국어"}, {"code": "th", "label": "ไทย"}, {"code": "zh-Hant", "label": "繁體中文"},
     {"code": "de", "label": "Deutsch"}, {"code": "en", "label": "English"}, {"code": "fr", "label": "Français"}, {"code": "es", "label": "Español"}, {"code": "it", "label": "Italiano"}, {"code": "pt", "label": "Português"}, {"code": "nl", "label": "Nederlands"}, {"code": "da", "label": "Dansk"}, {"code": "sv", "label": "Svenska"}, {"code": "no", "label": "Norsk"}, {"code": "fi", "label": "Suomi"}, {"code": "pl", "label": "Polski"}, {"code": "cs", "label": "Čeština"}, {"code": "sk", "label": "Slovenčina"}, {"code": "hu", "label": "Magyar"}, {"code": "ro", "label": "Română"}, {"code": "bg", "label": "Български"}, {"code": "hr", "label": "Hrvatski"}, {"code": "sl", "label": "Slovenščina"}, {"code": "el", "label": "Ελληνικά"}, {"code": "tr", "label": "Türkçe"}, {"code": "ru", "label": "Русский"}, {"code": "uk", "label": "Українська"}, {"code": "ja", "label": "日本語"}, {"code": "zh", "label": "中文"},
 ]
 WEB_LANGUAGE_CODES = {item["code"] for item in WEB_LANGUAGES}
 
 
+def _normalize_web_language(locale: str) -> str | None:
+    """Normalize UI locales only; firmware language codes remain unchanged."""
+    code = locale.strip().lower().split(".", 1)[0].split("@", 1)[0].replace("_", "-")
+    if not re.fullmatch(r"[a-z]{2,3}(?:-[a-z0-9]{2,8})*", code):
+        return None
+    parts = code.split("-")
+    if parts[0] == "zh":
+        # An explicit script wins over the regional default.
+        code = "zh-Hant" if "hant" in parts or ("hans" not in parts and any(p in {"tw", "hk", "mo"} for p in parts)) else "zh"
+    else:
+        code = "no" if parts[0] == "nb" else parts[0]
+    return code if code in WEB_LANGUAGE_CODES else None
+
+
 def _detected_web_language(raspberry_locale: str, browser_locale: str) -> str:
-    for locale in (raspberry_locale, browser_locale):
-        code = locale.lower().replace("-", "_").split("_", 1)[0]
-        code = "no" if code == "nb" else code
-        if code in WEB_LANGUAGE_CODES:
-            return code
+    configured = _normalize_web_language(raspberry_locale)
+    if configured:
+        return configured
+    candidates = []
+    for item in browser_locale.split(","):
+        parts = item.strip().split(";")
+        try:
+            quality = float(parts[1].strip().removeprefix("q=")) if len(parts) == 2 else 1.0
+        except ValueError:
+            continue
+        code = _normalize_web_language(parts[0])
+        if code and len(parts) <= 2 and 0 < quality <= 1:
+            candidates.append((quality, code))
+    if candidates:
+        return max(candidates, key=lambda pair: pair[0])[1]
     return "en"
 
 BATTERY_CLI_COMMANDS = ["ba p", "ba 0", "ba 1", "ba 2", "ba 3", "ba 5", "ba 6", "ba 7", "ba 8", "ba 9", "ba c", "ba n"]
@@ -487,7 +512,7 @@ async def system_settings(request: Request, db: Session = Depends(get_db)) -> di
         "local_base_url": f"http://{lan_host}:{config.cloud_port}" if lan_host else config.local_base_url,
         "web_base_url": f"http://{lan_host}:{config.web_port}" if lan_host else config.web_base_url,
         "debug_base_url": f"http://{lan_host}:{config.debug_port}" if lan_host else config.debug_base_url,
-        "web_language": rows.get("web_language", detected_language),
+        "web_language": _normalize_web_language(rows.get("web_language", "")) or detected_language,
         "default_timezone": rows.get("default_timezone", "Europe/Berlin"),
         "device_language_default": rows.get("device_language_default", "en"),
         "battery_polling_removed": True,
@@ -523,8 +548,11 @@ async def system_settings(request: Request, db: Session = Depends(get_db)) -> di
 async def save_system_settings(payload: dict, request: Request, db: Session = Depends(get_db)) -> dict:
     allowed = {"lan_host", "web_language", "default_timezone", "device_language_default", "display_metadata_mode", "first_run_warning_required", "show_startup_warning", "lab_mode", "ui_mode", "guided_hints", "safe_startup_volume", "ip_write_guard", "ip_write_allowed_ips", "protected_device_ips", "protected_device_ids", "support_latest_firmware_only", "latest_supported_firmware_family", "update_check_enabled", "update_channel", "update_manifest_url", "update_repo_url", "offline_mode", "offline_allowed_stream_hosts"}
     values = {key: str(payload.get(key, "")) for key in allowed if key in payload}
-    if values.get("web_language") and values["web_language"] not in WEB_LANGUAGE_CODES:
-        raise HTTPException(status_code=400, detail="unsupported web language")
+    if values.get("web_language"):
+        language = _normalize_web_language(values["web_language"])
+        if not language:
+            raise HTTPException(status_code=400, detail="unsupported web language")
+        values["web_language"] = language
     if values.get("default_timezone") and values["default_timezone"] not in TIME_ZONES:
         raise HTTPException(status_code=400, detail="unsupported timezone")
     if values.get("device_language_default") and values["device_language_default"] not in language_codes():
@@ -655,6 +683,26 @@ async def update_status(db: Session = Depends(get_db)) -> dict:
     status = "not_configured"
     message = "Updatequelle noch nicht eingerichtet." if not settings["manifest_url"] else "Updateprüfung bereit."
     return {**settings, "status": status, "message": message}
+
+
+@router.get("/update/official")
+async def official_update_status() -> dict:
+    from basswiesn.app.services.official_updates import installation_status
+    return {"status": "not_checked", "local_version": get_settings().version,
+            "repository": "https://github.com/Zimbo88/BASSWIESN", **installation_status()}
+
+
+@router.post("/update/official/check")
+async def official_update_check(db: Session = Depends(get_db)) -> dict:
+    from basswiesn.app.services.official_updates import LATEST, check_official_release, installation_status
+    decision = external_request_decision(db, service="update_check", url_or_host=LATEST,
+                                        reason="manual official release check", required=False, manual_action=True)
+    record_dependency(db, decision)
+    if not decision.allowed:
+        return {"status": "blocked_by_offline_mode", **installation_status()}
+    result = await check_official_release(get_settings().version)
+    write_masterlog("official_update_checked", status=result["status"], remote_version=result.get("remote_version", ""))
+    return result
 
 
 @router.post("/update/check")

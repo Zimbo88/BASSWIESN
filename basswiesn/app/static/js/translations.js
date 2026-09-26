@@ -59,6 +59,17 @@
   };
   for (const [lang, values] of Object.entries(extraRows)) for (const [index, key] of extraKeys.entries()) catalogs[lang][key] = values[index] || catalogs.en?.[key] || key;
   keys.push(...extraKeys);
+  const updateCopy = {
+    official_update_hint: ["Prüft auf Wunsch die neueste stabile BASSWIESN-Version auf GitHub. Es wird nichts installiert.", "Checks the latest stable BASSWIESN release on GitHub when requested. Nothing is installed."],
+    update_install_boundary: ["Updateinstallation ist in 3.0.0 eine LAB-Funktion. Sie benötigt den ausdrücklich eingerichteten Hostdienst, HTTPS und deinen Administratorcode. Daten werden vor dem Wechsel gesichert; ein fehlgeschlagener Start löst die Wiederherstellung aus. Die Prüfung auf neue Releases bleibt hier verfügbar.", "Update installation is a LAB feature in 3.0.0. It requires the explicitly enrolled host service, HTTPS and your administrator code. Data is backed up before switching; a failed startup triggers restoration. Checking for new releases remains available here."],
+    release_lab_title: ["3.0.0: Vorschau und offene Abnahmen", "3.0.0: previews and pending acceptance"],
+    release_lab_boundary: ["Die AirPlay-2-Bridge bleibt deaktiviert: Empfängerintegration und Mehrgerätebetrieb sind nicht fertig. Musikbibliothek/DLNA und Updateinstallation sind experimentell und nur im LAB zugänglich. DLNA-Wiedergabe am Radio und das Update der produktiven Installation sind noch nicht abschließend geprüft. Es startet nichts automatisch.", "The AirPlay 2 bridge remains disabled: receiver integration and multi-device operation are unfinished. Media library/DLNA and update installation are experimental and accessible only in LAB. Radio playback via DLNA and the production installation upgrade have not completed final acceptance. Nothing starts automatically."],
+    manifest_settings: ["Erweiterte Manifest-Einstellungen", "Advanced manifest settings"]
+  };
+  for (const [key, [de, en]] of Object.entries(updateCopy)) {
+    keys.push(key);
+    for (const language of Object.keys(catalogs)) catalogs[language][key] = language === "de" ? de : en;
+  }
   const releasePolish = {
     de: {
       telemetry_analysis: "Telemetry Analyse",
@@ -340,6 +351,14 @@
   // cards. English and German are release-gated as complete UI languages;
   // other catalogues retain English fallback until their native copy exists.
   const bilingualPairs = [
+    ["Modus", "Mode"],
+    ["Lokale SoundTouch-Cloud", "SoundTouch Local Cloud"],
+    ["Musikbibliothek", "Media/NAS"],
+    ["Ordner eines freigegebenen Medienservers durchsuchen und MP3-/AAC-Titel zur Senderliste hinzufügen.", "Browse folders on an approved media server and add MP3/AAC tracks to Stations."],
+    ["Medienserver ausdrücklich verbinden", "Connect a media server explicitly"],
+    ["Ordner öffnen und Titel übernehmen", "Open a folder and import a track"],
+    ["In der Senderliste ein Radio auswählen und starten", "Choose a radio in Stations and start playback"],
+    ["Importieren startet kein Radio und verändert keine Presets. Keine automatische Netzwerksuche. Die technischen Radio-Proben sind im LAB-Bereich.", "Importing never starts a radio or changes presets. No automatic network scan. Native radio probes are in LAB."],
     ["Geführte Einrichtung", "Guided setup"],
     ["Geräteschutz ist serverseitig aktiv", "Device protection is enforced by the server"],
     ["Erreichbare BASSWIESN-Adresse", "Reachable BASSWIESN address"],
@@ -555,6 +574,11 @@
     ,["Lokaler Senderkatalog mit Streamanalyse und explizitem Playback.", "Local station catalog with stream analysis and explicit playback."]
     ,["Manuelle Clock-Recovery mit Profil, Confirmation und Readback.", "Manual clock recovery with profile, confirmation, and readback."]
     ,["Manuelle, experimentelle Renderer-Erkennung ohne Hintergrundscan.", "Manual experimental renderer detection without background scanning."]
+    ,["DLNA-Suche, Medienbrowser und Wiedergabesteuerung sind nicht implementiert.", "DLNA discovery, media browsing and playback control are not implemented."]
+    ,["Das Feature-Flag allein stellt keine DLNA-Funktion bereit.", "The feature flag alone does not provide DLNA functionality."]
+    ,["Expliziter Medienserver, Ordnerbrowser und MP3-/AAC-Weitergabe über BASSWIESN.", "Explicit media server, folder browsing and MP3/AAC relay through BASSWIESN."]
+    ,["Noch kein Medienserver verbunden.", "No media server connected yet."]
+    ,["Im LAB die Musikbibliothek aktivieren und einen Server ausdrücklich verbinden.", "In LAB, enable the media library and explicitly connect a server."]
     ,["Modernere interne Gruppen-Zustandsmaschine der Bose-App.", "Newer internal group state machine used by the Bose app."]
     ,["Multiroom ohne Lautstärkeänderung", "Multiroom without volume changes"]
     ,["Noch keine Jahresdaten.", "No yearly data yet."]
@@ -566,7 +590,7 @@
     ,["Preflight, Backup, Cloud-Route, Apply, Verify und Rollback für ein Radio.", "Preflight, backup, cloud route, apply, verify, and rollback for one radio."]
     ,["Profilbasierter Reboot; kein freies Telnet-Kommando.", "Profile-based reboot; no arbitrary Telnet command."]
     ,["Provider, Stream, Metadaten und Reporting bleiben davon unabhängige Signale.", "Provider, stream, metadata, and reporting remain independent signals."]
-    ,["Prüft lokale Archive und bereitet ein Update vor; vollständige UI-Ausführung fehlt.", "Checks local archives and prepares an update; complete UI execution is missing."]
+    ,["Lokale Archivvorbereitung; getrennt vom experimentellen Installer für offizielle Releases im LAB.", "Local archive preparation; separate from the experimental official-release installer in LAB."]
     ,["Radio Info ohne SSH", "Radio information without SSH"]
     ,["Radio und Preset wählen, danach den Preflight starten.", "Select a radio and preset, then start the preflight."]
     ,["Radio-Slots und BASSWIESN-Daten read-only vergleichen.", "Compare radio slots and BASSWIESN data read-only."]
@@ -634,6 +658,104 @@
     ,["Serverseitige Szenen, keine nativen Bose-Presets. Der BASSWIESN-Server muss laufen; Aktivierung prüft Teilnehmer, Schutzstatus, Lautstärke und Readback.", "Server-side scenes, not native Bose presets. The BASSWIESN server must be running; activation verifies members, protection status, volume, and readback."]
     ,["Settings werden im Backup redigiert", "Settings are redacted in the backup"]
     ,["Strict Offline kann externe Prüfung blockieren", "Strict Offline can block external checks"]
+    ,["Offizielle Release-Prüfung", "Official release check"]
+    ,["Prüft auf Wunsch die neueste stabile GitHub-Version. Installiert kein Update.", "Checks the latest stable GitHub version on request. Does not install an update."]
+    ,["Strict Offline blockiert die GitHub-Prüfung", "Strict Offline blocks the GitHub check"]
+    ,["Manueller Start in den Einstellungen", "Start manually in Settings"]
+    ,["Internetzugang zu GitHub", "Internet access to GitHub"]
+    ,["Feste offizielle Quelle; kein Herunterladen, keine Installation", "Fixed official source; no download or installation"]
+    ,["Eigene Manifest-Prüfung (LAB)", "Custom manifest check (LAB)"]
+    ,["Prüft manuell ein konfiguriertes externes Release-Manifest.", "Manually checks a configured external release manifest."]
+    ,["Updateprüfung deaktiviert", "Update check disabled"]
+    ,["Manifest-URL fehlt", "Manifest URL missing"]
+    ,["Update-Flag oder UI-Einstellung", "Update flag or UI setting"]
+    ,["Abhängigkeiten", "Dependencies"]
+    ,["Administrativer Neustart", "Administrator-managed restart"]
+    ,["Aktiv, Konfiguration unvollständig", "Enabled, configuration incomplete"]
+    ,["Backend vorhanden, UI unvollständig", "Backend available, UI incomplete"]
+    ,["Secretquelle fehlt", "Secret source missing"]
+    ,["Aktuelle Lautstärken vorab lesen", "Read current volumes first"]
+    ,["Ansagen / TTS", "Announcements / TTS"]
+    ,["Audio-/Radio-Readback", "Audio/radio readback"]
+    ,["BASSWIESN LAN-IP fehlt", "BASSWIESN LAN IP missing"]
+    ,["BASSWIESN-Multiroom-Szenen", "BASSWIESN multiroom scenes"]
+    ,["Backup vor Write", "Back up before writing"]
+    ,["Datenverzeichnis ist nicht verfügbar", "Data directory is unavailable"]
+    ,["Deaktiviert", "Disabled"]
+    ,["Experimentell", "Experimental"]
+    ,["Expertenworkflow", "Expert workflow"]
+    ,["Explizite Confirmation", "Explicit confirmation"]
+    ,["Explizite REBOOT RADIO-Bestaetigung", "Explicit REBOOT RADIO confirmation"]
+    ,["Explizite existierende Medien-Root", "Explicit existing media root"]
+    ,["Hardwaretest", "Hardware test"]
+    ,["Hardwaretest offen", "Hardware test pending"]
+    ,["Infrastruktur", "Infrastructure"]
+    ,["Je Funktion zusätzliche Guards", "Additional guards for each function"]
+    ,["Keine Schutz-IP konfiguriert", "No protected IP configured"]
+    ,["Keine gültige Medien-Root konfiguriert", "No valid media root configured"]
+    ,["Kern", "Core"]
+    ,["Kompatibles Modellprofil", "Compatible model profile"]
+    ,["Kompatibles Profil", "Compatible profile"]
+    ,["Konfigurierbare Ereigniszustellung an explizit erlaubte Zielhosts.", "Configurable event delivery to explicitly allowed target hosts."]
+    ,["LAB-Modus", "LAB Mode"]
+    ,["LAB Mode ist deaktiviert", "LAB Mode is disabled"]
+    ,["LAN-IP des BASSWIESN-Servers", "BASSWIESN server LAN IP"]
+    ,["Lautstärken nachher zurücklesen", "Read volumes back afterward"]
+    ,["Lokale Updatevorbereitung", "Local Update"]
+    ,["Logo-URL oder lokaler BASSWIESN-Pfad", "Logo URL or local BASSWIESN path"]
+    ,["Lokale Datenbank", "Local database"]
+    ,["Lokale Medien", "Local media"]
+    ,["Lokale Sender", "Local stations"]
+    ,["Lokales Archiv", "Local archive"]
+    ,["Manifest-URL", "Manifest URL"]
+    ,["Manueller LAB-Start", "Manual LAB start"]
+    ,["Manueller Radio-Reboot", "Manual radio reboot"]
+    ,["Speicherprüfung", "Memory-Check"]
+    ,["Mindestens ein Radio lokal konfigurieren", "Configure at least one radio locally"]
+    ,["Mindestens ein Sender benötigt ein validiertes Logo", "At least one station needs a validated logo"]
+    ,["Mindestens zwei Radios konfigurieren", "Configure at least two radios"]
+    ,["Neustart des Webdienstes", "Web service restart"]
+    ,["Nicht unterstützt", "Not supported"]
+    ,["Nie automatisch; geschuetzte Radios bleiben serverseitig blockiert", "Never automatic; protected radios remain blocked on the server"]
+    ,["Offline-Modus", "Offline Mode"]
+    ,["Preset-Readback", "Preset Readback"]
+    ,["Preset schreiben", "Preset Write"]
+    ,["Preset-Synchronisierung", "Preset synchronization"]
+    ,["Preset-Synchronisierung nach Änderung", "Preset synchronization after changes"]
+    ,["Privates LAN", "Private LAN"]
+    ,["Prozess-/Containerneustart", "Process/container restart"]
+    ,["Radio erreichbar", "Radio reachable"]
+    ,["Radio-Readback", "Radio readback"]
+    ,["Readback nach Aktivierung", "Readback after activation"]
+    ,["Redaction vor Export", "Redaction before export"]
+    ,["Rollbackplan", "Rollback plan"]
+    ,["SSDP und IP-Fallback sind deaktiviert", "SSDP and IP fallback are disabled"]
+    ,["Schreibbares Datenverzeichnis", "Writable data directory"]
+    ,["Schutz-IP-Liste", "Protected IP list"]
+    ,["Schutz-IP-Liste beachten", "Observe the protected IP list"]
+    ,["Secretquelle per Environment/Datei", "Secret source via environment/file"]
+    ,["Sicherheit", "Security"]
+    ,["Sicht-/Readbackprüfung", "Visual/readback check"]
+    ,["Slotweiser Readback", "Per-slot readback"]
+    ,["Standby-Uhr wiederherstellen", "Standby Clock Recovery"]
+    ,["Strict erlaubt keine konfigurierten Stream-Hosts", "Strict mode allows no configured stream hosts"]
+    ,["Telnet-Neustart", "Telnet-Reboot"]
+    ,["Unterstütztes Audioformat", "Supported audio format"]
+    ,["Verwendet gespeicherte Senderlogos als containerArt in neuen oder synchronisierten Presets.", "Uses stored station logos as containerArt in new or synchronized presets."]
+    ,["Wartung", "Maintenance"]
+    ,["Zertifikatsmodus", "Certificate mode"]
+    ,["Ziel-Allowlist fehlt", "Target allowlist missing"]
+    ,["Zielhost-Allowlist", "Target host allowlist"]
+    ,["nicht verfügbar", "not available"]
+    ,["off, auto oder strict", "off, auto or strict"]
+    ,["offen", "pending"]
+    ,["Aktivierungsmatrix", "Activation matrix"]
+    ,["Aktivierungslücken", "Activation gaps"]
+    ,["Releasepipeline", "Release pipeline"]
+    ,["aktiviert", "enabled"]
+    ,["nutzbar", "usable"]
+    ,["nicht nutzbar", "not usable"]
+    ,["unvollständig oder nicht gesetzt", "incomplete or not set"]
     ,["Strict kontrolliert BASSWIESN-Requests, nicht das Radio", "Strict controls BASSWIESN requests, not the radio"]
     ,["Unverschlüsseltes Protokoll; Secretwerte werden nie angezeigt", "Unencrypted protocol; secret values are never displayed"]
     ,["Voraussetzungen", "Requirements"]
@@ -721,6 +843,7 @@
     ["Abschluss", "Complete"],
     ["Bereit", "Ready"],
     ["Wiedergabe gesperrt", "playback blocked"],
+    ["Wiedergabe gesperrt. Bitte zuerst die Audio-Sicherheitsprüfung im Setup ausführen.", "Playback is locked. Run the audio safety check in Setup before trying again."],
     ["Lautstärkegrenze", "volume limit"],
     ["letzte Quelle:", "last source:"],
     ["Backend vorhanden, UI unvollständig", "Backend available, UI incomplete"],

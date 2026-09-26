@@ -165,7 +165,12 @@ def parse_sources_xml(xml: str, last_seen: str = "") -> tuple[list[dict], dict]:
         return [], {}
     rows: list[dict] = []
     providers: dict[str, dict] = {}
-    for source in root.findall(".//source"):
+    # The hardware WebAPI uses sourceItem. Older integrations/fixtures also
+    # supply source: both are observations, not an absent provider. Do not
+    # interpret arbitrary nested XML fields as source records.
+    for source in root.iter():
+        if source.tag not in {"sourceItem", "source"}:
+            continue
         raw_name = source.attrib.get("source") or source.attrib.get("type") or source.findtext("name", "")
         name = _provider_name(raw_name)
         status = source.attrib.get("status") or source.findtext("status", "") or "READY"

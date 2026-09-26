@@ -72,8 +72,25 @@ def _language_leaks(page, pattern: re.Pattern[str]) -> list[str]:
         button = buttons.nth(index)
         button.click()
         for line in _visible_view_strings(page):
-            if pattern.search(line):
+            # The uppercase license identifier MIT is not the German word
+            # "mit". Keep checking the rest of the sentence, including every
+            # lowercase occurrence; do not exempt entire About paragraphs.
+            if pattern.search(re.sub(r"\bMIT\b", "", line)):
                 leaks.add(line.strip())
+    # The collapsed More menu used to escape this audit entirely. Real clicks
+    # are required: hidden developer pages must not be deemed translated only
+    # because the main navigation looked correct.
+    menu = page.locator(".advanced-nav")
+    if menu.is_visible():
+        menu.locator("summary").click()
+        entries = menu.locator(".nav-button:visible").evaluate_all("nodes => nodes.map(n => n.dataset.view)")
+        page.keyboard.press("Escape")
+        for view in entries:
+            menu.locator("summary").click()
+            menu.locator(f'.nav-button[data-view="{view}"]').click()
+            for line in _visible_view_strings(page):
+                if pattern.search(re.sub(r"\bMIT\b", "", line)):
+                    leaks.add(f"{view}: {line.strip()}")
     return sorted(leaks)
 
 
@@ -82,6 +99,7 @@ def test_english_and_german_visible_ui_are_consistent_in_every_mode(mode):
     with _LiveServer() as server, sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
         page = browser.new_page(viewport={"width": 1440, "height": 900})
+        page.route("**/*", lambda route: route.continue_() if route.request.url.startswith(server.url + "/") else route.abort())
         for language, pattern in (("en", ENGLISH_GERMAN_LEAKS), ("de", GERMAN_ENGLISH_LEAKS)):
             response = httpx.post(
                 f"{server.url}/api/system/settings",
@@ -109,6 +127,8 @@ def test_english_and_german_visible_ui_are_consistent_in_every_mode(mode):
         ("en", "Letzter Sync: unbekannt · Quelle: LOCAL_INTERNET_RADIO", "Last sync: unknown", "LOCAL_INTERNET_RADIO"),
         ("de", "using persisted radio snapshot · PLAYBACK_FAILED", "gespeicherter Radio-Snapshot wird verwendet", "PLAYBACK_FAILED"),
         ("de", "physical preset-button playback requires a manual step", "Wiedergabe über die physische Presettaste erfordert einen manuellen Schritt", ""),
+        ("en", "DLNA-Suche, Medienbrowser und Wiedergabesteuerung sind nicht implementiert.", "DLNA discovery, media browsing and playback control are not implemented.", "DLNA"),
+        ("de", "The feature flag alone does not provide DLNA functionality.", "Das Feature-Flag allein stellt keine DLNA-Funktion bereit.", "DLNA"),
     ],
 )
 def test_dynamic_runtime_copy_is_localized_without_changing_protocol_codes(language, source, expected, preserved_code):

@@ -39,7 +39,7 @@ def test_multiroom_human_ui_targets_one_group_and_explains_firmware_volume_chang
     assert 'postJson("/api/multiroom/clear",' in script
     assert "Bose-Firmware änderte trotz ausbleibendem SetVolume" in script
     assert "BASSWIESN hat nicht heimlich zurückkorrigiert" in script
-    assert 'confirmation, trigger: "webui"' in script
+    assert 'if (key === "POWER") payload.confirmation = "YES";' in script
 
 
 def _set_test_timezone(db, value: str = "UTC") -> None:

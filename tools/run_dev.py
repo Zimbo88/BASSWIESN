@@ -21,7 +21,8 @@ def run(app_path: str, port: int, ssl_certfile: str | None = None, ssl_keyfile: 
     # The parent finished migrations before *any* service began writing.
     # Direct uvicorn launches retain the normal lifespan initialization.
     app.state.database_schema_prepared = True
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=False, ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
+    uvicorn.run(app, host="0.0.0.0", port=port, reload=False, proxy_headers=False,
+                ssl_certfile=ssl_certfile, ssl_keyfile=ssl_keyfile)
 
 
 def healthcheck() -> bool:

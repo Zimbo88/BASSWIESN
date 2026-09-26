@@ -28,3 +28,5 @@ dist
 *.db
 *.sqlite*
 *.log
+# Private retained updater generations must never enter a future Docker build.
+/.basswiesn-update-*

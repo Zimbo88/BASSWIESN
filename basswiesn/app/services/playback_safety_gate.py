@@ -3,7 +3,7 @@
 Firmware can restore a remembered source volume while processing ``/select``.
 The local BMX/Orion endpoint is the last point before the radio receives an
 audio URL.  A human-triggered safe playback therefore arms a short-lived gate;
-the provider withholds its response until volume 1 and mute have been read back
+the provider withholds its response until the requested safe volume and mute have been read back
 after selection.
 """
 
@@ -62,6 +62,8 @@ def arm_playback_safety_gate(
     safe_volume: int,
     station_id: int,
 ) -> dict:
+    if type(safe_volume) is not int or not 0 <= safe_volume <= 5:
+        raise PlaybackSafetyGateError("safe volume must be an integer in 0..5")
     return _write(
         db,
         device_id,
@@ -76,14 +78,19 @@ def arm_playback_safety_gate(
 
 
 def verify_playback_safety_gate(db: Session, device_id: str, *, volume: int, muted: bool) -> dict:
-    if int(volume) != 1 or muted is not True:
-        raise PlaybackSafetyGateError("volume 1 and mute are required before provider release")
+    gate = load_playback_safety_gate(db, device_id)
+    expected = gate.get("safe_volume")
+    if (gate.get("state") != "ARMED" or gate.get("expired") is not False
+            or type(expected) is not int or not 0 <= expected <= 5
+            or type(volume) is not int or volume != expected or muted is not True):
+        raise PlaybackSafetyGateError("requested safe volume and mute must match the active gate")
     return _write(
         db,
         device_id,
         {
             "state": "VERIFIED",
-            "safe_volume": 1,
+            "safe_volume": expected,
+            "station_id": gate.get("station_id"),
             "mute_required": True,
             "volume_readback": int(volume),
             "mute_readback": bool(muted),
@@ -93,12 +100,14 @@ def verify_playback_safety_gate(db: Session, device_id: str, *, volume: int, mut
 
 
 def fail_playback_safety_gate(db: Session, device_id: str, reason: str) -> dict:
+    gate = load_playback_safety_gate(db, device_id)
     return _write(
         db,
         device_id,
         {
             "state": "FAILED",
-            "safe_volume": 1,
+            "safe_volume": gate.get("safe_volume"),
+            "station_id": gate.get("station_id"),
             "mute_required": True,
             "reason": str(reason or "playback safety verification failed")[:500],
         },
@@ -141,6 +150,11 @@ async def wait_for_provider_release(db: Session, device_id: str) -> dict:
             raise PlaybackSafetyGateError("playback safety gate expired before provider release")
         state = str(gate.get("state") or "").upper()
         if state == "VERIFIED":
+            if (type(gate.get("safe_volume")) is not int or not 0 <= gate["safe_volume"] <= 5
+                    or type(gate.get("volume_readback")) is not int
+                    or gate["volume_readback"] != gate["safe_volume"]
+                    or gate.get("mute_readback") is not True):
+                raise PlaybackSafetyGateError("invalid playback safety readback")
             return {"required": True, "state": state, "volume_readback": gate.get("volume_readback")}
         if state == "FAILED":
             raise PlaybackSafetyGateError(str(gate.get("reason") or "playback safety gate failed"))

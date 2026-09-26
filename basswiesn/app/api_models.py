@@ -19,6 +19,10 @@ class VersionResponse(BaseModel):
 
     version: str
     build_type: str
+    published_at: str | None = None
+    release_url: str | None = None
+    publication_status: str = "UNKNOWN"
+    publication_source: str = "NONE"
 
 
 class ReadinessResponse(BaseModel):
@@ -28,6 +32,7 @@ class ReadinessResponse(BaseModel):
     ready: bool
     status: str
     version: str
+    update_validation_mode: bool = False
     checks: dict[str, Any] = Field(default_factory=dict)
     error: str = ""
 

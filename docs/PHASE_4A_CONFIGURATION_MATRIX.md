@@ -84,8 +84,10 @@ gelesen; fuer eine sichere Wirksamkeit ist ein Prozessneustart anzunehmen.
 | BASSWIESN_UPDATE_ALLOW_LOCAL_ARCHIVE | bool | true | nein | WebGUI/External Services | mittel | ja | ja | true/false, 1/0, yes/no, on/off |  |
 | BASSWIESN_UPDATE_CHANNEL | enum | "manual" | nein | WebGUI/External Services | mittel | ja | ja | manual | stable | beta |  |
 | BASSWIESN_UPDATE_CHECK_ENABLED | bool | false | nein | WebGUI/External Services | mittel | ja | ja | true/false, 1/0, yes/no, on/off |  |
+| BASSWIESN_UPDATE_CONTROL_DIR | string | "" | nein | WebGUI/External Services | mittel | ja | ja | freier Text gemaess Code |  |
 | BASSWIESN_UPDATE_MANIFEST_URL | string | "" | nein | WebGUI/External Services | mittel | ja | ja | freier Text gemaess Code |  |
 | BASSWIESN_UPDATE_REPO_URL | string | "" | nein | WebGUI/External Services | mittel | ja | ja | freier Text gemaess Code |  |
+| BASSWIESN_UPDATE_VALIDATION_MODE | bool | false | nein | WebGUI/External Services | mittel | nein | ja | true/false, 1/0, yes/no, on/off |  |
 | BASSWIESN_VERSION | string | "" | nein | Global Runtime | niedrig | ja | ja | freier Text gemaess Code |  |
 | BASSWIESN_WEBHOOKS_ENABLED | bool | false | nein | WebGUI/External Services | mittel | ja | ja | true/false, 1/0, yes/no, on/off |  |
 | BASSWIESN_WEBHOOK_ALLOWED_HOSTS | csv | "" | nein | WebGUI/External Services | mittel | ja | ja | Kommagetrennte Werte |  |

@@ -11,6 +11,7 @@ from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 import hashlib
 import json
+import math
 import re
 import time
 from urllib.parse import urljoin, urlsplit
@@ -18,7 +19,7 @@ from urllib.parse import urljoin, urlsplit
 import httpx
 from sqlalchemy.orm import Session
 
-from basswiesn.app.models import RuntimeState, Setting
+from basswiesn.app.models import MetadataState, RuntimeState, Setting
 from basswiesn.app.services.network_security import pinned_http_target, validate_outbound_http_url
 from basswiesn.app.services.protected_devices import is_device_access_protected
 
@@ -130,6 +131,48 @@ def cached_metadata(db: Session, url: str, *, now: float | None = None) -> dict:
     return value
 
 
+def display_observation(db: Session, device_id: str, *, now: float | None = None) -> dict:
+    """Explain stored upstream evidence, never infer physical display success.
+
+    Pure DB read. Opening display preferences must not probe a stream or radio.
+    A recent shared cache can outlive the radio session, so label it as cached
+    sender data, not as current playback or a live OLED measurement.
+    """
+    from basswiesn.app.services.orion import station_by_contract_key
+    result = {"status": "NOT_OBSERVED", "scope": "LAST_STATION_CACHE", "radio_contacted": False,
+              "probe_started": False, "display_verified": False, "cache_age_seconds": None,
+              "artist_available": False, "title_available": False, "station_name": ""}
+    if not load_display_preference(db, device_id).needs_metadata:
+        return {**result, "status": "NOT_REQUESTED"}
+    meta = db.query(MetadataState).filter(MetadataState.device_id == device_id).one_or_none()
+    if meta is None or not meta.station_id:
+        return result
+    station = station_by_contract_key(db, meta.station_id)
+    if station is None:
+        return result
+    result["station_name"] = _text(station.name)
+    row = db.query(RuntimeState).filter(RuntimeState.key == cache_key(station.stream_url)).one_or_none()
+    value = _decode(row.value) if row else {}
+    stamp = value.get("observed_timestamp")
+    current = time.time() if now is None else now
+    if type(stamp) not in (int, float) or not math.isfinite(stamp) or current < stamp:
+        return result
+    age = current - stamp
+    result["cache_age_seconds"] = round(age)
+    if age > MAX_AGE:
+        return {**result, "status": "STALE"}
+    if value.get("status") not in {"AVAILABLE", "EMPTY_METADATA"}:
+        return {**result, "status": "UNAVAILABLE"}
+    result.update(artist_available=bool(value.get("artist")), title_available=bool(value.get("track")))
+    if result["artist_available"] and result["title_available"]:
+        result["status"] = "SONG_AVAILABLE"
+    elif value.get("other_info"):
+        result["status"] = "INFORMATION_ONLY"
+    else:
+        result["status"] = "NO_SONG"
+    return result
+
+
 def classify_title(raw: str, station_name: str, host: str) -> dict:
     """Observed provider conventions are inference, not an ICY field guarantee.
 
@@ -166,6 +209,14 @@ def classify_title(raw: str, station_name: str, host: str) -> dict:
 
 async def probe_icy(url: str, station_name: str) -> dict:
     result = {"status": "UNAVAILABLE", "track": "", "artist": "", "other_info": ""}
+    latest = None
+
+    def finish(reason: str) -> dict:
+        # A startup slogan/empty title is a genuine observation, but may be
+        # followed by current song information within the SAME bounded read.
+        # Never enlarge the byte/time limits or retain a title from a prior
+        # collection. An explicit empty update replaces the current fallback.
+        return {**latest, "probe_stop_reason": reason} if latest is not None else {**result, "status": reason}
     try:
         async with asyncio.timeout(12):
             async with httpx.AsyncClient(timeout=4, follow_redirects=False, trust_env=False) as client:
@@ -203,7 +254,7 @@ async def probe_icy(url: str, station_name: str) -> dict:
                         async for chunk in response.aiter_raw():
                             total += len(chunk)
                             if total > MAX_BYTES:
-                                return {**result, "status": "BYTE_LIMIT"}
+                                return finish("BYTE_LIMIT")
                             buffer.extend(chunk)
                             while len(buffer) > interval:
                                 size = buffer[interval] * 16
@@ -219,16 +270,21 @@ async def probe_icy(url: str, station_name: str) -> dict:
                                 match = re.search(r"StreamTitle='(.*?)';", text, re.DOTALL)
                                 if match:
                                     if match.group(1).strip():
-                                        return {**result, **classify_title(match.group(1), station_name, urlsplit(current).hostname or ""),
-                                                "status": "AVAILABLE", "source": "ICY"}
-                                    return {**result, "status": "EMPTY_METADATA"}
+                                        latest = {**result, **classify_title(match.group(1), station_name, urlsplit(current).hostname or ""),
+                                                  "status": "AVAILABLE", "source": "ICY"}
+                                        if latest.get("track") and latest.get("artist"):
+                                            return latest
+                                    else:
+                                        latest = {**result, "status": "EMPTY_METADATA", "source": "ICY"}
                                 # A zero-length ICY frame means "no update", not
                                 # "this station has no song metadata". Startup
                                 # bursts can contain several such frames; keep
                                 # looking within the existing byte/time budgets.
-                        return {**result, "status": "STREAM_ENDED"}
+                        return finish("STREAM_ENDED")
                 return {**result, "status": "REDIRECT_LIMIT"}
     except (httpx.HTTPError, OSError, ValueError, TimeoutError) as exc:
+        if latest is not None:
+            return {**latest, "probe_stop_reason": "TIME_LIMIT" if isinstance(exc, TimeoutError) else type(exc).__name__}
         return {**result, "status": "PROBE_FAILED", "error_type": type(exc).__name__}
 
 

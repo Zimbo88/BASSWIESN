@@ -817,28 +817,8 @@ async def _unsupported_provider_contract(
 
 
 def _station_by_contract_key(db: Session, station_id: str) -> Station | None:
-    station = (
-        db.query(Station)
-        .filter(Station.provider_station_id == str(station_id))
-        .one_or_none()
-    )
-    if station is None and str(station_id).isdigit():
-        station = db.query(Station).filter(Station.id == int(station_id)).one_or_none()
-    if station is None:
-        for candidate in db.query(Station).order_by(Station.id).all():
-            descriptor = StationDescriptor(
-                candidate.name,
-                candidate.stream_url,
-                candidate.image_url,
-                candidate.provider_station_id,
-                stream_url_resolved=candidate.stream_url_resolved,
-                stream_format=candidate.stream_format,
-                stream_mime=candidate.stream_mime,
-                compatibility_warning=candidate.compatibility_warning,
-            )
-            if station_contract_key(descriptor) == str(station_id):
-                return candidate
-    return station
+    from basswiesn.app.services.orion import station_by_contract_key
+    return station_by_contract_key(db, station_id)
 
 
 def _persist_orion_station_contract(

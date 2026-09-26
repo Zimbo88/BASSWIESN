@@ -23,6 +23,13 @@ const messages = {
     playing: "Playing", paused: "Paused", stopped: "Stopped", buffering: "Buffering", standby: "Standby",
     unknown: "Unknown", invalid: "Source unavailable", volume: "Volume", station: "Station", preset: "Preset",
     displayHeading: "Radio display", displayFields: "Fields and order",
+    metadataNotRequested: "Song collection is off for this layout.",
+    metadataNotObserved: "No stored song observation yet. Data is collected during BASSWIESN internet-radio playback.",
+    metadataStale: "Stored station data has expired. Old song titles are not reused.",
+    metadataUnavailable: "The last stream check returned no usable metadata. Playback can still work.",
+    metadataSong: "Last station observation: artist and title available. This is not a live display check.",
+    metadataInformation: "Last station observation: station information only, no separate artist/title.",
+    metadataNoSong: "Last station observation: no song information. Missing fields are skipped.",
     displayHelp: "Choose the fields and their order on the radio. Missing station data is skipped; it is never invented.",
     displayStation: "Station name", displayArtist: "Artist", displayTitle: "Song title", displayClock: "Time", displayOther: "Other station information",
     displayUp: "Move up", displayDown: "Move down", displaySave: "Save display",
@@ -53,6 +60,13 @@ const messages = {
     playing: "Wiedergabe läuft", paused: "Pausiert", stopped: "Gestoppt", buffering: "Wird gepuffert", standby: "Standby",
     unknown: "Unbekannt", invalid: "Quelle nicht verfügbar", volume: "Lautstärke", station: "Sender", preset: "Preset",
     displayHeading: "Radioanzeige", displayFields: "Angaben und Reihenfolge",
+    metadataNotRequested: "Für diese Anzeige ist das Sammeln von Songdaten aus.",
+    metadataNotObserved: "Noch keine gespeicherte Songbeobachtung. Daten werden während der BASSWIESN-Internetradio-Wiedergabe gesammelt.",
+    metadataStale: "Die gespeicherten Senderdaten sind veraltet. Alte Songtitel werden nicht wiederverwendet.",
+    metadataUnavailable: "Die letzte Streamprüfung lieferte keine nutzbaren Metadaten. Die Wiedergabe kann trotzdem funktionieren.",
+    metadataSong: "Letzte Senderbeobachtung: Interpret und Titel vorhanden. Das ist keine Live-Prüfung des Displays.",
+    metadataInformation: "Letzte Senderbeobachtung: nur Senderinformationen, kein getrennter Interpret und Titel.",
+    metadataNoSong: "Letzte Senderbeobachtung: keine Songdaten. Fehlende Angaben werden ausgelassen.",
     displayHelp: "Wähle die Angaben und ihre Reihenfolge auf dem Radio. Fehlende Senderdaten werden ausgelassen und nicht erfunden.",
     displayStation: "Sendername", displayArtist: "Interpret", displayTitle: "Songtitel", displayClock: "Uhrzeit", displayOther: "Sonstige Senderinformationen",
     displayUp: "Nach oben", displayDown: "Nach unten", displaySave: "Anzeige speichern",
@@ -221,7 +235,14 @@ safeStartEnabled.addEventListener("change", () => {
   safeStartField.hidden = !safeStartEnabled.checked;
   try { localStorage.setItem(`basswiesn_remote_safe_start_${deviceId}`, String(safeStartEnabled.checked)); } catch { /* Storage can be unavailable. */ }
 });
-byId("remote-refresh").addEventListener("click", () => run(async () => { details(await readState()); message(""); }));
+byId("remote-refresh").addEventListener("click", () => run(async () => {
+  details(await readState()); message("");
+  // Do not replace unsaved layout choices while refreshing cached evidence.
+  try {
+    const value = await request(path("metadata/display"));
+    showDisplayObservation(value.observation);
+  } catch { byId("remote-display-observation").textContent = t("clockUnavailable"); }
+}));
 function showReconnectPreference(value) {
   if (typeof value.enabled !== "boolean") throw new Error("invalid_reconnect_preference");
   reconnectPreference = value;
@@ -235,7 +256,15 @@ function showDisplayPreference(value) {
       || value.field_order.some((field) => !displayFieldOrder.includes(field))) throw new Error("invalid_display_preference");
   displayPreference = value;
   displayDraft = { fields: [...value.fields], field_order: [...value.field_order] };
+  showDisplayObservation(value.observation);
   renderDisplayFields();
+}
+
+function showDisplayObservation(observation) {
+  const observationKeys = { NOT_REQUESTED: "metadataNotRequested", NOT_OBSERVED: "metadataNotObserved",
+    STALE: "metadataStale", UNAVAILABLE: "metadataUnavailable", SONG_AVAILABLE: "metadataSong",
+    INFORMATION_ONLY: "metadataInformation", NO_SONG: "metadataNoSong" };
+  byId("remote-display-observation").textContent = t(observationKeys[observation?.status] || "metadataNotObserved");
 }
 
 function showDisplayPreview() {

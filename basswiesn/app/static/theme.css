@@ -1,0 +1,146 @@
+/* Shared surfaces for the dashboard and compact remote. The simulated radio
+   screen deliberately stays dark, independently of the browser theme. */
+:root {
+  color-scheme: dark;
+  --bg: #111820;
+  --bg-2: #17212b;
+  --panel: #1b2732;
+  --panel-2: #23323f;
+  --surface-sunken: #14202b;
+  --line: #405464;
+  --text: #edf4fa;
+  --muted: #b5c4cf;
+  --quiet: #a0b2c1;
+  --accent: #80d8b7;
+  --accent-2: #80d8b7;
+  --ok: #80d8b7;
+  --warn: #f2c572;
+  --bad: #ff929a;
+  --link: #9acaff;
+  --focus: #7dbeff;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f6f9;
+  --bg-2: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #edf2f6;
+  --surface-sunken: #f5f7fa;
+  --line: #c7d2dd;
+  --text: #192b3b;
+  --muted: #475e70;
+  --quiet: #526879;
+  --accent: #80d8b7;
+  --accent-2: #0b7150;
+  --ok: #0b7150;
+  --warn: #8a510a;
+  --bad: #b32536;
+  --link: #185da2;
+  --focus: #185da2;
+}
+body { line-height: 1.5; }
+a { color: var(--link); }
+.remote-header a { color: var(--link); }
+.now-panel > strong { display: block; }
+.about-release-copy p, .about-release-copy ul { color: var(--text); }
+.about-story { padding-block: 1.5rem; border-block: 1px solid var(--line); margin-block: 1.5rem; }
+.about-story h3:first-child { font-size: clamp(1.6rem, 5vw, 2.2rem); line-height: 1.25; max-width: 24ch; }
+.about-story p { line-height: 1.85; }
+.about-story .about-signature { margin-bottom: .2rem; font-weight: 600; }
+.about-links { flex-wrap: wrap; }
+.about-links .command { white-space: normal; text-align: center; }
+.about-technical-note { border-inline-start: 3px solid var(--accent); padding: 0 1rem; margin-block: 1.5rem; }
+.about-release-copy .about-language-note { font-size: .9rem; color: var(--muted); }
+.controls-volume-row { display: grid; grid-template-columns: minmax(44px, 1fr) 1fr minmax(44px, 1fr); align-items: center; gap: 12px; text-align: center; }
+.controls-volume-row output { font-size: 1.4rem; font-weight: 700; }
+#key-volume-slider { width: 100%; min-width: 0; }
+#key-extra-commands { margin-top: 1rem; }
+#key-extra-commands summary { margin-bottom: 1rem; }
+.command.danger, .danger-panel h3, .friendly-status.is-error,
+.setup-warning-box strong, .firmware-warning strong,
+.setup-rebuild-error, .setup-rebuild-safety strong { color: var(--bad); }
+.setup-rebuild-safety { color: var(--text); }
+.setup-rebuild-steps span.is-done, .battery-line { color: var(--ok) !important; }
+.requires-ssh, .page-help-button, .wizard-step-number { color: var(--link); border-color: var(--link); }
+button, input, select, textarea { font: inherit; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]), select, textarea,
+pre, .top-clock, .hint-row, .route-plan div, .config-grid div, .media-card,
+.step-pill span, .settings-form label span, .slot-card span, .help-drawer,
+.help-drawer > header, .status-pill, .station-logo-placeholder {
+  background: var(--surface-sunken);
+  color: var(--text);
+  border-color: var(--line);
+}
+.slot-picker label span, .quick-station, .member-row, .radio-choice,
+.station-result-card img, .station-logo-small, .metadata-artwork-frame,
+.setup-risk-card, .step-pill.is-current, .setup-progress-item,
+.setup-progress-item span, .setup-linear-stage, .setup-flow-step,
+.setup-guided-grid .setup-card, .setup-flow-step > .setup-card,
+.setup-flow-step > .route-plan, .setup-flow-step > .verify-grid,
+.setup-flow-step > form, .setup-flow-step input, .setup-flow-step select,
+.setup-flow-step .hint-row, .setup-flow-step .route-plan div,
+.setup-wizard-actions, .setup-console details, .setup-console pre {
+  background: var(--surface-sunken);
+  color: var(--text);
+}
+.setup-progress-item.is-current { border-color: var(--focus); }
+.setup-progress-item.is-current span, .slot-picker input:checked + span {
+  background: var(--accent); color: #102c22;
+}
+.app-toast { color: var(--text); background: var(--panel); }
+.app-toast.error { background: var(--panel); }
+input, select, textarea { accent-color: var(--accent-2); }
+pre, code, td code, .config-grid code, .method-card code, .device-card code,
+.media-card code { color: var(--text); }
+button, .command, summary, .nav-button { cursor: pointer; }
+button:disabled, .command:disabled { cursor: not-allowed; }
+button:focus-visible, a:focus-visible, summary:focus-visible,
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.nav-button:hover, .command:hover { background: var(--panel-2); border-color: var(--muted); color: var(--text); }
+.nav-button.is-active, .command.primary { background: var(--accent); color: #102c22; }
+.topbar { gap: 16px; }
+.brand { min-width: 180px; }
+.panel, .metric, .now-panel, .safe-start-panel { box-shadow: 0 4px 18px rgb(0 0 0 / 5%); }
+.theme-switch { display: grid; gap: 3px; color: var(--muted); font-size: 12px; }
+.theme-switch select { min-height: 40px; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.remote-shell > .theme-switch { grid-template-columns: 1fr auto; align-items: center; }
+#remote-message:empty { display: none; }
+#remote-display-panel { scroll-margin-top: 20px; }
+.preset-evidence-summary { display: grid; gap: 6px; margin: 0; }
+.preset-evidence-summary > div { display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.preset-evidence-summary dt { color: var(--muted); }
+.preset-evidence-summary dd { margin: 0; }
+.preset-compare-card details { min-width: 0; }
+.preset-dependency-line { overflow-wrap: anywhere; }
+.timeline-event summary { display: grid; gap: 5px; padding: 4px; list-style: none; }
+.timeline-event summary::-webkit-details-marker { display: none; }
+.timeline-event summary::before { content: "▸"; color: var(--link); }
+.timeline-event[open] summary::before { content: "▾"; }
+.timeline-detail-label { color: var(--link); }
+.timeline-evidence { max-height: 360px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+.advanced-nav > div { box-shadow: 0 14px 40px rgb(0 0 0 / 20%); }
+@media (max-width: 900px) {
+  .topbar { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 14px; padding: 12px; }
+  .brand { min-width: 0; }
+  .brand p { font-size: 11px; }
+  .top-clock { width: auto; justify-items: end; padding: 6px; border: 0; background: transparent; }
+  .top-clock strong { font-size: 16px; }
+  .top-clock small { font-size: 10px; }
+  .topnav { grid-column: 1 / -1; }
+  .ui-mode-switch select, .theme-switch select, input, textarea, select { font-size: 16px; }
+  .command, .nav-button { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
+}
+/* Listening summaries stay readable without a wide chart or table. */
+.listening-summary select { width: 100%; margin-block: .4rem; }
+.listening-total { display: flex; flex-wrap: wrap; align-items: baseline; gap: .5rem 1rem; margin-block: 1rem; }
+.listening-total strong { font-size: 1.65rem; }
+.listening-row { padding-block: .5rem; }
+.listening-row > div { display: flex; justify-content: space-between; gap: 1rem; }
+.listening-row strong { overflow-wrap: anywhere; }
+.listening-row meter { display: block; width: 100%; height: .55rem; margin-block: .3rem; accent-color: var(--accent); }

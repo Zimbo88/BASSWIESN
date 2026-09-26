@@ -530,13 +530,13 @@ def media_search(q: str = "", limit: int = Query(default=100, ge=1, le=500), db:
 
 
 @router.get("/dlna/status")
-def get_dlna_status() -> dict:
-    return dlna_status()
+def get_dlna_status(db: Session = Depends(get_db)) -> dict:
+    return dlna_status(db)
 
 
 @router.post("/dlna/discover")
-async def dlna_discover() -> dict:
-    return await discover_renderers()
+async def dlna_discover(db: Session = Depends(get_db)) -> dict:
+    return await discover_renderers(db)
 
 
 @router.get("/announcements/status")

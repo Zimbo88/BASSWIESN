@@ -21,8 +21,9 @@ identity checks, backups and read-back before reporting a successful result.
 
 ## Release status
 
-BASSWIESN `2.6.5` adds individually selectable and ordered radio-display fields,
-guarded radio restarts, an opt-in restart schedule and host diagnostics.
+BASSWIESN `3.0.0` improves mobile navigation, light/dark appearance, remote
+controls, preset checks, listening statistics and readable diagnostics. The
+display layouts, guarded restarts and host diagnostics from 2.6.5 are retained.
 Release validation separates software,
 Chromium workflows, clean installation and real-hardware read-back. Easy Mode
 is the default UI, while experimental functions are kept
@@ -34,7 +35,7 @@ Station/song/time display was confirmed on a SoundTouch 30. Restart dispatch
 and return were tested on SoundTouch 30 SCM and SoundTouch 20 Series III SM2;
 firmware volume/source changes are reported explicitly. Reconnect is off by default.
 Firmware may change volume when selecting a source or creating a group; there
-is no guaranteed maximum-volume lock. See the [2.6.5 release notes](docs/releases/2.6.5/RELEASE_NOTES_2.6.5.md#hardware-boundary).
+is no guaranteed maximum-volume lock. See the [3.0.0 release notes](docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md#hardware-boundary).
 
 ## Supported hardware
 
@@ -139,13 +140,54 @@ New installations open in Easy Mode. It presents seven clear areas:
 7. Device Settings
 
 Advanced diagnostics and LAB functions remain available through an explicit
-mode switch. Changing the interface mode does not disable backend features.
+mode switch. New DLNA enrollment/browsing and update installation require LAB;
+changing modes does not cancel an already-running update or media relay.
 
 ## Advanced Mode and LAB Mode
 
 Standard Mode exposes stable diagnostics and administrative controls. LAB Mode
 adds clearly marked experimental and manual recovery tools. LAB is not enabled
 by default and never bypasses protected-device or write-profile gates.
+
+### Interface and release information
+
+The interface improves the mobile More menu, adds a shared
+light/dark/system appearance and puts the main remote controls before display
+options. Commands are followed by a radio-state readback; a successful command
+alone is not presented as a verified new volume or audible playback.
+
+Listening statistics offer today (UTC), rolling 7/30 days and all-time views,
+grouped by radio and station. These are estimates from recorded radio states,
+not measurements of uninterrupted sound. Advanced device checks are explicit,
+read-only and identity-guarded; they do not enable SSH or change redirects.
+
+Settings can check the official stable GitHub release without configuring a
+manifest URL. **Checking does not install an update.** The experimental LAB updater
+has explicit installer onboarding, an HTTPS administrator action, a restricted
+host service, private backups and version/image/data rollback. Production
+upgrade acceptance remains open; see [update setup and limits](docs/update-helper.md).
+The unfinished AirPlay bridge remains disabled. The experimental LAB DLNA library
+can browse an explicitly selected server and relay MP3/AAC items; radio-audio
+and broader server-compatibility acceptance remain separate. These are
+deferred LAB features, not completed production functions. See [feature status](FEATURES.md).
+
+About remains available in all three modes. The author's German statement is
+preserved verbatim, with a separate English translation and a separate technical
+status note. Other interface languages explicitly identify the English fallback
+for this essay; a translated navigation label does not mean the essay is translated.
+
+The interface offers 28 language choices, including Korean, Thai
+and Traditional Chinese. All codes in the radio-language catalogue have an
+equivalent UI choice, but the two settings remain independent. English and
+German are the primary interface languages. Other translations are partial;
+Settings states explicitly that untranslated controls and explanations use
+English. A populated translation catalogue is not proof of full translation.
+
+Version information shows the installed version's public GitHub release date,
+not its build date or the computer's current date. Normal page loads use local
+information only. **Check release date on GitHub** explicitly reads the official
+release metadata; it does not install an update. If no publication date is known,
+the interface says so. A failed check preserves an already verified date.
 
 ## Screenshots
 
@@ -158,12 +200,12 @@ addresses or hardware backups.
 Download and verify the versioned release asset:
 
 ```bash
-mkdir -p "$HOME/basswiesn-2.6.5"
-cd "$HOME/basswiesn-2.6.5"
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.5/basswiesn-docker-release-2.6.5.tar.gz
-curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v2.6.5/SHA256SUMS
+mkdir -p "$HOME/basswiesn-3.0.0"
+cd "$HOME/basswiesn-3.0.0"
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.0/basswiesn-docker-release-3.0.0.tar.gz
+curl -fLO https://github.com/Zimbo88/BASSWIESN/releases/download/v3.0.0/SHA256SUMS
 sha256sum -c SHA256SUMS
-tar -xzf basswiesn-docker-release-2.6.5.tar.gz
+tar -xzf basswiesn-docker-release-3.0.0.tar.gz
 cd basswiesn-release
 ./install.sh
 ```
@@ -381,7 +423,14 @@ storing secrets.
   failed read-back instead of faking success.
 - Arbitrary OLED bitmap artwork is not claimed.
 - Physical preset-button validation may require a person.
-- DLNA, local media, announcements/TTS, battery patching, Telnet reboot and
+- The development [DLNA library](docs/dlna-library.md) connects an explicitly
+  selected ContentDirectory server, browses folders and imports MP3/AAC tracks
+  into Stations through a bounded relay. No automatic LAN scan, NAS password,
+  transcoding or generic renderer control. Protocol tests are not radio-audio
+  acceptance. It is LAB-only and disabled by default in 3.0.0.
+- Local file indexing is separate from DLNA; successfully indexing a format
+  does not prove that a radio can play it.
+- Local media, announcements/TTS, battery patching, Telnet reboot and
   standby-clock recovery remain experimental or LAB features.
 - Factory reset is an exact-profile, explicitly confirmed LAB function. It
   erases radio configuration and can require the user to reconnect Wi-Fi; it
@@ -391,6 +440,14 @@ storing secrets.
 
 The test suite is split by feedback speed:
 
+After installing the Python requirements in your development environment,
+install the browsers used by the UI suite (Linux dependencies may require
+administrator rights):
+
+```bash
+python -m playwright install --with-deps chromium webkit
+```
+
 ```bash
 make test-fast
 make test-integration
@@ -399,8 +456,10 @@ make test-hardware   # explicitly gated; real devices
 make test-release    # complete software suite
 ```
 
-Visible user workflows are exercised with Chromium/Playwright. Hardware tests
-remain separate and require explicit target authorization.
+Visible user workflows are exercised with Playwright, including Chromium and
+WebKit for mobile navigation. WebKit simulation is not a substitute for a final
+real-iPhone check. Software tests use isolated data and mocked device access;
+hardware tests remain separate and require explicit target authorization.
 
 ## Docker commands
 
@@ -416,9 +475,19 @@ docker compose logs -f        # follow logs
 
 ## Updating
 
-To update, download and verify the new release in a separate directory, copy
-the existing `.env` and `data/` only after making a backup, then run
-`./install.sh`. Never use `docker compose down -v` as an update step.
+For the experimental installer, switch to LAB and use Settings → Updates over
+HTTPS with the optional host helper enrolled. Production-host acceptance remains open.
+Checking is read-only; installation requires the private administrator code and
+explicit confirmation. The helper checks the official archive, backs up the
+stopped installation and restores the previous image **and matching data** if
+the candidate fails. See [setup, supported hosts and recovery](docs/update-helper.md).
+
+Without that helper, download and verify the new release in a separate directory,
+stop the old installation for a consistent backup, then copy its `.env` and
+`data/` and run `./install.sh --no-updater`. Keep the old image and backup until
+validation is complete. Do not relocate a helper-enrolled installation this way:
+its root service is deliberately bound to the original directory and container.
+Never use `docker compose down -v` as an update step.
 
 To uninstall, run `docker compose down` and archive the local `.env` and
 `data/` before deleting the release directory. BASSWIESN does not provide a

@@ -1328,6 +1328,22 @@
     "default": "",
     "deprecated": false,
     "documented_in_env_example": true,
+    "name": "BASSWIESN_UPDATE_CONTROL_DIR",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      ".env.example"
+    ],
+    "type": "string"
+  },
+  {
+    "allowed_values": "freier Text gemaess Code",
+    "default": "",
+    "deprecated": false,
+    "documented_in_env_example": true,
     "name": "BASSWIESN_UPDATE_MANIFEST_URL",
     "notes": "",
     "required": false,
@@ -1356,6 +1372,22 @@
       "basswiesn/app/config.py"
     ],
     "type": "string"
+  },
+  {
+    "allowed_values": "true/false, 1/0, yes/no, on/off",
+    "default": false,
+    "deprecated": false,
+    "documented_in_env_example": false,
+    "name": "BASSWIESN_UPDATE_VALIDATION_MODE",
+    "notes": "",
+    "required": false,
+    "restart_required": true,
+    "security_relevance": "mittel",
+    "service": "WebGUI/External Services",
+    "sources": [
+      "basswiesn/app/config.py"
+    ],
+    "type": "bool"
   },
   {
     "allowed_values": "freier Text gemaess Code",

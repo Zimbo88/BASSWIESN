@@ -50,8 +50,8 @@ def test_remote_human_flow_without_radio_contacts(tmp_path, language, width, hei
             return route.fulfill(json=clock_preference)
         if path == "/remote/REMOTE-A":
             return route.fulfill(body=html, content_type="text/html")
-        if path in {"/static/remote.js", "/static/remote.css"}:
-            return route.fulfill(body=(assets / Path(path).name).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
+        if path in {"/static/remote.js", "/static/remote.css", "/static/theme.css", "/static/js/theme.js"}:
+            return route.fulfill(body=(assets / path.removeprefix("/static/")).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
         response = {
             "/api/system/settings": {"web_language": language, "safe_startup_volume": 1},
             "/api/devices": radios,

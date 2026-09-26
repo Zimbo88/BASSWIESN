@@ -8,17 +8,31 @@ PYTHON="${BASSWIESN_PYTHON:-python3}"
 [[ -x .venv/bin/python ]] && PYTHON=.venv/bin/python
 SOURCE_DATE_EPOCH="${SOURCE_DATE_EPOCH:-0}"
 DIST="$ROOT_DIR/dist"
+if (( $# != 0 )); then
+  [[ $# == 2 && "$1" == "--output-dir" && "$2" == /* ]] || {
+    echo "Usage: package_release.sh [--output-dir NEW_ABSOLUTE_DIRECTORY]" >&2
+    exit 2
+  }
+  DIST="$2"
+fi
+# Reserve a NEW directory before doing work. Never overwrite a previous release
+# or accept a symlink/ambiguous output path. Parent must already exist.
+[[ "$DIST" != */../* && "$DIST" != */./* && "$DIST" != */.. && "$DIST" != */. ]] || exit 2
+if ! mkdir -m 700 -- "$DIST"; then
+  echo "Release output must be a new directory; existing artifacts were not changed." >&2
+  exit 1
+fi
 VERSION="$("$PYTHON" - <<'PY'
 from basswiesn import __version__
 print(__version__)
 PY
 )"
-ARCHIVE="$DIST/basswiesn-docker-release-${VERSION}.tar.gz"
 STAGE_ROOT="$(mktemp -d)"
+ARCHIVE="$STAGE_ROOT/basswiesn-docker-release-${VERSION}.tar.gz"
 STAGE="$STAGE_ROOT/basswiesn-release"
 BASE_ITEMS=(basswiesn Dockerfile docker-compose.yml requirements.txt README.md FEATURES.md SETUP_READ_HERE.md RELEASE_CHECKLIST.md LICENSE .env.example install.sh .dockerignore CHANGELOG.md)
-PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py)
-PUBLIC_DOCS=(docs/releases/2.6.5/RELEASE_NOTES_2.6.5.md docs/PI_OBSERVER.md)
+PUBLIC_TOOLS=(tools/run_dev.py tools/pi_observer.py tools/install_observer.py tools/check_update_host.py tools/prepare_update_host.py tools/prepare_update_service.py tools/install_update_helper.py tools/configure_update_env.py tools/verify_release_archive.py)
+PUBLIC_DOCS=(docs/releases/3.0.0/RELEASE_NOTES_3.0.0.md docs/PI_OBSERVER.md docs/update-helper.md docs/dlna-library.md docs/airplay-bridge.md)
 trap 'rm -rf "$STAGE_ROOT"' EXIT
 
 "$PYTHON" -m compileall -q basswiesn tests tools
@@ -53,7 +67,7 @@ else
   echo "node not found; skipping JavaScript syntax checks" >&2
 fi
 
-mkdir -p "$DIST" "$STAGE"
+mkdir -p "$STAGE"
 for item in "${BASE_ITEMS[@]}"; do
   [[ -e "$item" ]] || { echo "Missing release input: $item" >&2; exit 1; }
   cp -a "$item" "$STAGE/"
@@ -64,6 +78,9 @@ for item in "${PUBLIC_TOOLS[@]}" "${PUBLIC_DOCS[@]}"; do
   cp -a "$item" "$STAGE/$item"
 done
 chmod 755 "$STAGE/install.sh"
+# Stable release metadata must not inherit a developer's group-writable umask.
+find "$STAGE" -type d -exec chmod go-w {} +
+find "$STAGE" -type f -exec chmod go-w {} +
 mkdir -p "$STAGE/data"
 cp "$TEST_SUMMARY" "$STAGE/release-test-summary.json"
 find "$STAGE" -type d -name __pycache__ -prune -exec rm -rf {} +
@@ -116,8 +133,11 @@ for path in sorted(p for p in root.rglob("*") if p.is_file() and p.name != "SHA2
 (root / "SHA256SUMS").write_text("\n".join(checksum_lines) + "\n", encoding="utf-8")
 PY
 
-rm -f "$ARCHIVE" "$DIST/basswiesn-docker-release.tar.gz" "$DIST/manifest.json" "$DIST/release-test-summary.json" "$DIST/SHA256SUMS.txt" "$DIST/SHA256SUMS"
-tar --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner -cf - -C "$STAGE_ROOT" basswiesn-release | gzip -n > "$ARCHIVE"
+tar --format=gnu --sort=name --mtime="@$SOURCE_DATE_EPOCH" --owner=0 --group=0 --numeric-owner -cf - -C "$STAGE_ROOT" basswiesn-release | gzip -n > "$ARCHIVE"
+# Verify before placing any package in the reserved output directory.
+(cd "$STAGE_ROOT" && sha256sum "$(basename "$ARCHIVE")" > SHA256SUMS)
+"$PYTHON" tools/verify_release_archive.py "$ARCHIVE" --version "$VERSION" --checksums "$STAGE_ROOT/SHA256SUMS"
+cp -n "$ARCHIVE" "$DIST/$(basename "$ARCHIVE")"
 ln -s "$(basename "$ARCHIVE")" "$DIST/basswiesn-docker-release.tar.gz"
 cp "$STAGE/manifest.json" "$DIST/manifest.json"
 cp "$STAGE/release-test-summary.json" "$DIST/release-test-summary.json"
@@ -128,4 +148,7 @@ cp "$STAGE/.env.example" "$DIST/.env.example"
 # The public GitHub release uploads only the versioned archive and this file;
 # keep its copy-paste verification contract limited to the downloadable asset.
 (cd "$DIST" && sha256sum "$(basename "$ARCHIVE")" > SHA256SUMS)
-echo "$ARCHIVE"
+# Verify the complete artifact without extracting or executing its contents.
+# This is an integrity/layout gate, not the separate publication/privacy gate.
+"$PYTHON" tools/verify_release_archive.py "$ARCHIVE" --version "$VERSION" --checksums "$DIST/SHA256SUMS"
+echo "$DIST/$(basename "$ARCHIVE")"

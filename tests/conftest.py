@@ -35,6 +35,15 @@ from basswiesn.app.db import database as database_module
 
 
 @pytest.fixture(autouse=True)
+def browser_setup_probe_stays_offline(monkeypatch, request):
+    if request.node.get_closest_marker("browser") is not None:
+        from basswiesn.app.routers import api
+        # The page may ask about the host's ports. This is a software fixture,
+        # not permission to probe a developer LAN. Network guard stays active.
+        monkeypatch.setattr(api, "_tcp_port_open", lambda *_args, **_kwargs: (False, "offline fixture"))
+
+
+@pytest.fixture(autouse=True)
 def no_real_network_in_software_tests(monkeypatch, request):
     """Software suites may use loopback servers, never a household radio."""
     if request.node.get_closest_marker("hardware") is not None:

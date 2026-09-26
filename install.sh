@@ -6,6 +6,24 @@ trap 'echo "Installation failed at line $LINENO. Check the message above and run
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
+UPDATE_HELPER=0
+if (( $# > 1 )); then
+  echo "Usage: ./install.sh [--enable-updater | --no-updater]" >&2
+  exit 2
+fi
+case "${1:-}" in
+  --enable-updater) UPDATE_HELPER=1 ;;
+  --no-updater|"") ;;
+  *) echo "Usage: ./install.sh [--enable-updater | --no-updater]" >&2; exit 2 ;;
+esac
+if [[ $# == 0 && -t 0 ]]; then
+  echo "Experimental LAB in-app updates need a restricted root host service, HTTPS and a private administrator code."
+  echo "The service may stop this BASSWIESN container, back up its data and replace or restore this installation."
+  read -r -p "Enable the update service? [y/N] " UPDATE_ANSWER
+  [[ "$UPDATE_ANSWER" =~ ^[Yy]$ ]] && UPDATE_HELPER=1
+fi
+UPDATE_ADMIN=()
+
 command -v docker >/dev/null 2>&1 || {
   echo "Docker is missing. Install Docker Engine and run this script again." >&2
   exit 1
@@ -20,6 +38,27 @@ docker info >/dev/null 2>&1 || {
   echo "Docker daemon is not reachable. Start Docker or check user permissions." >&2
   exit 1
 }
+
+# Complete non-mutating prerequisites before creating a privileged host group,
+# runtime directory or any application data. Missing Docker is not partial
+# updater enrollment.
+if (( UPDATE_HELPER == 1 )); then
+  case "$ROOT_DIR/" in
+    /tmp/*|/var/tmp/*|/run/*) echo "Install the updater from a persistent directory, not a temporary folder." >&2; exit 1 ;;
+  esac
+  /usr/bin/python3 -c 'import sys; assert sys.version_info >= (3,11)' || {
+    echo "Host Python 3.11+ is required." >&2; exit 1;
+  }
+  # The trusted actor may own a home ancestor even when sudo created the final
+  # directory as root. Never infer trust from arbitrary filesystem owner IDs.
+  # Check the entire no-symlink path before any privileged bootstrap or write.
+  UPDATE_OWNER="$(/usr/bin/python3 -c 'from pathlib import Path; from tools.install_update_helper import installation_owner; print(installation_owner(Path.cwd()))')" || {
+    echo "Installation path is not owned by root and the invoking administrator. Use that administrator (with sudo when needed), or a root-owned persistent path." >&2
+    exit 1
+  }
+  if (( EUID != 0 )); then UPDATE_ADMIN=(sudo); fi
+  "${UPDATE_ADMIN[@]}" /usr/bin/python3 tools/install_update_helper.py bootstrap --approve-root-helper
+fi
 
 is_usable_lan_ipv4() {
   local candidate="${1:-}" second_octet=""
@@ -77,6 +116,7 @@ mkdir -p \
   data/tmp \
   data/diagnostics \
   data/setup-rebuild \
+  data/update-disabled \
   data/secrets/setup-rebuild
 
 CREATED_ENV=0
@@ -85,6 +125,7 @@ if [[ ! -f .env ]]; then
   CREATED_ENV=1
   echo "Created .env from .env.example"
 fi
+chmod 600 .env
 
 # A bridge-mode container cannot see the host's physical LAN interfaces. On a
 # brand-new installation, persist the host-side candidates so Setup can offer
@@ -97,6 +138,10 @@ if (( CREATED_ENV == 1 )) && (( ${#LAN_CANDIDATES[@]} > 0 )); then
     printf 'BASSWIESN_LAN_HOST_CANDIDATES=%s\n' "$LAN_CANDIDATE_LIST"
   } >> .env
   echo "Detected LAN server address: ${LAN_CANDIDATES[0]}"
+fi
+
+if (( UPDATE_HELPER == 1 )); then
+  /usr/bin/python3 tools/configure_update_env.py --enable-updater
 fi
 
 docker compose pull --ignore-buildable || echo "No prebuilt image available; BASSWIESN will be built locally."
@@ -139,6 +184,35 @@ docker compose run --rm --no-deps --user 10001 --entrypoint sh basswiesn -c '
   done
 '
 docker compose up -d --force-recreate
+
+if (( UPDATE_HELPER == 1 )); then
+  # Exact single service identity; never choose from unrelated containers.
+  UPDATE_CONTAINER="$(docker compose ps --all --quiet basswiesn)"
+  [[ "$UPDATE_CONTAINER" =~ ^[0-9a-f]{64}$ ]] || { echo "Expected exactly one BASSWIESN container." >&2; exit 1; }
+  for (( UPDATE_WAIT=0; UPDATE_WAIT<120; UPDATE_WAIT++ )); do
+    [[ "$(docker inspect --format '{{.State.Health.Status}}' "$UPDATE_CONTAINER")" == "healthy" ]] && break
+    sleep 1
+  done
+  [[ "$(docker inspect --format '{{.State.Health.Status}}' "$UPDATE_CONTAINER")" == "healthy" ]] || { echo "Application is not healthy; helper not activated." >&2; exit 1; }
+  UPDATE_IMAGE="$(docker inspect --format '{{.Image}}' "$UPDATE_CONTAINER")"
+  UPDATE_PROJECT="$(docker inspect --format '{{index .Config.Labels "com.docker.compose.project"}}' "$UPDATE_CONTAINER")"
+  UPDATE_VERSION="$(docker image inspect --format '{{index .Config.Labels "org.opencontainers.image.version"}}' "$UPDATE_IMAGE")"
+  UPDATE_BUNDLE_HASH="$(/usr/bin/python3 -c 'from pathlib import Path; from basswiesn.update_helper.deployment import build_bundle,sha; print(sha(build_bundle(Path.cwd())))')"
+  "${UPDATE_ADMIN[@]}" /usr/bin/python3 tools/install_update_helper.py activate --approve-root-helper \
+    --installation-root "$ROOT_DIR" --installation-owner-uid "$UPDATE_OWNER" \
+    --compose-project "$UPDATE_PROJECT" --container-id "$UPDATE_CONTAINER" \
+    --image-id "$UPDATE_IMAGE" --version "$UPDATE_VERSION" --approve-sha256 "$UPDATE_BUNDLE_HASH"
+  echo "Update service ready. Switch to LAB; use HTTPS port 1329 and Settings > Updates."
+  echo "Retrieve the private administrator code on this host with:"
+  echo "  sudo /usr/bin/python3 tools/install_update_helper.py show-code --approve-root-helper"
+  if [[ -t 0 && -t 1 ]]; then
+    "${UPDATE_ADMIN[@]}" /usr/bin/python3 tools/install_update_helper.py show-code --approve-root-helper
+  fi
+  if [[ -f data/tls/basswiesn.crt ]]; then
+    echo "Compare this certificate fingerprint before entering the code in your browser:"
+    openssl x509 -in data/tls/basswiesn.crt -noout -fingerprint -sha256
+  fi
+fi
 
 HOST_IP="$(awk -F= '/^BASSWIESN_LAN_HOST=/{print $2; exit}' .env | tr -d '[:space:]')"
 if [[ -z "$HOST_IP" ]]; then

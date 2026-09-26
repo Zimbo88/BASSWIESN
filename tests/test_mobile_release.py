@@ -9,6 +9,13 @@ from playwright.sync_api import sync_playwright
 
 from basswiesn import __version__
 from basswiesn.app.main import create_web_app
+from basswiesn.app.routers import api
+
+
+@pytest.fixture(autouse=True)
+def offline_setup_status(monkeypatch):
+    # The UI server's setup wizard must not probe the developer's LAN.
+    monkeypatch.setattr(api, "_tcp_port_open", lambda *_args, **_kwargs: (False, "offline fixture"))
 
 
 def _free_port() -> int:
@@ -169,7 +176,8 @@ def test_mobile_advanced_lab_menu_stays_in_viewport_and_all_items_are_clickable(
 def test_web_language_switch_wires_all_supported_languages_to_visible_ui():
     with _LiveServer() as server, sync_playwright() as playwright:
         languages = httpx.get(f"{server.url}/api/system/settings", timeout=2).json()["web_languages"]
-        assert len(languages) == 25
+        assert len(languages) == 28
+        assert {"ko", "th", "zh-Hant"} <= {language["code"] for language in languages}
 
         browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
         page = browser.new_page(viewport={"width": 1440, "height": 900})
@@ -203,11 +211,12 @@ def test_web_language_switch_wires_all_supported_languages_to_visible_ui():
             assert page.locator("#view-about .page-head h2").text_content() == expected["aboutTitle"]
             assert page.locator("#view-about .about-release-copy p").count() >= 12
             about_text = page.locator("#view-about").inner_text()
-            assert "400" in about_text
-            assert "Raspberry Pi 5" in about_text
-            if code != "en":
-                assert "BASSWIESN grew out of more than 400 hours" not in about_text
-                assert "Thank you. Greetings from Bavaria" not in about_text
+            assert "400" not in about_text
+            assert "Raspberry Pi 5" not in about_text
+            assert page.locator(".about-story").get_attribute("lang") == ("de" if code == "de" else "en")
+            assert ("1.000" if code == "de" else "1,000") in about_text
+            assert "Mathias Zimmermann" in about_text
+            assert page.locator(".about-language-note").count() == (0 if code in {"de", "en"} else 1)
 
         assert page_errors == []
         browser.close()

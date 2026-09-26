@@ -24,6 +24,13 @@ def test_api_matrix_covers_mounted_applications_and_known_duplicate():
     assert any(route["path"] == "/{path:path}" and route["application"] == "cloud" for route in routes)
     assert any(route["path"] == "/api/health" and route["application"] == "webgui" for route in routes)
     assert any(route["path"] == "/api/health" and route["application"] == "https-webgui" for route in routes)
+    ap2 = [route for route in routes if route["path"] == "/api/airplay-bridge/status"]
+    assert {route["application"] for route in ap2} == {"webgui", "https-webgui"}
+    assert all(route["method"] == "GET" and not route["hardware_contact_possible"]
+               and not route["database_change_possible"] for route in ap2)
+    assert {r["application"] for r in routes if r["path"] == "/api/dlna/servers"} == {"webgui", "https-webgui"}
+    assert {r["application"] for r in routes if r["path"] == "/dlna/audio/{server_id}/{token}"} == {"cloud"}
+    assert not any(r["path"].startswith("/api/dlna/dlna/") for r in routes)
 
     for application in applications:
         rows = [route for route in routes if route["application"] == application]

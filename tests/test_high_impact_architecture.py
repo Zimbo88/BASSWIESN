@@ -299,11 +299,18 @@ def test_preset_checker_returns_both_sides_and_changed_fields(monkeypatch):
     assert preview.json()["sync_scope"] == "containerArt only; live radio selection identity is preserved"
 
 
-def test_system_settings_expose_all_25_web_languages():
+def test_system_settings_expose_all_device_languages_and_legacy_ui_choices():
+    from basswiesn.app.services.catalogs import STOCKHOLM_LANGUAGES
+    from basswiesn.app.routers.media import _normalize_web_language
     with TestClient(create_web_app()) as client:
         response = client.get("/api/system/settings")
     assert response.status_code == 200
-    assert len(response.json()["web_languages"]) == 25
+    languages = response.json()["web_languages"]
+    codes = {row["code"] for row in languages}
+    assert len(languages) == len(codes) == 28
+    assert {"ko", "th", "zh-Hant", "de", "en", "sk", "bg", "hr", "uk"} <= codes
+    assert all(_normalize_web_language(row["code"]) in codes for row in STOCKHOLM_LANGUAGES)
+    assert all(row["label"] for row in languages)
 
 
 def test_source_select_updates_runtime_state(monkeypatch):

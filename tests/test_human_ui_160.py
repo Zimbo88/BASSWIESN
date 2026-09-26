@@ -338,6 +338,8 @@ def _open_view(page: Page, view: str) -> None:
         advanced = page.locator("details.advanced-nav")
         if not advanced.evaluate("node => node.open"):
             advanced.locator("summary").click()
+        # The native details toggle schedules showing the top-layer popover.
+        expect(advanced.locator(":scope > div")).to_be_visible()
         if (page.viewport_size or {}).get("width", 9999) <= 900:
             viewport = page.viewport_size
             drawer_box = advanced.locator(":scope > div").bounding_box()

@@ -1,8 +1,31 @@
-# BASSWIESN 2.6.5 Feature Status
+# BASSWIESN 3.0.0 Feature Status
 
 This document separates production features from limited, experimental and
 unsupported behavior. A feature is not called complete solely because a unit
 test exists.
+
+## 3.0.0 — stable core and explicit LAB boundary
+
+The stable core is released with the following boundaries. Unfinished functions
+are LAB-only or disabled. Software checks do not replace real-radio acceptance.
+
+| Area | Implemented in this tree | Remaining boundary |
+|---|---|---|
+| Mobile navigation | Height-bounded More menu, touch/click tests in Chromium and WebKit; user-confirmed iPhone UI acceptance | UI acceptance is not an audio test |
+| Appearance | Shared system/light/dark preference for the main UI and compact remote | Full visual and translation review continues |
+| Languages | DE/EN interface checks; 28 selectable UI locales, including Korean, Thai and Traditional Chinese core navigation and safety prompts; aliases for all device-language catalogue entries | Other locales remain partial, with an explicit English fallback notice. This is not a claim of complete native translation or radio-language modification |
+| Remote control | Main controls first, command followed by current-state readback, collapsed technical output; display and compact-remote shortcuts | Readback is not proof of audible output |
+| Display metadata | Distinguish missing, stale, unavailable and artist/title-bearing station metadata in the display editor without starting a probe | Stored upstream evidence is not physical display verification; absent cache does not prove absent station metadata |
+| Preset checker | Actual sourceItem parsing, separate configuration/provider/stream results | Physical buttons and audible playback remain separate checks |
+| Listening statistics | Today (UTC), rolling 7/30 days and all-time summaries; by-radio and station totals; midnight clipping | Estimated intervals, not continuous sound measurement |
+| Device readiness | Explicit identity-guarded read-only SSH/marker check, cached with expiry; concise request/retry summary and last response, technical details in LAB | Marker presence does not prove boot persistence or the redirect destination; allowed requests are not a current connectivity check |
+| Updates | Stable official release check; experimental LAB installation with explicit enrollment, HTTPS administrator action, root-sealed Unix service, backup/cutover/rollback and durable reconnect status. See [setup and limits](docs/update-helper.md) | Production updater acceptance remains open. Rootful Linux Docker/systemd and administrator setup required. No unattended updates, arbitrary archives or host commands. Checksums are not publisher signatures |
+| About | Unchanged German author statement, English translation, observed release date | Other languages explicitly use the English essay fallback |
+| AirPlay bridge | Disabled LAB preview and offline safety checks | Production receiver/network/group integration is unfinished. No AP2 audio, volume, metadata or multi-device PASS is claimed |
+| DLNA library | Explicit ContentDirectory server connection, folder browsing (including unknown totals), MP3/AAC import into Stations and bounded same-origin byte/range relay; Chromium/WebKit DE/EN and independent ReadyMedia synthetic-media Pi checks | No multicast discovery, NAS credentials, transcoding, playlists or generic AVTransport control. Real-radio audio and broader NAS-vendor acceptance are separate; see [library guide](docs/dlna-library.md) |
+
+No feature in this section enables radio SSH, rewrites firmware or relaxes
+protected-device checks. Deferred LAB work is not advertised as production-ready.
 
 ## Production path
 

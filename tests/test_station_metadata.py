@@ -22,6 +22,55 @@ from basswiesn.app.services.network_security import UrlValidation
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.parametrize("age,status,fields,expected", [
+    (10,"AVAILABLE",{"artist":"Artist","track":"Title"},"SONG_AVAILABLE"),
+    (10,"AVAILABLE",{"other_info":"Traffic"},"INFORMATION_ONLY"),
+    (10,"EMPTY_METADATA",{},"NO_SONG"),
+    (10,"PROBE_FAILED",{},"UNAVAILABLE"),
+    (121,"AVAILABLE",{"artist":"Old","track":"Old"},"STALE"),
+    (-10,"AVAILABLE",{"artist":"Future","track":"Future"},"NOT_OBSERVED"),
+])
+def test_display_observation_is_upstream_evidence_not_radio_success(age, status, fields, expected):
+    with app_db.SessionLocal() as db:
+        device = Device(device_id="OBSERVATION-EXAMPLE", name="Example")
+        station = Station(name="Example Station", stream_url="https://example.invalid/music")
+        db.add_all([device,station]); db.commit()
+        db.add(MetadataState(device_id=device.device_id, station_id=str(station.id),
+            display_projection="Old unrelated radio echo"))
+        db.add(RuntimeState(key=metadata.cache_key(station.stream_url),value=json.dumps({
+            "observed_timestamp":1000-age,"status":status,**fields})))
+        metadata.save_display_preference(db, device.device_id, metadata.DisplayPreference("TRACK_ARTIST"))
+        result = metadata.display_observation(db, device.device_id, now=1000)
+        assert result["status"] == expected
+        assert result["scope"] == "LAST_STATION_CACHE"
+        assert not result["radio_contacted"] and not result["probe_started"] and not result["display_verified"]
+        assert result["artist_available"] is (expected == "SONG_AVAILABLE")
+        assert "Old unrelated" not in json.dumps(result)
+
+
+def test_display_observation_disabled_and_unknown_station_are_not_errors():
+    with app_db.SessionLocal() as db:
+        db.add(Device(device_id="OBSERVATION-EXAMPLE",name="Example")); db.commit()
+        assert metadata.display_observation(db,"OBSERVATION-EXAMPLE")["status"] == "NOT_REQUESTED"
+        metadata.save_display_preference(db,"OBSERVATION-EXAMPLE",metadata.DisplayPreference("TRACK_ARTIST"))
+        assert metadata.display_observation(db,"OBSERVATION-EXAMPLE")["status"] == "NOT_OBSERVED"
+        db.add(MetadataState(device_id="OBSERVATION-EXAMPLE",station_id="removed-station")); db.commit()
+        assert metadata.display_observation(db,"OBSERVATION-EXAMPLE")["status"] == "NOT_OBSERVED"
+
+
+def test_display_observation_resolves_generated_contract_key():
+    from basswiesn.app.services.orion import StationDescriptor, station_contract_key
+    with app_db.SessionLocal() as db:
+        station=Station(name="Example",stream_url="https://example.invalid/generated")
+        db.add(station); db.commit()
+        db.add(MetadataState(device_id="OBSERVATION-EXAMPLE",
+            station_id=station_contract_key(StationDescriptor(station.name,station.stream_url))))
+        db.add(RuntimeState(key=metadata.cache_key(station.stream_url),value=json.dumps({
+            "observed_timestamp":1000,"status":"AVAILABLE","artist":"Artist","track":"Song"})))
+        metadata.save_display_preference(db,"OBSERVATION-EXAMPLE",metadata.DisplayPreference("TRACK_ARTIST"))
+        assert metadata.display_observation(db,"OBSERVATION-EXAMPLE",now=1010)["status"] == "SONG_AVAILABLE"
+
+
 @pytest.mark.parametrize("raw,name,host,track,artist", [
     ("Artist: Title", "Example", "d1.rndfnk.com", "Title", "Artist"),
     ("Artist - Title", "Example", "d1.rndfnk.com", "Title", "Artist"),
@@ -63,6 +112,40 @@ def transport(monkeypatch, responder, validate=None):
     monkeypatch.setattr(metadata.httpx, "AsyncClient", lambda **kwargs: original(transport=httpx.MockTransport(responder), **kwargs))
     monkeypatch.setattr(metadata, "validate_outbound_http_url", validate or (
         lambda url, **kw: UrlValidation(True, "ok", hostname=httpx.URL(url).host, addresses=("1.1.1.1",))))
+
+
+@pytest.mark.parametrize('opening', ['*** Example - Station slogan', ''])
+def test_startup_information_does_not_hide_later_song_in_same_bounded_probe(monkeypatch, opening):
+    def responder(_request):
+        return httpx.Response(200, headers={'icy-metaint': '8'},
+            stream=Chunks([block(opening), block('Artist: Current song')]))
+    transport(monkeypatch, responder)
+    result = asyncio.run(metadata.probe_icy('https://d1.rndfnk.com/live', 'Example'))
+    assert result['status'] == 'AVAILABLE'
+    assert (result['artist'], result['track']) == ('Artist', 'Current song')
+
+
+def test_later_empty_update_replaces_slogan_fallback(monkeypatch):
+    def responder(_request):
+        return httpx.Response(200, headers={'icy-metaint': '8'},
+            stream=Chunks([block('*** Example - Station slogan'), block('')]))
+    transport(monkeypatch, responder)
+    result = asyncio.run(metadata.probe_icy('https://d1.rndfnk.com/live', 'Example'))
+    assert result['status'] == 'EMPTY_METADATA'
+    assert result['other_info'] == ''
+    assert not result['track'] and not result['artist']
+
+
+def test_slogan_fallback_preserved_at_byte_limit_without_inventing_song(monkeypatch):
+    monkeypatch.setattr(metadata, 'MAX_BYTES', 100)
+    def responder(_request):
+        return httpx.Response(200, headers={'icy-metaint': '8'},
+            stream=Chunks([block('*** Example - Station slogan'), b'A' * 101]))
+    transport(monkeypatch, responder)
+    result = asyncio.run(metadata.probe_icy('https://d1.rndfnk.com/live', 'Example'))
+    assert result['status'] == 'AVAILABLE' and result['probe_stop_reason'] == 'BYTE_LIMIT'
+    assert result['classification'] == 'UNSTRUCTURED'
+    assert not result['track'] and not result['artist']
 
 
 @pytest.mark.parametrize("encoding", ["utf-8", "latin-1"])

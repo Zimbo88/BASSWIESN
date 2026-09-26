@@ -1,3 +1,3 @@
 """BASSWIESN package metadata."""
 
-__version__ = "2.6.5"
+__version__ = "3.0.0"

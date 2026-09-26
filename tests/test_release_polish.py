@@ -415,10 +415,10 @@ def test_system_health_reports_https_disabled_by_default():
         health = client.get("/api/system/healthcheck").json()
 
     assert version.status_code == 200
-    assert version.json()["version"] == "2.6.5"
+    assert version.json()["version"] == "3.0.0"
     assert readiness.status_code == 200
     assert readiness.json()["ready"] is True
-    assert readiness.json()["version"] == "2.6.5"
+    assert readiness.json()["version"] == "3.0.0"
     check = next(item for item in health["checks"] if item["name"] == "https_status")
     assert check["status"] == "green"
     assert "optional HTTPS disabled" in check["message"]
@@ -427,8 +427,8 @@ def test_system_health_reports_https_disabled_by_default():
 def test_release_polish_ui_and_translation_keys_exist():
     with TestClient(create_web_app()) as client:
         html = client.get("/").text
-    js = open("basswiesn/app/static/app.js", encoding="utf-8").read()
     translations = open("basswiesn/app/static/js/translations.js", encoding="utf-8").read()
+    js = open("basswiesn/app/static/app.js", encoding="utf-8").read()
 
     assert "Telemetry Analyse" in js
     assert "6h Protection" in js
@@ -457,6 +457,8 @@ def test_translation_catalogs_cover_all_languages_and_about_has_clean_names():
 global.window = {};
 global.console = { warn() {}, log: (...args) => process.stdout.write(args.join(' ') + '\\n'), error() {} };
 require('./basswiesn/app/static/js/translations.js');
+require('./basswiesn/app/static/js/about.js');
+require('./basswiesn/app/static/js/language-extension.js');
 const i18n = window.BasswiesnI18n;
 const languages = i18n.languages;
 const keys = i18n.keys;
@@ -479,11 +481,12 @@ for (const lang of languages) {
   phraseTranslations[lang] = phraseProbe.map((text) => i18n.phrase(text));
   firstRunTranslations[lang] = firstRunProbe.map((key) => i18n.catalogs[lang][key]);
 }
-console.log(JSON.stringify({languages, keys, missing, phraseProbe, phraseTranslations, firstRunTranslations}));
+console.log(JSON.stringify({languages, keys, missing, phraseProbe, phraseTranslations, firstRunTranslations, about: window.BasswiesnAbout}));
 """
     result = subprocess.run(["node", "-e", script], cwd=".", text=True, capture_output=True, check=True)
     data = json.loads(result.stdout)
-    assert len(data["languages"]) == 25
+    from basswiesn.app.routers.media import WEB_LANGUAGE_CODES
+    assert set(data["languages"]) == WEB_LANGUAGE_CODES
     assert all(not values for values in data["missing"].values())
     for lang in data["languages"]:
         if lang == "en":
@@ -502,15 +505,17 @@ console.log(JSON.stringify({languages, keys, missing, phraseProbe, phraseTransla
     translations = open("basswiesn/app/static/js/translations.js", encoding="utf-8").read()
     assert "const aboutKeys" not in translations
     assert "const aboutRows" not in translations
-    about_segment = js[js.index("const ABOUT_COPY ="):js.index("const FIRST_RUN_COPY =")]
+    about = open("basswiesn/app/static/js/about.js", encoding="utf-8").read()
+    about_data = json.loads(about.split("window.BasswiesnAbout = ", 1)[1].rstrip(";\n"))
     for lang in data["languages"]:
-        assert f"\n  {lang}: {{" in about_segment
-        lang_start = about_segment.index(f"\n  {lang}: {{")
-        next_lang = re.search(r"\n  [a-z]{2}: \{", about_segment[lang_start + 1 :])
-        lang_end = lang_start + 1 + next_lang.start() if next_lang else len(about_segment)
-        lang_section = about_segment[lang_start:lang_end]
-        assert "paragraphs: [" in lang_section
-        assert "400" in lang_section
-        assert "Raspberry Pi 5" in lang_section
+        assert data["about"]["labels"][lang]["title"]
+        assert data["about"]["fallbackNotices"][lang]
+    # A language catalogue is not proof that the updated personal essay has
+    # been translated. Retire the old 400-hour text instead of serving it as
+    # a stale translation of the user's new 1,000-hour statement.
+    assert set(about_data["stories"]) == {"de", "en"}
+    assert all(len(blocks) == 32 for blocks in about_data["stories"].values())
+    assert "1.000" in json.dumps(about_data["stories"]["de"], ensure_ascii=False)
+    assert "1,000" in json.dumps(about_data["stories"]["en"])
 import pytest as _pytest_marker
 pytestmark = [_pytest_marker.mark.integration, _pytest_marker.mark.release]
