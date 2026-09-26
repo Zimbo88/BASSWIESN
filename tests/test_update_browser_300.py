@@ -1,6 +1,5 @@
 """Real Chromium/WebKit interactions, offline HTTPS browser with mocked API."""
 from pathlib import Path
-import json
 
 import pytest
 from playwright.sync_api import sync_playwright, expect
@@ -13,6 +12,8 @@ TOKEN = "A" * 43
 @pytest.mark.parametrize("language", ["de", "en"])
 def test_secure_install_and_reload_only_poll_never_resubmit(engine, language):
     script = Path("basswiesn/app/static/js/update-admin.js").read_text()
+    catalogs = {f"/{name}.js": Path(f"basswiesn/app/static/js/{name}.js").read_text()
+                for name in ("translations", "language-extension", "locale-301")}
     with sync_playwright() as pw:
         browser = getattr(pw, engine).launch(headless=True)
         page = browser.new_page(viewport={"width":430,"height":932})
@@ -22,7 +23,10 @@ def test_secure_install_and_reload_only_poll_never_resubmit(engine, language):
         def route(r):
             path = r.request.url.removeprefix("https://example.invalid")
             if path == "/":
-                return r.fulfill(content_type="text/html",body=f'<html lang="{language}"><body><p data-i18n="update_install_boundary"></p><script src="/update.js"></script></body></html>')
+                assets = ''.join(f'<script src="{name}"></script>' for name in catalogs)
+                return r.fulfill(content_type="text/html",body=f'<html lang="{language}"><body><p data-i18n="update_install_boundary"></p>{assets}<script>BasswiesnI18n.setLanguage(document.documentElement.lang)</script><script src="/update.js"></script></body></html>')
+            if path in catalogs:
+                return r.fulfill(content_type="application/javascript",body=catalogs[path])
             if path == "/update.js":
                 return r.fulfill(content_type="application/javascript",body=script)
             if path == "/api/update/admin/status":
@@ -53,7 +57,7 @@ def test_secure_install_and_reload_only_poll_never_resubmit(engine, language):
         page.locator("#update-admin-refresh").click()
         expect(page.locator("#update-admin-status")).to_contain_text("wiederhergestellt" if language == "de" else "restored")
         assert page.evaluate("sessionStorage.getItem('basswiesn.update.request')") is None
-        page.evaluate("document.documentElement.lang = " + json.dumps("en" if language == "de" else "de"))
+        page.evaluate("language => { BasswiesnI18n.setLanguage(language); document.documentElement.lang = language; }", "en" if language == "de" else "de")
         expect(page.locator("#update-admin-status")).to_contain_text("restored" if language == "de" else "wiederhergestellt")
         assert len(calls) == 1 and errors == []
         browser.close()

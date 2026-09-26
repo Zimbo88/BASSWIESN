@@ -26,8 +26,11 @@ def test_reboot_preview_schedule_and_reload_are_explicit(tmp_path, lang, width, 
         body = req.post_data_json if req.method in {"POST", "PUT"} else None
         calls.append((req.method, path, body))
         if path == "/reboots": return route.fulfill(body=(assets/"reboots.html").read_text(), content_type="text/html")
-        if path in {"/static/reboots.js", "/static/reboots.css", "/static/remote.css"}:
-            return route.fulfill(body=(assets/Path(path).name).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
+        if path in {"/static/reboots.js", "/static/reboots.css", "/static/remote.css",
+                    "/static/js/translations.js", "/static/js/language-extension.js",
+                    "/static/js/locale-301.js", "/static/js/help-content.js",
+                    "/static/js/help.js", "/static/help.css"}:
+            return route.fulfill(body=(assets/path.removeprefix("/static/")).read_text(), content_type="text/javascript" if path.endswith(".js") else "text/css")
         if path == "/api/system/settings": return route.fulfill(json={"web_language":lang})
         if path == "/api/radio-reboots": return route.fulfill(json=deepcopy(config))
         if path.endswith("/preview"):
@@ -53,6 +56,12 @@ def test_reboot_preview_schedule_and_reload_are_explicit(tmp_path, lang, width, 
         assert not [c for c in calls if c[0] != "GET"]
         assert page.locator("html").get_attribute("lang") == lang
         assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+        before_help = list(calls)
+        page.locator('[data-guide-note="restart"]').click()
+        expect(page.locator("#page-help")).to_contain_text("kein Werksreset" if lang == "de" else "not factory reset")
+        page.keyboard.press("Escape")
+        expect(page.locator("#page-help")).not_to_be_visible()
+        assert calls == before_help
         page.locator("#reboot-preview").click()
         expect(page.locator("#reboot-confirmation")).to_be_visible()
         expect(page.locator("#reboot-start")).to_be_disabled()
