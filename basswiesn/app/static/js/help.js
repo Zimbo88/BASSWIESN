@@ -20,6 +20,7 @@
   // Specialized context is kept separate from a tutorial: a tutorial button is
   // not permission to run discovery, import, reset, install or audio tests.
   const extra = {
+    features: ["Diese Übersicht trennt implementiert, aktiviert und am Gerät bestätigt. Ein vorhandener Codepfad beweist weder seine Freigabe noch eine erfolgreiche Wiedergabe. Voraussetzungen und Abnahmegrenzen der jeweiligen Karte lesen; das Öffnen der Karte aktiviert nichts.", "This overview separates implemented, enabled and hardware-confirmed functionality. An existing code path proves neither permission to use it nor successful playback. Read each card's prerequisites and acceptance limits; opening a card enables nothing."],
     "system-settings": ["Oberflächensprache, Darstellung und Standardwerte betreffen BASSWIESN, nicht die Sprache oder Firmware des Radios. Ein Updatecheck installiert nichts. Erweiterte Installation bleibt in LAB.", "Interface language, appearance and defaults belong to BASSWIESN, not the radio's language or firmware. An update check installs nothing. Advanced installation remains in LAB."],
     factory: ["Werksreset löscht die Radio-Konfiguration. Vorher Identität, Modell und Sicherung prüfen. Nur das ausdrücklich bestätigte Radio wird angesprochen. Nach dem Befehl ist Nichterreichbarkeit zu erwarten; sie beweist nicht allein einen vollständig abgeschlossenen Reset. Anschließend neu einrichten.", "Factory reset erases radio configuration. Verify identity, model and backup first. Only the explicitly confirmed radio is targeted. Becoming unreachable after the command is expected; it does not alone prove reset completion. Setup is required afterward."],
     battery: ["Der Batteriepatch ist eine invasive, modellspezifische Forschungsfunktion, keine allgemeine Reparatur. Nicht vorsorglich auf ein Gerät mit Originalbatterie anwenden. Originalzustand, Kompatibilität, Sicherung und Rückweg müssen vor einem Versuch feststehen. Bei unklarer Ursache nicht ausführen.", "The battery patch is invasive, model-specific research, not a general repair. Do not apply it preventively to a device with an original battery. Establish the original state, compatibility, backup and restoration path first. Do not run it when the cause is unknown."],
@@ -62,9 +63,13 @@
     dialog.dataset.authoredCopy = "true";
     dialog.setAttribute("translate", "no");
     dialog.setAttribute("aria-labelledby", "guide-title");
+    dialog.setAttribute("aria-hidden", "true");
     document.body.append(dialog);
     dialog.addEventListener("click", event => { if (event.target === dialog) dialog.close(); });
-    dialog.addEventListener("close", () => { if (opener?.isConnected) opener.focus(); });
+    dialog.addEventListener("close", () => {
+      dialog.setAttribute("aria-hidden", "true");
+      if (opener?.isConnected) opener.focus();
+    });
   }
   function diagram(steps) {
     const figure = node("figure", undefined, "guide-illustration");
@@ -87,7 +92,9 @@
     const steps = (content[i.language()] || content.en)[topic];
     const head = node("header"), heading = node("h2", title(topic));
     heading.id = "guide-title";
-    head.append(heading, button(word("close"), () => dialog.close()));
+    const close = button(word("close"), () => dialog.close());
+    close.id = "page-help-close";
+    head.append(heading, close);
     const body = node("div", undefined, "guide-body");
     body.append(node("p", word(topics[topic][1]), "guide-badge"), node("p", word("passive")));
     if (extra[pageContext] && position === null) {
@@ -134,6 +141,7 @@
     ensureDialog();
     topic = key; position = tutorial ? 0 : null; pageContext = view; opener = trigger;
     render();
+    dialog.setAttribute("aria-hidden", "false");
     if (!dialog.open) dialog.showModal();
     if (tutorial) dialog.querySelector(".guide-step")?.focus();
   }
@@ -151,8 +159,8 @@
     document.querySelectorAll(".view").forEach(view => {
       const head = view.querySelector(":scope > .page-head");
       const key = view.id.replace("view-", "");
-      if (!head || !context[key] || head.querySelector("[data-guide-page]")) return;
-      const help = button("?", () => open(context[key], help, false, key), "page-help-button");
+      if (!head || head.querySelector("[data-guide-page]")) return;
+      const help = button("?", () => open(context[key] || "recovery", help, false, key), "page-help-button");
       help.dataset.guidePage = key;
       head.append(help);
     });
