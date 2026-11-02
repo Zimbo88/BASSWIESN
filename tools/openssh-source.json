@@ -1,0 +1,11 @@
+{
+  "version": "10.6p1",
+  "archive_url": "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.6p1.tar.gz",
+  "archive_sha256": "a9dc9565dffe8640f64d863cd29a32bc4a3dbdec0566a7fc44c5d6ee767d5f39",
+  "signature_url": "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/portable/openssh-10.6p1.tar.gz.asc",
+  "signature_sha256": "1f8fd46ddb5ec95f5bc9e0d7b0fc34ccea3ef8f94a8e3a5d3911434cce7027cf",
+  "release_key_url": "https://cdn.openbsd.org/pub/OpenBSD/OpenSSH/RELEASE_KEY.asc",
+  "release_key_sha256": "c4a6f4692c9b8e75ec096add049fe0314b3ceff9410321f1e85907cf7a864269",
+  "signing_fingerprint": "7168B983815A5EEF59A4ADFD2A3F414E736060BA",
+  "release_notes": "https://www.openssh.org/releasenotes.html#10.6p1"
+}

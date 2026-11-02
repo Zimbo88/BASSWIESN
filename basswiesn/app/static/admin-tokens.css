@@ -1,0 +1,18 @@
+:root { color-scheme: light dark; font: 1rem/1.55 system-ui, sans-serif; }
+body { margin: 0; padding: 1rem; }
+main { max-width: 58rem; min-width: 0; margin: auto; overflow-wrap: anywhere; }
+section, form { border: 1px solid #888; border-radius: .6rem; margin: 1rem 0; padding: 1rem; }
+label { display: block; margin: .5rem 0; }
+input:not([type=checkbox]), textarea { box-sizing: border-box; width: 100%; max-width: 100%; font: inherit; padding: .55rem; }
+input[type=checkbox] { width: 1.2rem; height: 1.2rem; margin-right: .65rem; }
+fieldset { margin: 1rem 0; min-inline-size: 0; }
+button, a { min-height: 44px; }
+a { display: inline-block; padding-block: .5rem; box-sizing: border-box; }
+button { font: inherit; margin: .25rem .5rem .25rem 0; padding: .5rem .8rem; cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 3px solid #2785cd; outline-offset: 3px; }
+.token-card { padding: 1rem 0; border-bottom: 1px solid #888; overflow-wrap: anywhere; }
+.token-card h3 { margin: .25rem 0; }
+dl { display: grid; grid-template-columns: minmax(5rem, 1fr) minmax(0, 3fr); gap: .25rem 1rem; }
+dd { margin: 0; }
+[hidden] { display: none !important; }

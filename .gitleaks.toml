@@ -1,0 +1,12 @@
+title = "BASSWIESN secret scanning: upstream rules plus reviewed synthetic values"
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Two fixed anonymous-provider fixture descriptors; decoded JSON contains only a synthetic serial label, not credentials. See docs/SECURITY_CHECKS.md."
+condition = "AND"
+paths = ['''(^|/)basswiesn/app/services/provider_registry\.py$''']
+regexTarget = "secret"
+regexes = ['''^(eyJzZXJpYWwiOiJsb2NhbC1pbnRlcm5ldC1yYWRpbyJ9|eyJzZXJpYWwiOiJ0dW5laW4ifQ==)$''']

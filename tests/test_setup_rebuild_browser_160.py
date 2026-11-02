@@ -1,0 +1,287 @@
+import socket
+import threading
+import time
+from pathlib import Path
+
+import httpx
+import pytest
+import uvicorn
+from playwright.sync_api import expect, sync_playwright
+
+from basswiesn.app import config
+from basswiesn.app.adapters.discovery import DiscoveryScanResult
+from basswiesn.app.main import create_web_app
+
+
+pytestmark = [
+    pytest.mark.browser,
+    pytest.mark.integration,
+    pytest.mark.slow,
+    pytest.mark.release,
+]
+
+
+def _free_port() -> int:
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+class LiveServer:
+    def __init__(self) -> None:
+        self.port = _free_port()
+        self.url = f"http://127.0.0.1:{self.port}"
+        self.server = uvicorn.Server(
+            uvicorn.Config(
+                create_web_app(background_tasks=False),
+                host="127.0.0.1",
+                port=self.port,
+                log_level="warning",
+                access_log=False,
+            )
+        )
+        self.thread = threading.Thread(target=self.server.run, daemon=True)
+
+    def __enter__(self):
+        self.thread.start()
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            try:
+                if httpx.get(f"{self.url}/api/health", timeout=0.25).status_code == 200:
+                    return self
+            except Exception:
+                time.sleep(0.05)
+        raise RuntimeError("test web server did not start")
+
+    def __exit__(self, exc_type, exc, tb):
+        self.server.should_exit = True
+        self.thread.join(timeout=5)
+
+
+@pytest.mark.parametrize(
+    ("width", "height", "artifact_kind"),
+    [
+        (1920, 1080, "desktop"),
+        (1440, 900, "desktop"),
+        (390, 844, "mobile"),
+        (393, 852, "mobile"),
+        (430, 932, "mobile"),
+    ],
+)
+@pytest.mark.parametrize("setup_mode", ["normal", "patched", "original"])
+def test_human_setup_preview_start_progress_readback_and_rollback(
+    monkeypatch,
+    width,
+    height,
+    artifact_kind,
+    setup_mode,
+):
+    """No route mocks: browser -> HTTP API -> coordinator -> isolated DB."""
+
+    from basswiesn.app.services.setup_rebuild import coordinator as coordinator_module
+
+    monkeypatch.setenv("BASSWIESN_TEST_MODE", "true")
+    config.get_settings.cache_clear()
+    coordinator_module._COORDINATOR = None
+    if setup_mode == "original":
+        original_verify = coordinator_module.DryRunAdapter.restore_verify
+        async def simulated_cleanup(adapter, row):
+            result = await original_verify(adapter, row)
+            return {**result, "presentation_cleanup": {"cleanup_verified": width > 760,
+                                                       "dry_run": True}}
+        monkeypatch.setattr(coordinator_module.DryRunAdapter, "restore_verify", simulated_cleanup)
+    try:
+        with LiveServer() as server, sync_playwright() as playwright:
+            httpx.post(
+                f"{server.url}/api/system/settings",
+                json={"web_language": "de", "show_startup_warning": "false", "first_run_warning_required": "false"},
+                timeout=3,
+            ).raise_for_status()
+            browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
+            page = browser.new_page(viewport={"width": width, "height": height})
+            page.goto(server.url, wait_until="networkidle")
+
+            warning = page.locator("#first-run-warning")
+            if warning.is_visible():
+                page.locator("#first-run-warning-read").check()
+                page.locator("#first-run-warning-ack").click()
+
+            page.locator('button.nav-button[data-view="setup"]').click()
+            expect(page.locator("#setup-rebuild-assistant")).to_be_visible()
+            page.locator("#setup-rebuild-host").select_option("192.0.2.10")
+            expect(page.locator("#setup-rebuild-host")).to_have_value("192.0.2.10")
+            radio = page.locator('[data-setup-rebuild-device="BASSWIESN-SIM-160"]')
+            expect(radio).to_be_visible()
+            expect(radio).not_to_be_checked()
+            if width <= 760:
+                card = radio.locator("xpath=ancestor::article")
+                # System fonts differ between Linux hosts. Keep the compact
+                # layout contract without clipping text or shrinking fonts.
+                for font in ("system-ui", "Arial, sans-serif", "DejaVu Sans, sans-serif"):
+                    page.evaluate("font => document.body.style.fontFamily = font", font)
+                    card_box = card.bounding_box()
+                    assert card_box is not None and card_box["height"] < 420, (font, card_box)
+                    assert page.evaluate(
+                        "document.documentElement.scrollWidth <= window.innerWidth + 1"
+                    )
+                    columns = card.locator(":scope > div").evaluate_all(
+                        "nodes => nodes.map(node => getComputedStyle(node).gridColumn)"
+                    )
+                    assert columns[0] == "2"
+                    assert all(column == "1 / -1" for column in columns[1:])
+                    expect(card.locator("[data-setup-audio-safety]")).to_be_visible()
+                page.evaluate("document.body.style.removeProperty('font-family')")
+            radio.check()
+            mode = page.locator("#setup-rebuild-presentation")
+            expect(mode).to_have_value("normal")
+            mode.select_option(setup_mode)
+            expect(page.locator("#setup-presentation-choice")).to_contain_text("SoundTouch 10")
+            expect(page.locator('[data-setup-audio-safety="BASSWIESN-SIM-160"]')).to_be_visible()
+
+            # Playback is an audible side effect and therefore deliberately
+            # opt-in.  The human browser flow must select it visibly before a
+            # successful playback readback can be expected.
+            playback_test = page.locator("#setup-rebuild-playback")
+            expect(playback_test).not_to_be_checked()
+            playback_test.check()
+            expect(playback_test).to_be_checked()
+
+            page.locator("#setup-rebuild-preview").click()
+            expect(page.locator("#setup-rebuild-output")).to_contain_text('"engine": "setup-rebuild-v2"')
+            expect(page.locator("#setup-rebuild-output")).to_contain_text('"ready_for_start": true')
+            expect(page.locator("#setup-rebuild-output")).to_contain_text(f'"presentation_mode": "{setup_mode}"')
+            expect(page.locator("#setup-rebuild-output")).to_contain_text('"firmware_files_changed": ' + ("false" if setup_mode == "normal" else "true"))
+            expect(page.locator("#setup-rebuild-details")).to_have_attribute("open", "")
+            page.wait_for_timeout(1500)
+            expect(page.locator("#setup-rebuild-output")).to_contain_text('"ready_for_start": true')
+
+            page.once("dialog", lambda dialog: dialog.accept())
+            page.locator("#setup-rebuild-start").click()
+            expect(page.locator("#setup-rebuild-status")).to_contain_text("running")
+            expect(page.locator("#setup-rebuild-status")).to_contain_text("completed", timeout=10_000)
+            if setup_mode == "original":
+                expect(page.locator("#setup-rebuild-output")).to_contain_text('"playback_test": "not_requested"')
+                expect(page.locator("#setup-rebuild-output")).to_contain_text('"original_verified": true')
+                expect(page.locator("#setup-rebuild-rollback")).to_be_disabled()
+                expect(page.locator(".setup-rebuild-cleanup")).to_contain_text(
+                    "Altes Patchpaket gesichert" if width > 760 else "Speicherbereinigung benötigt eine gesonderte Prüfung")
+            else:
+                expect(page.locator("#setup-rebuild-output")).to_contain_text('"playback_test": "passed"')
+                expect(page.locator("#setup-rebuild-rollback")).to_be_enabled()
+                page.once("dialog", lambda dialog: dialog.accept())
+                page.locator("#setup-rebuild-rollback").click()
+                expect(page.locator("#setup-rebuild-output")).to_contain_text('"state": "ROLLED_BACK"')
+
+            artifact = Path(
+                f"test-artifacts/1.6.0/{artifact_kind}/setup-test-{setup_mode}-{width}x{height}.png"
+            )
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            page.evaluate("window.scrollTo(0, 0)")
+            page.wait_for_timeout(100)
+            page.screenshot(path=str(artifact), full_page=True)
+            browser.close()
+    finally:
+        coordinator_module._COORDINATOR = None
+        config.get_settings.cache_clear()
+
+
+def test_fresh_database_discovery_requires_visible_user_action_before_setup_population(
+    monkeypatch,
+):
+    """Fresh Setup stays passive until the human explicitly starts discovery."""
+
+    from basswiesn.app.api import routes_devices
+    from basswiesn.app.routers import setup_rebuild as setup_rebuild_router
+    from basswiesn.app.services.setup_rebuild import coordinator as coordinator_module
+
+    device_id = "FRESH-SCAN-160"
+    info_xml = (
+        f'<info deviceID="{device_id}"><name>Frisch erkanntes Radio</name>'
+        "<type>SoundTouch 20</type><components><component>"
+        "<softwareVersion>27.0.6.46330.5043500 epdbuild.test</softwareVersion>"
+        "</component></components><moduleType>sm2</moduleType><variant>spotty</variant></info>"
+    )
+
+    discovery_calls = []
+
+    async def fake_discovery(cidr, *, limit, timeout, concurrency):
+        discovery_calls.append({"cidr": cidr, "limit": limit, "timeout": timeout, "concurrency": concurrency})
+        return DiscoveryScanResult(
+            scanned=1,
+            devices=[{
+                "device_id": device_id,
+                "ip_address": "192.0.2.31",
+                "name": "Frisch erkanntes Radio",
+                "model": "SoundTouch 20",
+                "raw": info_xml,
+            }],
+            failures=[],
+        )
+
+    class FakeInfoClient:
+        def __init__(self, _host, _device_id="", **_kwargs):
+            pass
+
+        async def get_xml(self, path):
+            assert path == "/info"
+            return info_xml
+
+    monkeypatch.setenv("BASSWIESN_TEST_MODE", "true")
+    config.get_settings.cache_clear()
+    monkeypatch.setattr(
+        setup_rebuild_router,
+        "_ensure_test_mode_simulation_device",
+        lambda _db: None,
+    )
+    monkeypatch.setattr(routes_devices, "scan_subnet_detailed", fake_discovery)
+    monkeypatch.setattr(routes_devices, "SoundTouchClient", FakeInfoClient)
+    coordinator_module._COORDINATOR = None
+    try:
+        with LiveServer() as server, sync_playwright() as playwright:
+            httpx.post(
+                f"{server.url}/api/system/settings",
+                json={"web_language": "de", "show_startup_warning": "false", "first_run_warning_required": "false"},
+                timeout=3,
+            ).raise_for_status()
+            browser = playwright.chromium.launch(headless=True, args=["--no-sandbox"])
+            page = browser.new_page(viewport={"width": 1440, "height": 900})
+            page.goto(server.url, wait_until="networkidle")
+
+            warning = page.locator("#first-run-warning")
+            if warning.is_visible():
+                page.locator("#first-run-warning-read").check()
+                page.locator("#first-run-warning-ack").click()
+
+            page.locator('button.nav-button[data-view="setup"]').click()
+            radio = page.locator(f'[data-setup-rebuild-device="{device_id}"]')
+            expect(radio).to_have_count(0)
+            expect(page.locator("#setup-rebuild-devices")).to_contain_text(
+                "Noch kein geeignetes Radio"
+            )
+            expect(page.locator("#setup-rebuild-discover")).to_be_visible()
+            assert discovery_calls == []
+
+            page.locator("#setup-rebuild-discover").click()
+            expect(page.locator("#setup-rebuild-discovery-status")).to_contain_text(
+                "1 von 1",
+                timeout=10_000,
+            )
+            assert len(discovery_calls) == 1
+            assert discovery_calls[0]["timeout"] == 0.7
+            assert discovery_calls[0]["concurrency"] == 64
+
+            expect(radio).to_be_visible(timeout=10_000)
+            expect(radio.locator("xpath=ancestor::article")).to_contain_text(
+                "Frisch erkanntes Radio"
+            )
+            expect(radio).not_to_be_checked()
+            artifact = Path(
+                "test-artifacts/2.0.0/fresh-install/"
+                "fresh-db-explicit-discovery-1440x900.png"
+            )
+            artifact.parent.mkdir(parents=True, exist_ok=True)
+            page.screenshot(path=str(artifact), full_page=True)
+            browser.close()
+    finally:
+        coordinator_module._COORDINATOR = None
+        config.get_settings.cache_clear()

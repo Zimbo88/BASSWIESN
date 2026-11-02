@@ -1,0 +1,989 @@
+(function () {
+  const keys = ["setup","radios","favorites","settings","diagnostics","lab","scan","verify","apply","complete","success","failed","presets","sources","volume","playing","battery","capabilities","runtime_state","support_bundle","logs","status","cloud","ssh","remote_services","language","guided_hints","write_guard","theme","preset_checker","provider_status","refresh","load_status","download","unknown"];
+  const rows = {
+    de:["Setup","Radios","Presets","Einstellungen","Diagnose","Labor","Scannen","Prüfen","Anwenden","Abschließen","Erfolg","Fehlgeschlagen","Presets","Quellen","Lautstärke","Wiedergabe","Batterie","Fähigkeiten","Laufzeitstatus","Support-Paket","Protokolle","Status","Cloud","SSH","Remote-Dienste","Sprache","Geführte Hinweise","Schreibschutz","Design","Preset-Prüfer","Provider-Status","Aktualisieren","Status laden","Herunterladen","Unbekannt"],
+    en:["Setup","Radios","Presets","Settings","Diagnostics","Lab","Scan","Verify","Apply","Complete","Success","Failed","Presets","Sources","Volume","Playing","Battery","Capabilities","Runtime State","Support Bundle","Logs","Status","Cloud","SSH","Remote Services","Language","Guided Hints","Write Guard","Theme","Preset Checker","Provider Status","Refresh","Load Status","Download","Unknown"],
+    fr:["Configuration","Radios","Favoris","Paramètres","Diagnostic","Labo","Analyser","Vérifier","Appliquer","Terminer","Succès","Échec","Préréglages","Sources","Volume","Lecture","Batterie","Capacités","État d’exécution","Bundle de support","Journaux","État","Cloud","SSH","Services distants","Langue","Aide guidée","Protection d’écriture","Thème","Vérificateur de favoris","État des fournisseurs","Actualiser","Charger l’état","Télécharger","Inconnu"],
+    es:["Configuración","Radios","Favoritos","Ajustes","Diagnóstico","Laboratorio","Buscar","Verificar","Aplicar","Completar","Correcto","Falló","Preajustes","Fuentes","Volumen","Reproduciendo","Batería","Capacidades","Estado de ejecución","Paquete de soporte","Registros","Estado","Nube","SSH","Servicios remotos","Idioma","Ayuda guiada","Protección de escritura","Tema","Comprobador de favoritos","Estado de proveedores","Actualizar","Cargar estado","Descargar","Desconocido"],
+    it:["Configurazione","Radio","Preferiti","Impostazioni","Diagnostica","Laboratorio","Scansiona","Verifica","Applica","Completa","Riuscito","Fallito","Preset","Sorgenti","Volume","In riproduzione","Batteria","Funzionalità","Stato runtime","Pacchetto assistenza","Log","Stato","Cloud","SSH","Servizi remoti","Lingua","Suggerimenti guidati","Protezione scrittura","Tema","Controllo preset","Stato provider","Aggiorna","Carica stato","Scarica","Sconosciuto"],
+    pt:["Configuração","Rádios","Favoritos","Definições","Diagnóstico","Laboratório","Procurar","Verificar","Aplicar","Concluir","Sucesso","Falhou","Predefinições","Fontes","Volume","A reproduzir","Bateria","Capacidades","Estado de execução","Pacote de suporte","Registos","Estado","Cloud","SSH","Serviços remotos","Idioma","Dicas guiadas","Proteção de escrita","Tema","Verificador de favoritos","Estado dos fornecedores","Atualizar","Carregar estado","Transferir","Desconhecido"],
+    nl:["Installatie","Radio's","Favorieten","Instellingen","Diagnostiek","Lab","Scannen","Verifiëren","Toepassen","Voltooien","Geslaagd","Mislukt","Voorkeuzes","Bronnen","Volume","Speelt","Batterij","Mogelijkheden","Runtime-status","Supportbundel","Logboeken","Status","Cloud","SSH","Externe diensten","Taal","Begeleide hints","Schrijfbeveiliging","Thema","Presetcontrole","Providerstatus","Vernieuwen","Status laden","Downloaden","Onbekend"],
+    da:["Opsætning","Radioer","Favoritter","Indstillinger","Diagnostik","Laboratorium","Scan","Bekræft","Anvend","Fuldfør","Lykkedes","Mislykkedes","Forvalg","Kilder","Lydstyrke","Afspiller","Batteri","Funktioner","Kørselstilstand","Supportpakke","Logfiler","Status","Cloud","SSH","Fjerntjenester","Sprog","Guidede tips","Skrivebeskyttelse","Tema","Forvalgskontrol","Udbyderstatus","Opdater","Indlæs status","Hent","Ukendt"],
+    sv:["Konfiguration","Radioapparater","Favoriter","Inställningar","Diagnostik","Labb","Skanna","Verifiera","Tillämpa","Slutför","Klart","Misslyckades","Förval","Källor","Volym","Spelar","Batteri","Funktioner","Körningsstatus","Supportpaket","Loggar","Status","Moln","SSH","Fjärrtjänster","Språk","Guidade tips","Skrivskydd","Tema","Förvalskontroll","Leverantörsstatus","Uppdatera","Ladda status","Hämta","Okänd"],
+    no:["Oppsett","Radioer","Favoritter","Innstillinger","Diagnostikk","Laboratorium","Skann","Bekreft","Bruk","Fullfør","Vellykket","Mislyktes","Forvalg","Kilder","Volum","Spiller","Batteri","Funksjoner","Kjørestatus","Støttepakke","Logger","Status","Sky","SSH","Fjerntjenester","Språk","Veiledede tips","Skrivebeskyttelse","Tema","Forvalgskontroll","Leverandørstatus","Oppdater","Last status","Last ned","Ukjent"],
+    fi:["Määritys","Radiot","Suosikit","Asetukset","Diagnostiikka","Laboratorio","Skannaa","Vahvista","Käytä","Valmis","Onnistui","Epäonnistui","Esiasetukset","Lähteet","Äänenvoimakkuus","Toistetaan","Akku","Ominaisuudet","Ajonaikainen tila","Tukipaketti","Lokit","Tila","Pilvi","SSH","Etäpalvelut","Kieli","Ohjatut vihjeet","Kirjoitussuoja","Teema","Esiasetusten tarkistus","Palveluntarjoajan tila","Päivitä","Lataa tila","Lataa","Tuntematon"],
+    pl:["Konfiguracja","Radia","Ulubione","Ustawienia","Diagnostyka","Laboratorium","Skanuj","Sprawdź","Zastosuj","Zakończ","Sukces","Niepowodzenie","Presety","Źródła","Głośność","Odtwarzanie","Bateria","Możliwości","Stan działania","Pakiet wsparcia","Dzienniki","Stan","Chmura","SSH","Usługi zdalne","Język","Podpowiedzi","Blokada zapisu","Motyw","Kontrola presetów","Stan dostawców","Odśwież","Wczytaj stan","Pobierz","Nieznany"],
+    cs:["Nastavení","Rádia","Oblíbené","Nastavení","Diagnostika","Laboratoř","Skenovat","Ověřit","Použít","Dokončit","Úspěch","Selhalo","Předvolby","Zdroje","Hlasitost","Přehrávání","Baterie","Možnosti","Běhový stav","Balíček podpory","Protokoly","Stav","Cloud","SSH","Vzdálené služby","Jazyk","Průvodce","Ochrana zápisu","Motiv","Kontrola předvoleb","Stav poskytovatelů","Obnovit","Načíst stav","Stáhnout","Neznámý"],
+    sk:["Nastavenie","Rádiá","Obľúbené","Nastavenia","Diagnostika","Laboratórium","Skenovať","Overiť","Použiť","Dokončiť","Úspech","Zlyhalo","Predvoľby","Zdroje","Hlasitosť","Prehrávanie","Batéria","Možnosti","Stav behu","Balík podpory","Protokoly","Stav","Cloud","SSH","Vzdialené služby","Jazyk","Sprievodca","Ochrana zápisu","Téma","Kontrola predvolieb","Stav poskytovateľov","Obnoviť","Načítať stav","Stiahnuť","Neznáme"],
+    hu:["Beállítás","Rádiók","Kedvencek","Beállítások","Diagnosztika","Labor","Keresés","Ellenőrzés","Alkalmazás","Befejezés","Siker","Sikertelen","Programhelyek","Források","Hangerő","Lejátszás","Akkumulátor","Képességek","Futásidejű állapot","Támogatási csomag","Naplók","Állapot","Felhő","SSH","Távoli szolgáltatások","Nyelv","Vezetett tippek","Írásvédelem","Téma","Programhely-ellenőrző","Szolgáltató állapota","Frissítés","Állapot betöltése","Letöltés","Ismeretlen"],
+    ro:["Configurare","Radiouri","Favorite","Setări","Diagnostic","Laborator","Scanare","Verificare","Aplicare","Finalizare","Succes","Eșuat","Presetări","Surse","Volum","Redare","Baterie","Capabilități","Stare runtime","Pachet suport","Jurnale","Stare","Cloud","SSH","Servicii la distanță","Limbă","Indicații ghidate","Protecție scriere","Temă","Verificator presetări","Stare furnizori","Actualizare","Încarcă starea","Descărcare","Necunoscut"],
+    bg:["Настройка","Радио","Любими","Настройки","Диагностика","Лаборатория","Сканиране","Проверка","Прилагане","Завършване","Успех","Неуспех","Предварителни настройки","Източници","Сила на звука","Възпроизвеждане","Батерия","Възможности","Състояние на изпълнение","Пакет за поддръжка","Дневници","Състояние","Облак","SSH","Отдалечени услуги","Език","Насочващи подсказки","Защита от запис","Тема","Проверка на настройки","Състояние на доставчици","Обновяване","Зареди състояние","Изтегляне","Неизвестно"],
+    hr:["Postavljanje","Radiji","Favoriti","Postavke","Dijagnostika","Laboratorij","Skeniraj","Provjeri","Primijeni","Dovrši","Uspjeh","Neuspjeh","Postavke","Izvori","Glasnoća","Reprodukcija","Baterija","Mogućnosti","Stanje izvođenja","Paket podrške","Zapisi","Stanje","Oblak","SSH","Udaljene usluge","Jezik","Vođene upute","Zaštita pisanja","Tema","Provjera postavki","Stanje pružatelja","Osvježi","Učitaj stanje","Preuzmi","Nepoznato"],
+    sl:["Nastavitev","Radijski sprejemniki","Priljubljene","Nastavitve","Diagnostika","Laboratorij","Skeniraj","Preveri","Uporabi","Dokončaj","Uspeh","Neuspeh","Prednastavitve","Viri","Glasnost","Predvajanje","Baterija","Zmožnosti","Stanje izvajanja","Paket podpore","Dnevniki","Stanje","Oblak","SSH","Oddaljene storitve","Jezik","Vodeni namigi","Zaščita pisanja","Tema","Preverjanje prednastavitev","Stanje ponudnikov","Osveži","Naloži stanje","Prenesi","Neznano"],
+    el:["Ρύθμιση","Ραδιόφωνα","Αγαπημένα","Ρυθμίσεις","Διαγνωστικά","Εργαστήριο","Σάρωση","Επαλήθευση","Εφαρμογή","Ολοκλήρωση","Επιτυχία","Αποτυχία","Προεπιλογές","Πηγές","Ένταση","Αναπαραγωγή","Μπαταρία","Δυνατότητες","Κατάσταση εκτέλεσης","Πακέτο υποστήριξης","Αρχεία καταγραφής","Κατάσταση","Cloud","SSH","Απομακρυσμένες υπηρεσίες","Γλώσσα","Καθοδηγούμενες συμβουλές","Προστασία εγγραφής","Θέμα","Έλεγχος προεπιλογών","Κατάσταση παρόχων","Ανανέωση","Φόρτωση κατάστασης","Λήψη","Άγνωστο"],
+    tr:["Kurulum","Radyolar","Favoriler","Ayarlar","Tanılama","Laboratuvar","Tara","Doğrula","Uygula","Tamamla","Başarılı","Başarısız","Ön ayarlar","Kaynaklar","Ses düzeyi","Oynatılıyor","Pil","Yetenekler","Çalışma durumu","Destek paketi","Günlükler","Durum","Bulut","SSH","Uzak hizmetler","Dil","Rehberli ipuçları","Yazma koruması","Tema","Ön ayar denetleyici","Sağlayıcı durumu","Yenile","Durumu yükle","İndir","Bilinmiyor"],
+    ru:["Настройка","Радио","Избранное","Настройки","Диагностика","Лаборатория","Сканировать","Проверить","Применить","Завершить","Успешно","Ошибка","Предустановки","Источники","Громкость","Воспроизведение","Батарея","Возможности","Состояние выполнения","Пакет поддержки","Журналы","Состояние","Облако","SSH","Удалённые службы","Язык","Пошаговые подсказки","Защита записи","Тема","Проверка предустановок","Состояние провайдеров","Обновить","Загрузить состояние","Скачать","Неизвестно"],
+    uk:["Налаштування","Радіо","Обране","Параметри","Діагностика","Лабораторія","Сканувати","Перевірити","Застосувати","Завершити","Успішно","Помилка","Пресети","Джерела","Гучність","Відтворення","Батарея","Можливості","Стан виконання","Пакет підтримки","Журнали","Стан","Хмара","SSH","Віддалені служби","Мова","Покрокові підказки","Захист запису","Тема","Перевірка пресетів","Стан провайдерів","Оновити","Завантажити стан","Завантажити","Невідомо"],
+    ja:["セットアップ","ラジオ","お気に入り","設定","診断","ラボ","スキャン","確認","適用","完了","成功","失敗","プリセット","ソース","音量","再生中","バッテリー","機能","実行状態","サポートバンドル","ログ","状態","クラウド","SSH","リモートサービス","言語","ガイドヒント","書き込みガード","テーマ","プリセット確認","プロバイダー状態","更新","状態を読み込む","ダウンロード","不明"],
+    zh:["设置","收音机","收藏夹","设置","诊断","实验室","扫描","验证","应用","完成","成功","失败","预设","来源","音量","正在播放","电池","功能","运行状态","支持包","日志","状态","云服务","SSH","远程服务","语言","引导提示","写入保护","主题","预设检查器","提供商状态","刷新","加载状态","下载","未知"]
+  };
+  const catalogs = {};
+  for (const [lang, values] of Object.entries(rows)) catalogs[lang] = Object.fromEntries(keys.map((key, index) => [key, values[index]]));
+  const extraKeys = ["updates","enable_update_check","check_updates","loading","retry","error","match","different","missing","unreadable","details"];
+  const extraRows = {
+    de:["Updates","Updateprüfung aktivieren","Nach Update suchen","Wird geladen …","Erneut versuchen","Fehler","Übereinstimmung","Unterschied","Fehlt","Nicht lesbar","Details anzeigen"],
+    en:["Updates","Enable update checks","Check for updates","Loading …","Retry","Error","Match","Different","Missing","Unreadable","Show details"],
+    fr:["Mises à jour","Activer la vérification","Rechercher des mises à jour","Chargement …","Réessayer","Erreur","Identique","Différent","Manquant","Illisible","Afficher les détails"],
+    es:["Actualizaciones","Activar comprobación","Buscar actualizaciones","Cargando …","Reintentar","Error","Coincide","Diferente","Falta","Ilegible","Mostrar detalles"],
+    it:["Aggiornamenti","Abilita controllo","Cerca aggiornamenti","Caricamento …","Riprova","Errore","Corrisponde","Diverso","Mancante","Illeggibile","Mostra dettagli"],
+    pt:["Atualizações","Ativar verificação","Procurar atualizações","A carregar …","Tentar novamente","Erro","Igual","Diferente","Em falta","Ilegível","Mostrar detalhes"],
+    nl:["Updates","Updatecontrole inschakelen","Zoeken naar updates","Laden …","Opnieuw","Fout","Gelijk","Verschillend","Ontbreekt","Onleesbaar","Details tonen"],
+    da:["Opdateringer","Aktivér opdateringstjek","Søg efter opdateringer","Indlæser …","Prøv igen","Fejl","Matcher","Forskellig","Mangler","Ulæselig","Vis detaljer"],
+    sv:["Uppdateringar","Aktivera uppdateringskontroll","Sök efter uppdateringar","Läser in …","Försök igen","Fel","Matchar","Olika","Saknas","Oläsbar","Visa detaljer"],
+    no:["Oppdateringer","Aktiver oppdateringssjekk","Se etter oppdateringer","Laster …","Prøv igjen","Feil","Samsvar","Forskjellig","Mangler","Uleselig","Vis detaljer"],
+    fi:["Päivitykset","Ota päivitystarkistus käyttöön","Tarkista päivitykset","Ladataan …","Yritä uudelleen","Virhe","Täsmää","Eroaa","Puuttuu","Ei luettavissa","Näytä tiedot"],
+    pl:["Aktualizacje","Włącz sprawdzanie","Sprawdź aktualizacje","Ładowanie …","Ponów","Błąd","Zgodne","Różne","Brak","Nieczytelne","Pokaż szczegóły"],
+    cs:["Aktualizace","Zapnout kontrolu","Zkontrolovat aktualizace","Načítání …","Opakovat","Chyba","Shoda","Rozdíl","Chybí","Nečitelné","Zobrazit podrobnosti"],
+    sk:["Aktualizácie","Zapnúť kontrolu","Skontrolovať aktualizácie","Načítava sa …","Skúsiť znova","Chyba","Zhoda","Rozdiel","Chýba","Nečitateľné","Zobraziť podrobnosti"],
+    hu:["Frissítések","Frissítéskeresés engedélyezése","Frissítések keresése","Betöltés …","Újra","Hiba","Egyezik","Eltér","Hiányzik","Nem olvasható","Részletek"],
+    ro:["Actualizări","Activează verificarea","Caută actualizări","Se încarcă …","Reîncearcă","Eroare","Identic","Diferit","Lipsește","Ilizibil","Arată detalii"],
+    bg:["Актуализации","Включи проверката","Провери за актуализации","Зареждане …","Опитай пак","Грешка","Съвпада","Различно","Липсва","Нечетимо","Покажи детайли"],
+    hr:["Ažuriranja","Uključi provjeru","Provjeri ažuriranja","Učitavanje …","Pokušaj ponovno","Pogreška","Podudara se","Razlikuje se","Nedostaje","Nečitljivo","Prikaži detalje"],
+    sl:["Posodobitve","Omogoči preverjanje","Preveri posodobitve","Nalaganje …","Poskusi znova","Napaka","Ujemanje","Razlika","Manjka","Neberljivo","Prikaži podrobnosti"],
+    el:["Ενημερώσεις","Ενεργοποίηση ελέγχου","Έλεγχος ενημερώσεων","Φόρτωση …","Επανάληψη","Σφάλμα","Ταύτιση","Διαφορά","Λείπει","Μη αναγνώσιμο","Προβολή λεπτομερειών"],
+    tr:["Güncellemeler","Güncelleme denetimini aç","Güncellemeleri denetle","Yükleniyor …","Yeniden dene","Hata","Eşleşiyor","Farklı","Eksik","Okunamıyor","Ayrıntıları göster"],
+    ru:["Обновления","Включить проверку","Проверить обновления","Загрузка …","Повторить","Ошибка","Совпадает","Отличается","Отсутствует","Не читается","Показать детали"],
+    uk:["Оновлення","Увімкнути перевірку","Перевірити оновлення","Завантаження …","Повторити","Помилка","Збігається","Відрізняється","Відсутнє","Не читається","Показати деталі"],
+    ja:["アップデート","更新確認を有効化","更新を確認","読み込み中 …","再試行","エラー","一致","相違","不足","読み取り不可","詳細を表示"],
+    zh:["更新","启用更新检查","检查更新","加载中 …","重试","错误","匹配","不同","缺失","无法读取","显示详情"]
+  };
+  for (const [lang, values] of Object.entries(extraRows)) for (const [index, key] of extraKeys.entries()) catalogs[lang][key] = values[index] || catalogs.en?.[key] || key;
+  keys.push(...extraKeys);
+  const updateCopy = {
+    official_update_hint: ["Prüft auf Wunsch die neueste stabile BASSWIESN-Version auf GitHub. Es wird nichts installiert.", "Checks the latest stable BASSWIESN release on GitHub when requested. Nothing is installed."],
+    update_install_boundary: ["Updateinstallation ist eine LAB-Funktion. Sie benötigt den ausdrücklich eingerichteten Hostdienst, HTTPS und deinen Administratorcode. Daten werden vor dem Wechsel gesichert; ein fehlgeschlagener Start löst die Wiederherstellung aus. Die Prüfung auf neue Releases bleibt hier verfügbar.", "Update installation is a LAB feature. It requires the explicitly enrolled host service, HTTPS and your administrator code. Data is backed up before switching; a failed startup triggers restoration. Checking for new releases remains available here."],
+    release_lab_title: ["Vorschau und offene Abnahmen", "Previews and pending acceptance"],
+    release_lab_boundary: ["Die AirPlay-2-Bridge bleibt deaktiviert: Empfängerintegration und Mehrgerätebetrieb sind nicht fertig. Musikbibliothek/DLNA und Updateinstallation sind experimentell und nur im LAB zugänglich. DLNA-Wiedergabe am Radio und das Update der produktiven Installation sind noch nicht abschließend geprüft. Es startet nichts automatisch.", "The AirPlay 2 bridge remains disabled: receiver integration and multi-device operation are unfinished. Media library/DLNA and update installation are experimental and accessible only in LAB. Radio playback via DLNA and the production installation upgrade have not completed final acceptance. Nothing starts automatically."],
+    manifest_settings: ["Erweiterte Manifest-Einstellungen", "Advanced manifest settings"]
+  };
+  for (const [key, [de, en]] of Object.entries(updateCopy)) {
+    keys.push(key);
+    for (const language of Object.keys(catalogs)) catalogs[language][key] = language === "de" ? de : en;
+  }
+  const releasePolish = {
+    de: {
+      telemetry_analysis: "Telemetry Analyse",
+      time_range: "Zeitraum",
+      download_json: "JSON herunterladen",
+      download_csv: "CSV herunterladen",
+      download_html_report: "HTML Report herunterladen",
+      emulation_gaps: "Emulation Gap Report",
+      storage_cleanup: "Speicher & Cleanup",
+      check_storage: "Speicher prüfen",
+      cleanup_preview: "Cleanup Vorschau",
+      run_cleanup: "Cleanup ausführen",
+      start: "Start",
+      remote_control: "Fernbedienung",
+      stations: "Sender",
+      multiroom: "Multiroom",
+      alarms: "Wecker Timer",
+      device_settings: "Device Settings",
+      more: "Mehr",
+      about_basswiesn: "Über BASSWIESN",
+      new_alarm_timer: "Neuer Wecker Timer",
+      name: "Name",
+      start_time: "Start",
+      stop_time: "Stop Timer / Ende",
+      days: "Tage",
+      daily: "Täglich",
+      weekdays: "Werktage",
+      weekend: "Wochenende",
+      custom_weekdays: "Einzelne Wochentage",
+      once: "Einmalig",
+      monday: "Montag",
+      tuesday: "Dienstag",
+      wednesday: "Mittwoch",
+      thursday: "Donnerstag",
+      friday: "Freitag",
+      saturday: "Samstag",
+      sunday: "Sonntag",
+      radio: "Radio",
+      station: "Sender",
+      or_preset_slot: "Oder Preset Slot",
+      use_station: "Sender verwenden",
+      stop_action: "Stop-Aktion",
+      stop_and_standby: "Stop + Standby",
+      stop_only: "Nur Stop",
+      multiroom_master: "Multiroom Master",
+      no_multiroom: "Kein Multiroom",
+      multiroom_members: "Multiroom Mitglieder",
+      preview_only: "Nur Vorschau / nicht ausführen",
+      save_alarm_timer: "Wecker Timer speichern",
+      saved_alarm_timers: "Gespeicherte Wecker Timer",
+      clear_test_plans: "Testpläne aufräumen",
+    },
+    en: {
+      telemetry_analysis: "Telemetry Analysis",
+      time_range: "Time range",
+      download_json: "Download JSON",
+      download_csv: "Download CSV",
+      download_html_report: "Download HTML report",
+      emulation_gaps: "Emulation Gap Report",
+      storage_cleanup: "Storage & Cleanup",
+      check_storage: "Check storage",
+      cleanup_preview: "Cleanup preview",
+      run_cleanup: "Run cleanup",
+      start: "Start",
+      remote_control: "Remote",
+      stations: "Stations",
+      multiroom: "Multiroom",
+      alarms: "Alarm Timers",
+      device_settings: "Device Settings",
+      more: "More",
+      about_basswiesn: "About BASSWIESN",
+      new_alarm_timer: "New Alarm Timer",
+      name: "Name",
+      start_time: "Start",
+      stop_time: "Stop timer / end",
+      days: "Days",
+      daily: "Daily",
+      weekdays: "Weekdays",
+      weekend: "Weekend",
+      custom_weekdays: "Individual weekdays",
+      once: "Once",
+      monday: "Monday",
+      tuesday: "Tuesday",
+      wednesday: "Wednesday",
+      thursday: "Thursday",
+      friday: "Friday",
+      saturday: "Saturday",
+      sunday: "Sunday",
+      radio: "Radio",
+      station: "Station",
+      or_preset_slot: "Or preset slot",
+      use_station: "Use station",
+      stop_action: "Stop action",
+      stop_and_standby: "Stop + standby",
+      stop_only: "Stop only",
+      multiroom_master: "Multiroom master",
+      no_multiroom: "No multiroom",
+      multiroom_members: "Multiroom members",
+      preview_only: "Preview only / do not run",
+      save_alarm_timer: "Save Alarm Timer",
+      saved_alarm_timers: "Saved Alarm Timers",
+      clear_test_plans: "Clean up test plans",
+    },
+  };
+  for (const lang of Object.keys(catalogs)) {
+    const values = releasePolish[lang] || releasePolish.en;
+    for (const [key, value] of Object.entries(values)) catalogs[lang][key] = value;
+  }
+  const releasePolishNative = {
+    de: {
+      telemetry_analysis: "Telemetrieanalyse", download_html_report: "HTML-Bericht herunterladen", emulation_gaps: "Emulationslücken-Bericht", storage_cleanup: "Speicher und Bereinigung", cleanup_preview: "Bereinigungsvorschau", run_cleanup: "Bereinigung ausführen", device_settings: "Geräteeinstellungen"
+    },
+    fr: {
+      telemetry_analysis: "Analyse de télémétrie", time_range: "Période", download_json: "Télécharger JSON", download_csv: "Télécharger CSV", download_html_report: "Télécharger le rapport HTML", emulation_gaps: "Rapport des écarts d'émulation", storage_cleanup: "Stockage et nettoyage", check_storage: "Vérifier le stockage", cleanup_preview: "Aperçu du nettoyage", run_cleanup: "Lancer le nettoyage", start: "Accueil", remote_control: "Télécommande", stations: "Stations", multiroom: "Multiroom", alarms: "Réveils et minuteries", device_settings: "Réglages de l'appareil", more: "Plus", about_basswiesn: "À propos de BASSWIESN", new_alarm_timer: "Nouveau réveil/minuteur", name: "Nom", start_time: "Début", stop_time: "Minuteur d'arrêt / fin", days: "Jours", daily: "Tous les jours", weekdays: "Jours ouvrés", weekend: "Week-end", custom_weekdays: "Jours choisis", once: "Une fois", monday: "Lundi", tuesday: "Mardi", wednesday: "Mercredi", thursday: "Jeudi", friday: "Vendredi", saturday: "Samedi", sunday: "Dimanche", radio: "Radio", station: "Station", or_preset_slot: "Ou emplacement preset", use_station: "Utiliser la station", stop_action: "Action d'arrêt", stop_and_standby: "Arrêt + veille", stop_only: "Arrêt seulement", multiroom_master: "Maître multiroom", no_multiroom: "Pas de multiroom", multiroom_members: "Membres multiroom", preview_only: "Aperçu seulement / ne pas exécuter", save_alarm_timer: "Enregistrer le réveil/minuteur", saved_alarm_timers: "Réveils/minuteurs enregistrés", clear_test_plans: "Nettoyer les plans de test"
+    },
+    es: {
+      telemetry_analysis: "Análisis de telemetría", time_range: "Rango de tiempo", download_json: "Descargar JSON", download_csv: "Descargar CSV", download_html_report: "Descargar informe HTML", emulation_gaps: "Informe de diferencias de emulación", storage_cleanup: "Almacenamiento y limpieza", check_storage: "Comprobar almacenamiento", cleanup_preview: "Vista previa de limpieza", run_cleanup: "Ejecutar limpieza", start: "Inicio", remote_control: "Mando", stations: "Emisoras", multiroom: "Multiroom", alarms: "Alarmas y temporizadores", device_settings: "Ajustes del dispositivo", more: "Más", about_basswiesn: "Acerca de BASSWIESN", new_alarm_timer: "Nueva alarma/temporizador", name: "Nombre", start_time: "Inicio", stop_time: "Temporizador de parada / fin", days: "Días", daily: "A diario", weekdays: "Días laborables", weekend: "Fin de semana", custom_weekdays: "Días concretos", once: "Una vez", monday: "Lunes", tuesday: "Martes", wednesday: "Miércoles", thursday: "Jueves", friday: "Viernes", saturday: "Sábado", sunday: "Domingo", radio: "Radio", station: "Emisora", or_preset_slot: "O ranura de preset", use_station: "Usar emisora", stop_action: "Acción de parada", stop_and_standby: "Parar + reposo", stop_only: "Solo parar", multiroom_master: "Maestro multiroom", no_multiroom: "Sin multiroom", multiroom_members: "Miembros multiroom", preview_only: "Solo vista previa / no ejecutar", save_alarm_timer: "Guardar alarma/temporizador", saved_alarm_timers: "Alarmas/temporizadores guardados", clear_test_plans: "Limpiar planes de prueba"
+    },
+    it: {
+      telemetry_analysis: "Analisi telemetria", time_range: "Intervallo", download_json: "Scarica JSON", download_csv: "Scarica CSV", download_html_report: "Scarica report HTML", emulation_gaps: "Report differenze emulazione", storage_cleanup: "Archiviazione e pulizia", check_storage: "Controlla archiviazione", cleanup_preview: "Anteprima pulizia", run_cleanup: "Esegui pulizia", start: "Home", remote_control: "Telecomando", stations: "Stazioni", multiroom: "Multiroom", alarms: "Sveglie e timer", device_settings: "Impostazioni dispositivo", more: "Altro", about_basswiesn: "Informazioni su BASSWIESN", new_alarm_timer: "Nuova sveglia/timer", name: "Nome", start_time: "Inizio", stop_time: "Timer stop / fine", days: "Giorni", daily: "Ogni giorno", weekdays: "Giorni feriali", weekend: "Weekend", custom_weekdays: "Giorni singoli", once: "Una volta", monday: "Lunedì", tuesday: "Martedì", wednesday: "Mercoledì", thursday: "Giovedì", friday: "Venerdì", saturday: "Sabato", sunday: "Domenica", radio: "Radio", station: "Stazione", or_preset_slot: "O slot preset", use_station: "Usa stazione", stop_action: "Azione stop", stop_and_standby: "Stop + standby", stop_only: "Solo stop", multiroom_master: "Master multiroom", no_multiroom: "Nessun multiroom", multiroom_members: "Membri multiroom", preview_only: "Solo anteprima / non eseguire", save_alarm_timer: "Salva sveglia/timer", saved_alarm_timers: "Sveglie/timer salvati", clear_test_plans: "Pulisci piani di test"
+    },
+    pt: {
+      telemetry_analysis: "Análise de telemetria", time_range: "Intervalo de tempo", download_json: "Transferir JSON", download_csv: "Transferir CSV", download_html_report: "Transferir relatório HTML", emulation_gaps: "Relatório de diferenças de emulação", storage_cleanup: "Armazenamento e limpeza", check_storage: "Verificar armazenamento", cleanup_preview: "Pré-visualização da limpeza", run_cleanup: "Executar limpeza", start: "Início", remote_control: "Comando", stations: "Estações", multiroom: "Multiroom", alarms: "Alarmes e temporizadores", device_settings: "Definições do dispositivo", more: "Mais", about_basswiesn: "Sobre o BASSWIESN", new_alarm_timer: "Novo alarme/temporizador", name: "Nome", start_time: "Início", stop_time: "Temporizador de paragem / fim", days: "Dias", daily: "Diariamente", weekdays: "Dias úteis", weekend: "Fim de semana", custom_weekdays: "Dias escolhidos", once: "Uma vez", monday: "Segunda-feira", tuesday: "Terça-feira", wednesday: "Quarta-feira", thursday: "Quinta-feira", friday: "Sexta-feira", saturday: "Sábado", sunday: "Domingo", radio: "Rádio", station: "Estação", or_preset_slot: "Ou posição de preset", use_station: "Usar estação", stop_action: "Ação de paragem", stop_and_standby: "Parar + standby", stop_only: "Só parar", multiroom_master: "Mestre multiroom", no_multiroom: "Sem multiroom", multiroom_members: "Membros multiroom", preview_only: "Só pré-visualizar / não executar", save_alarm_timer: "Guardar alarme/temporizador", saved_alarm_timers: "Alarmes/temporizadores guardados", clear_test_plans: "Limpar planos de teste"
+    },
+    nl: {
+      telemetry_analysis: "Telemetrieanalyse", time_range: "Periode", download_json: "JSON downloaden", download_csv: "CSV downloaden", download_html_report: "HTML-rapport downloaden", emulation_gaps: "Rapport met emulatieverschillen", storage_cleanup: "Opslag en opruimen", check_storage: "Opslag controleren", cleanup_preview: "Opruimvoorbeeld", run_cleanup: "Opruimen uitvoeren", start: "Start", remote_control: "Afstandsbediening", stations: "Zenders", multiroom: "Multiroom", alarms: "Wekkers en timers", device_settings: "Apparaatinstellingen", more: "Meer", about_basswiesn: "Over BASSWIESN", new_alarm_timer: "Nieuwe wekker/timer", name: "Naam", start_time: "Start", stop_time: "Stoptimer / einde", days: "Dagen", daily: "Dagelijks", weekdays: "Werkdagen", weekend: "Weekend", custom_weekdays: "Losse weekdagen", once: "Eenmalig", monday: "Maandag", tuesday: "Dinsdag", wednesday: "Woensdag", thursday: "Donderdag", friday: "Vrijdag", saturday: "Zaterdag", sunday: "Zondag", radio: "Radio", station: "Zender", or_preset_slot: "Of presetpositie", use_station: "Zender gebruiken", stop_action: "Stopactie", stop_and_standby: "Stop + standby", stop_only: "Alleen stop", multiroom_master: "Multiroom-master", no_multiroom: "Geen multiroom", multiroom_members: "Multiroom-leden", preview_only: "Alleen voorbeeld / niet uitvoeren", save_alarm_timer: "Wekker/timer opslaan", saved_alarm_timers: "Opgeslagen wekkers/timers", clear_test_plans: "Testplannen opruimen"
+    },
+    da: {
+      telemetry_analysis: "Telemetrianalyse", time_range: "Tidsrum", download_json: "Hent JSON", download_csv: "Hent CSV", download_html_report: "Hent HTML-rapport", emulation_gaps: "Rapport over emuleringshuller", storage_cleanup: "Lager og oprydning", check_storage: "Kontroller lager", cleanup_preview: "Oprydningsvisning", run_cleanup: "Kør oprydning", start: "Start", remote_control: "Fjernbetjening", stations: "Stationer", multiroom: "Multiroom", alarms: "Alarmer og timere", device_settings: "Enhedsindstillinger", more: "Mere", about_basswiesn: "Om BASSWIESN", new_alarm_timer: "Ny alarm/timer", name: "Navn", start_time: "Start", stop_time: "Stop-timer / slut", days: "Dage", daily: "Dagligt", weekdays: "Hverdage", weekend: "Weekend", custom_weekdays: "Valgte ugedage", once: "Én gang", monday: "Mandag", tuesday: "Tirsdag", wednesday: "Onsdag", thursday: "Torsdag", friday: "Fredag", saturday: "Lørdag", sunday: "Søndag", radio: "Radio", station: "Station", or_preset_slot: "Eller presetplads", use_station: "Brug station", stop_action: "Stophandling", stop_and_standby: "Stop + standby", stop_only: "Kun stop", multiroom_master: "Multiroom-master", no_multiroom: "Ingen multiroom", multiroom_members: "Multiroom-medlemmer", preview_only: "Kun forhåndsvisning / kør ikke", save_alarm_timer: "Gem alarm/timer", saved_alarm_timers: "Gemte alarmer/timere", clear_test_plans: "Ryd testplaner"
+    },
+    sv: {
+      telemetry_analysis: "Telemetrianalys", time_range: "Tidsintervall", download_json: "Hämta JSON", download_csv: "Hämta CSV", download_html_report: "Hämta HTML-rapport", emulation_gaps: "Rapport om emuleringsluckor", storage_cleanup: "Lagring och rensning", check_storage: "Kontrollera lagring", cleanup_preview: "Förhandsvisa rensning", run_cleanup: "Kör rensning", start: "Start", remote_control: "Fjärrkontroll", stations: "Stationer", multiroom: "Multiroom", alarms: "Alarm och timer", device_settings: "Enhetsinställningar", more: "Mer", about_basswiesn: "Om BASSWIESN", new_alarm_timer: "Nytt alarm/timer", name: "Namn", start_time: "Start", stop_time: "Stopp-timer / slut", days: "Dagar", daily: "Dagligen", weekdays: "Vardagar", weekend: "Helg", custom_weekdays: "Valda veckodagar", once: "En gång", monday: "Måndag", tuesday: "Tisdag", wednesday: "Onsdag", thursday: "Torsdag", friday: "Fredag", saturday: "Lördag", sunday: "Söndag", radio: "Radio", station: "Station", or_preset_slot: "Eller presetplats", use_station: "Använd station", stop_action: "Stoppåtgärd", stop_and_standby: "Stoppa + standby", stop_only: "Endast stoppa", multiroom_master: "Multiroom-master", no_multiroom: "Ingen multiroom", multiroom_members: "Multiroom-medlemmar", preview_only: "Endast förhandsvisning / kör inte", save_alarm_timer: "Spara alarm/timer", saved_alarm_timers: "Sparade alarm/timer", clear_test_plans: "Rensa testplaner"
+    },
+    no: {
+      telemetry_analysis: "Telemetrianalyse", time_range: "Tidsrom", download_json: "Last ned JSON", download_csv: "Last ned CSV", download_html_report: "Last ned HTML-rapport", emulation_gaps: "Rapport om emuleringsavvik", storage_cleanup: "Lagring og opprydding", check_storage: "Kontroller lagring", cleanup_preview: "Forhåndsvis opprydding", run_cleanup: "Kjør opprydding", start: "Start", remote_control: "Fjernkontroll", stations: "Stasjoner", multiroom: "Multiroom", alarms: "Alarmer og timere", device_settings: "Enhetsinnstillinger", more: "Mer", about_basswiesn: "Om BASSWIESN", new_alarm_timer: "Ny alarm/timer", name: "Navn", start_time: "Start", stop_time: "Stopptimer / slutt", days: "Dager", daily: "Daglig", weekdays: "Hverdager", weekend: "Helg", custom_weekdays: "Valgte ukedager", once: "Én gang", monday: "Mandag", tuesday: "Tirsdag", wednesday: "Onsdag", thursday: "Torsdag", friday: "Fredag", saturday: "Lørdag", sunday: "Søndag", radio: "Radio", station: "Stasjon", or_preset_slot: "Eller presetplass", use_station: "Bruk stasjon", stop_action: "Stopphandling", stop_and_standby: "Stopp + standby", stop_only: "Bare stopp", multiroom_master: "Multiroom-master", no_multiroom: "Ingen multiroom", multiroom_members: "Multiroom-medlemmer", preview_only: "Bare forhåndsvisning / ikke kjør", save_alarm_timer: "Lagre alarm/timer", saved_alarm_timers: "Lagrede alarmer/timere", clear_test_plans: "Rydd testplaner"
+    },
+    fi: {
+      telemetry_analysis: "Telemetria-analyysi", time_range: "Aikaväli", download_json: "Lataa JSON", download_csv: "Lataa CSV", download_html_report: "Lataa HTML-raportti", emulation_gaps: "Emulointieroista raportti", storage_cleanup: "Tallennus ja siivous", check_storage: "Tarkista tallennus", cleanup_preview: "Siivouksen esikatselu", run_cleanup: "Suorita siivous", start: "Aloitus", remote_control: "Kaukosäädin", stations: "Asemat", multiroom: "Multiroom", alarms: "Herätykset ja ajastimet", device_settings: "Laitteen asetukset", more: "Lisää", about_basswiesn: "Tietoja BASSWIESNistä", new_alarm_timer: "Uusi herätys/ajastin", name: "Nimi", start_time: "Alku", stop_time: "Pysäytysajastin / loppu", days: "Päivät", daily: "Päivittäin", weekdays: "Arkipäivät", weekend: "Viikonloppu", custom_weekdays: "Valitut viikonpäivät", once: "Kerran", monday: "Maanantai", tuesday: "Tiistai", wednesday: "Keskiviikko", thursday: "Torstai", friday: "Perjantai", saturday: "Lauantai", sunday: "Sunnuntai", radio: "Radio", station: "Asema", or_preset_slot: "Tai preset-paikka", use_station: "Käytä asemaa", stop_action: "Pysäytystoiminto", stop_and_standby: "Pysäytä + valmiustila", stop_only: "Vain pysäytys", multiroom_master: "Multiroom-isäntä", no_multiroom: "Ei multiroomia", multiroom_members: "Multiroom-jäsenet", preview_only: "Vain esikatselu / älä suorita", save_alarm_timer: "Tallenna herätys/ajastin", saved_alarm_timers: "Tallennetut herätykset/ajastimet", clear_test_plans: "Siivoa testisuunnitelmat"
+    },
+    pl: {
+      telemetry_analysis: "Analiza telemetrii", time_range: "Zakres czasu", download_json: "Pobierz JSON", download_csv: "Pobierz CSV", download_html_report: "Pobierz raport HTML", emulation_gaps: "Raport luk emulacji", storage_cleanup: "Pamięć i porządkowanie", check_storage: "Sprawdź pamięć", cleanup_preview: "Podgląd porządkowania", run_cleanup: "Uruchom porządkowanie", start: "Start", remote_control: "Pilot", stations: "Stacje", multiroom: "Multiroom", alarms: "Alarmy i timery", device_settings: "Ustawienia urządzenia", more: "Więcej", about_basswiesn: "O BASSWIESN", new_alarm_timer: "Nowy alarm/timer", name: "Nazwa", start_time: "Start", stop_time: "Timer zatrzymania / koniec", days: "Dni", daily: "Codziennie", weekdays: "Dni robocze", weekend: "Weekend", custom_weekdays: "Wybrane dni tygodnia", once: "Jednorazowo", monday: "Poniedziałek", tuesday: "Wtorek", wednesday: "Środa", thursday: "Czwartek", friday: "Piątek", saturday: "Sobota", sunday: "Niedziela", radio: "Radio", station: "Stacja", or_preset_slot: "Lub miejsce presetu", use_station: "Użyj stacji", stop_action: "Akcja zatrzymania", stop_and_standby: "Zatrzymaj + czuwanie", stop_only: "Tylko zatrzymaj", multiroom_master: "Master multiroom", no_multiroom: "Bez multiroom", multiroom_members: "Członkowie multiroom", preview_only: "Tylko podgląd / nie wykonuj", save_alarm_timer: "Zapisz alarm/timer", saved_alarm_timers: "Zapisane alarmy/timery", clear_test_plans: "Wyczyść plany testowe"
+    },
+    cs: {
+      telemetry_analysis: "Analýza telemetrie", time_range: "Časový rozsah", download_json: "Stáhnout JSON", download_csv: "Stáhnout CSV", download_html_report: "Stáhnout HTML zprávu", emulation_gaps: "Zpráva o mezerách emulace", storage_cleanup: "Úložiště a úklid", check_storage: "Zkontrolovat úložiště", cleanup_preview: "Náhled úklidu", run_cleanup: "Spustit úklid", start: "Start", remote_control: "Dálkové ovládání", stations: "Stanice", multiroom: "Multiroom", alarms: "Budíky a časovače", device_settings: "Nastavení zařízení", more: "Více", about_basswiesn: "O BASSWIESN", new_alarm_timer: "Nový budík/časovač", name: "Název", start_time: "Start", stop_time: "Časovač zastavení / konec", days: "Dny", daily: "Denně", weekdays: "Pracovní dny", weekend: "Víkend", custom_weekdays: "Vybrané dny", once: "Jednou", monday: "Pondělí", tuesday: "Úterý", wednesday: "Středa", thursday: "Čtvrtek", friday: "Pátek", saturday: "Sobota", sunday: "Neděle", radio: "Rádio", station: "Stanice", or_preset_slot: "Nebo pozice předvolby", use_station: "Použít stanici", stop_action: "Akce zastavení", stop_and_standby: "Stop + pohotovost", stop_only: "Pouze stop", multiroom_master: "Multiroom master", no_multiroom: "Žádný multiroom", multiroom_members: "Členové multiroom", preview_only: "Pouze náhled / nespouštět", save_alarm_timer: "Uložit budík/časovač", saved_alarm_timers: "Uložené budíky/časovače", clear_test_plans: "Vyčistit testovací plány"
+    },
+    sk: {
+      telemetry_analysis: "Analýza telemetrie", time_range: "Časový rozsah", download_json: "Stiahnuť JSON", download_csv: "Stiahnuť CSV", download_html_report: "Stiahnuť HTML správu", emulation_gaps: "Správa o medzerách emulácie", storage_cleanup: "Úložisko a čistenie", check_storage: "Skontrolovať úložisko", cleanup_preview: "Náhľad čistenia", run_cleanup: "Spustiť čistenie", start: "Štart", remote_control: "Diaľkové ovládanie", stations: "Stanice", multiroom: "Multiroom", alarms: "Budíky a časovače", device_settings: "Nastavenia zariadenia", more: "Viac", about_basswiesn: "O BASSWIESN", new_alarm_timer: "Nový budík/časovač", name: "Názov", start_time: "Štart", stop_time: "Časovač zastavenia / koniec", days: "Dni", daily: "Denne", weekdays: "Pracovné dni", weekend: "Víkend", custom_weekdays: "Vybrané dni", once: "Raz", monday: "Pondelok", tuesday: "Utorok", wednesday: "Streda", thursday: "Štvrtok", friday: "Piatok", saturday: "Sobota", sunday: "Nedeľa", radio: "Rádio", station: "Stanica", or_preset_slot: "Alebo pozícia predvoľby", use_station: "Použiť stanicu", stop_action: "Akcia zastavenia", stop_and_standby: "Stop + pohotovosť", stop_only: "Iba stop", multiroom_master: "Multiroom master", no_multiroom: "Žiadny multiroom", multiroom_members: "Členovia multiroom", preview_only: "Iba náhľad / nespúšťať", save_alarm_timer: "Uložiť budík/časovač", saved_alarm_timers: "Uložené budíky/časovače", clear_test_plans: "Vyčistiť testovacie plány"
+    },
+    hu: {
+      telemetry_analysis: "Telemetriaelemzés", time_range: "Időtartomány", download_json: "JSON letöltése", download_csv: "CSV letöltése", download_html_report: "HTML-jelentés letöltése", emulation_gaps: "Emulációs eltérések jelentése", storage_cleanup: "Tárhely és takarítás", check_storage: "Tárhely ellenőrzése", cleanup_preview: "Takarítás előnézete", run_cleanup: "Takarítás indítása", start: "Kezdőlap", remote_control: "Távirányító", stations: "Állomások", multiroom: "Multiroom", alarms: "Ébresztők és időzítők", device_settings: "Eszközbeállítások", more: "Továbbiak", about_basswiesn: "A BASSWIESN névjegye", new_alarm_timer: "Új ébresztő/időzítő", name: "Név", start_time: "Indítás", stop_time: "Leállítási időzítő / vége", days: "Napok", daily: "Naponta", weekdays: "Hétköznapok", weekend: "Hétvége", custom_weekdays: "Kiválasztott hétköznapok", once: "Egyszer", monday: "Hétfő", tuesday: "Kedd", wednesday: "Szerda", thursday: "Csütörtök", friday: "Péntek", saturday: "Szombat", sunday: "Vasárnap", radio: "Rádió", station: "Állomás", or_preset_slot: "Vagy programhely", use_station: "Állomás használata", stop_action: "Leállítási művelet", stop_and_standby: "Stop + készenlét", stop_only: "Csak stop", multiroom_master: "Multiroom vezérlő", no_multiroom: "Nincs multiroom", multiroom_members: "Multiroom tagok", preview_only: "Csak előnézet / ne futtassa", save_alarm_timer: "Ébresztő/időzítő mentése", saved_alarm_timers: "Mentett ébresztők/időzítők", clear_test_plans: "Teszttervek törlése"
+    },
+    ro: {
+      telemetry_analysis: "Analiză telemetrie", time_range: "Interval de timp", download_json: "Descarcă JSON", download_csv: "Descarcă CSV", download_html_report: "Descarcă raport HTML", emulation_gaps: "Raport diferențe emulare", storage_cleanup: "Stocare și curățare", check_storage: "Verifică stocarea", cleanup_preview: "Previzualizare curățare", run_cleanup: "Rulează curățarea", start: "Start", remote_control: "Telecomandă", stations: "Posturi", multiroom: "Multiroom", alarms: "Alarme și temporizatoare", device_settings: "Setări dispozitiv", more: "Mai multe", about_basswiesn: "Despre BASSWIESN", new_alarm_timer: "Alarmă/temporizator nou", name: "Nume", start_time: "Start", stop_time: "Temporizator oprire / final", days: "Zile", daily: "Zilnic", weekdays: "Zile lucrătoare", weekend: "Weekend", custom_weekdays: "Zile selectate", once: "O dată", monday: "Luni", tuesday: "Marți", wednesday: "Miercuri", thursday: "Joi", friday: "Vineri", saturday: "Sâmbătă", sunday: "Duminică", radio: "Radio", station: "Post", or_preset_slot: "Sau poziție presetată", use_station: "Folosește postul", stop_action: "Acțiune de oprire", stop_and_standby: "Stop + standby", stop_only: "Doar stop", multiroom_master: "Master multiroom", no_multiroom: "Fără multiroom", multiroom_members: "Membri multiroom", preview_only: "Doar previzualizare / nu executa", save_alarm_timer: "Salvează alarma/temporizatorul", saved_alarm_timers: "Alarme/temporizatoare salvate", clear_test_plans: "Curăță planurile de test"
+    },
+    bg: {
+      telemetry_analysis: "Анализ на телеметрия", time_range: "Времеви диапазон", download_json: "Изтегляне на JSON", download_csv: "Изтегляне на CSV", download_html_report: "Изтегляне на HTML отчет", emulation_gaps: "Отчет за пропуски в емулацията", storage_cleanup: "Съхранение и почистване", check_storage: "Проверка на съхранението", cleanup_preview: "Преглед на почистването", run_cleanup: "Стартиране на почистване", start: "Начало", remote_control: "Дистанционно", stations: "Станции", multiroom: "Multiroom", alarms: "Аларми и таймери", device_settings: "Настройки на устройството", more: "Още", about_basswiesn: "За BASSWIESN", new_alarm_timer: "Нова аларма/таймер", name: "Име", start_time: "Старт", stop_time: "Таймер за стоп / край", days: "Дни", daily: "Всеки ден", weekdays: "Работни дни", weekend: "Уикенд", custom_weekdays: "Избрани дни", once: "Еднократно", monday: "Понеделник", tuesday: "Вторник", wednesday: "Сряда", thursday: "Четвъртък", friday: "Петък", saturday: "Събота", sunday: "Неделя", radio: "Радио", station: "Станция", or_preset_slot: "Или preset позиция", use_station: "Използвай станция", stop_action: "Действие при спиране", stop_and_standby: "Стоп + готовност", stop_only: "Само стоп", multiroom_master: "Multiroom master", no_multiroom: "Без multiroom", multiroom_members: "Multiroom членове", preview_only: "Само преглед / не изпълнявай", save_alarm_timer: "Запази аларма/таймер", saved_alarm_timers: "Запазени аларми/таймери", clear_test_plans: "Почистване на тестови планове"
+    },
+    hr: {
+      telemetry_analysis: "Analiza telemetrije", time_range: "Vremenski raspon", download_json: "Preuzmi JSON", download_csv: "Preuzmi CSV", download_html_report: "Preuzmi HTML izvještaj", emulation_gaps: "Izvještaj o razlikama emulacije", storage_cleanup: "Pohrana i čišćenje", check_storage: "Provjeri pohranu", cleanup_preview: "Pregled čišćenja", run_cleanup: "Pokreni čišćenje", start: "Početak", remote_control: "Daljinski", stations: "Stanice", multiroom: "Multiroom", alarms: "Alarmi i timeri", device_settings: "Postavke uređaja", more: "Više", about_basswiesn: "O BASSWIESN-u", new_alarm_timer: "Novi alarm/timer", name: "Naziv", start_time: "Početak", stop_time: "Timer zaustavljanja / kraj", days: "Dani", daily: "Svakodnevno", weekdays: "Radni dani", weekend: "Vikend", custom_weekdays: "Odabrani dani", once: "Jednom", monday: "Ponedjeljak", tuesday: "Utorak", wednesday: "Srijeda", thursday: "Četvrtak", friday: "Petak", saturday: "Subota", sunday: "Nedjelja", radio: "Radio", station: "Stanica", or_preset_slot: "Ili preset mjesto", use_station: "Koristi stanicu", stop_action: "Akcija zaustavljanja", stop_and_standby: "Stop + pripravnost", stop_only: "Samo stop", multiroom_master: "Multiroom master", no_multiroom: "Bez multirooma", multiroom_members: "Multiroom članovi", preview_only: "Samo pregled / ne izvršavaj", save_alarm_timer: "Spremi alarm/timer", saved_alarm_timers: "Spremljeni alarmi/timeri", clear_test_plans: "Očisti testne planove"
+    },
+    sl: {
+      telemetry_analysis: "Analiza telemetrije", time_range: "Časovni razpon", download_json: "Prenesi JSON", download_csv: "Prenesi CSV", download_html_report: "Prenesi HTML poročilo", emulation_gaps: "Poročilo o vrzelih emulacije", storage_cleanup: "Shramba in čiščenje", check_storage: "Preveri shrambo", cleanup_preview: "Predogled čiščenja", run_cleanup: "Zaženi čiščenje", start: "Začetek", remote_control: "Daljinec", stations: "Postaje", multiroom: "Multiroom", alarms: "Alarmi in časovniki", device_settings: "Nastavitve naprave", more: "Več", about_basswiesn: "O BASSWIESN", new_alarm_timer: "Nov alarm/časovnik", name: "Ime", start_time: "Začetek", stop_time: "Časovnik zaustavitve / konec", days: "Dnevi", daily: "Dnevno", weekdays: "Delovni dnevi", weekend: "Vikend", custom_weekdays: "Izbrani dnevi", once: "Enkrat", monday: "Ponedeljek", tuesday: "Torek", wednesday: "Sreda", thursday: "Četrtek", friday: "Petek", saturday: "Sobota", sunday: "Nedelja", radio: "Radio", station: "Postaja", or_preset_slot: "Ali mesto prednastavitve", use_station: "Uporabi postajo", stop_action: "Dejanje zaustavitve", stop_and_standby: "Stop + pripravljenost", stop_only: "Samo stop", multiroom_master: "Multiroom glavni", no_multiroom: "Brez multiroom", multiroom_members: "Člani multiroom", preview_only: "Samo predogled / ne izvedi", save_alarm_timer: "Shrani alarm/časovnik", saved_alarm_timers: "Shranjeni alarmi/časovniki", clear_test_plans: "Počisti testne načrte"
+    },
+    el: {
+      telemetry_analysis: "Ανάλυση τηλεμετρίας", time_range: "Χρονικό εύρος", download_json: "Λήψη JSON", download_csv: "Λήψη CSV", download_html_report: "Λήψη αναφοράς HTML", emulation_gaps: "Αναφορά κενών εξομοίωσης", storage_cleanup: "Αποθήκευση και καθαρισμός", check_storage: "Έλεγχος αποθήκευσης", cleanup_preview: "Προεπισκόπηση καθαρισμού", run_cleanup: "Εκτέλεση καθαρισμού", start: "Αρχική", remote_control: "Τηλεχειριστήριο", stations: "Σταθμοί", multiroom: "Multiroom", alarms: "Ξυπνητήρια και χρονοδιακόπτες", device_settings: "Ρυθμίσεις συσκευής", more: "Περισσότερα", about_basswiesn: "Σχετικά με το BASSWIESN", new_alarm_timer: "Νέο ξυπνητήρι/χρονόμετρο", name: "Όνομα", start_time: "Έναρξη", stop_time: "Χρονόμετρο διακοπής / τέλος", days: "Ημέρες", daily: "Καθημερινά", weekdays: "Εργάσιμες", weekend: "Σαββατοκύριακο", custom_weekdays: "Επιλεγμένες ημέρες", once: "Μία φορά", monday: "Δευτέρα", tuesday: "Τρίτη", wednesday: "Τετάρτη", thursday: "Πέμπτη", friday: "Παρασκευή", saturday: "Σάββατο", sunday: "Κυριακή", radio: "Ραδιόφωνο", station: "Σταθμός", or_preset_slot: "Ή θέση preset", use_station: "Χρήση σταθμού", stop_action: "Ενέργεια διακοπής", stop_and_standby: "Stop + αναμονή", stop_only: "Μόνο stop", multiroom_master: "Κύριο multiroom", no_multiroom: "Χωρίς multiroom", multiroom_members: "Μέλη multiroom", preview_only: "Μόνο προεπισκόπηση / χωρίς εκτέλεση", save_alarm_timer: "Αποθήκευση ξυπνητηριού/χρονοδιακόπτη", saved_alarm_timers: "Αποθηκευμένα ξυπνητήρια/χρονόμετρα", clear_test_plans: "Καθαρισμός δοκιμαστικών σχεδίων"
+    },
+    tr: {
+      telemetry_analysis: "Telemetri analizi", time_range: "Zaman aralığı", download_json: "JSON indir", download_csv: "CSV indir", download_html_report: "HTML raporu indir", emulation_gaps: "Emülasyon fark raporu", storage_cleanup: "Depolama ve temizlik", check_storage: "Depolamayı denetle", cleanup_preview: "Temizlik önizlemesi", run_cleanup: "Temizliği çalıştır", start: "Başlangıç", remote_control: "Kumanda", stations: "İstasyonlar", multiroom: "Multiroom", alarms: "Alarmlar ve zamanlayıcılar", device_settings: "Cihaz ayarları", more: "Daha fazla", about_basswiesn: "BASSWIESN hakkında", new_alarm_timer: "Yeni alarm/zamanlayıcı", name: "Ad", start_time: "Başlat", stop_time: "Durdurma zamanlayıcısı / bitiş", days: "Günler", daily: "Günlük", weekdays: "Hafta içi", weekend: "Hafta sonu", custom_weekdays: "Seçili günler", once: "Bir kez", monday: "Pazartesi", tuesday: "Salı", wednesday: "Çarşamba", thursday: "Perşembe", friday: "Cuma", saturday: "Cumartesi", sunday: "Pazar", radio: "Radyo", station: "İstasyon", or_preset_slot: "Veya preset yuvası", use_station: "İstasyonu kullan", stop_action: "Durdurma işlemi", stop_and_standby: "Stop + bekleme", stop_only: "Yalnızca stop", multiroom_master: "Multiroom ana cihaz", no_multiroom: "Multiroom yok", multiroom_members: "Multiroom üyeleri", preview_only: "Sadece önizleme / çalıştırma", save_alarm_timer: "Alarm/zamanlayıcı kaydet", saved_alarm_timers: "Kayıtlı alarm/zamanlayıcılar", clear_test_plans: "Test planlarını temizle"
+    },
+    ru: {
+      telemetry_analysis: "Анализ телеметрии", time_range: "Диапазон времени", download_json: "Скачать JSON", download_csv: "Скачать CSV", download_html_report: "Скачать HTML-отчет", emulation_gaps: "Отчет о пробелах эмуляции", storage_cleanup: "Хранилище и очистка", check_storage: "Проверить хранилище", cleanup_preview: "Предпросмотр очистки", run_cleanup: "Запустить очистку", start: "Старт", remote_control: "Пульт", stations: "Станции", multiroom: "Multiroom", alarms: "Будильники и таймеры", device_settings: "Настройки устройства", more: "Еще", about_basswiesn: "О BASSWIESN", new_alarm_timer: "Новый будильник/таймер", name: "Имя", start_time: "Старт", stop_time: "Таймер остановки / конец", days: "Дни", daily: "Ежедневно", weekdays: "Будни", weekend: "Выходные", custom_weekdays: "Выбранные дни", once: "Один раз", monday: "Понедельник", tuesday: "Вторник", wednesday: "Среда", thursday: "Четверг", friday: "Пятница", saturday: "Суббота", sunday: "Воскресенье", radio: "Радио", station: "Станция", or_preset_slot: "Или слот пресета", use_station: "Использовать станцию", stop_action: "Действие остановки", stop_and_standby: "Стоп + ожидание", stop_only: "Только стоп", multiroom_master: "Multiroom-мастер", no_multiroom: "Без multiroom", multiroom_members: "Участники multiroom", preview_only: "Только просмотр / не выполнять", save_alarm_timer: "Сохранить будильник/таймер", saved_alarm_timers: "Сохраненные будильники/таймеры", clear_test_plans: "Очистить тестовые планы"
+    },
+    uk: {
+      telemetry_analysis: "Аналіз телеметрії", time_range: "Діапазон часу", download_json: "Завантажити JSON", download_csv: "Завантажити CSV", download_html_report: "Завантажити HTML-звіт", emulation_gaps: "Звіт про прогалини емуляції", storage_cleanup: "Сховище й очищення", check_storage: "Перевірити сховище", cleanup_preview: "Попередній перегляд очищення", run_cleanup: "Запустити очищення", start: "Старт", remote_control: "Пульт", stations: "Станції", multiroom: "Multiroom", alarms: "Будильники й таймери", device_settings: "Налаштування пристрою", more: "Ще", about_basswiesn: "Про BASSWIESN", new_alarm_timer: "Новий будильник/таймер", name: "Назва", start_time: "Старт", stop_time: "Таймер зупинки / кінець", days: "Дні", daily: "Щодня", weekdays: "Будні", weekend: "Вихідні", custom_weekdays: "Вибрані дні", once: "Один раз", monday: "Понеділок", tuesday: "Вівторок", wednesday: "Середа", thursday: "Четвер", friday: "П’ятниця", saturday: "Субота", sunday: "Неділя", radio: "Радіо", station: "Станція", or_preset_slot: "Або слот пресету", use_station: "Використати станцію", stop_action: "Дія зупинки", stop_and_standby: "Стоп + очікування", stop_only: "Лише стоп", multiroom_master: "Multiroom-майстер", no_multiroom: "Без multiroom", multiroom_members: "Учасники multiroom", preview_only: "Лише перегляд / не виконувати", save_alarm_timer: "Зберегти будильник/таймер", saved_alarm_timers: "Збережені будильники/таймери", clear_test_plans: "Очистити тестові плани"
+    },
+    ja: {
+      telemetry_analysis: "テレメトリ分析", time_range: "期間", download_json: "JSON をダウンロード", download_csv: "CSV をダウンロード", download_html_report: "HTML レポートをダウンロード", emulation_gaps: "エミュレーション差分レポート", storage_cleanup: "ストレージとクリーンアップ", check_storage: "ストレージを確認", cleanup_preview: "クリーンアップのプレビュー", run_cleanup: "クリーンアップを実行", start: "開始", remote_control: "リモコン", stations: "局", multiroom: "Multiroom", alarms: "アラームとタイマー", device_settings: "機器設定", more: "その他", about_basswiesn: "BASSWIESN について", new_alarm_timer: "新しいアラーム/タイマー", name: "名前", start_time: "開始", stop_time: "停止タイマー / 終了", days: "日", daily: "毎日", weekdays: "平日", weekend: "週末", custom_weekdays: "選択した曜日", once: "1回", monday: "月曜日", tuesday: "火曜日", wednesday: "水曜日", thursday: "木曜日", friday: "金曜日", saturday: "土曜日", sunday: "日曜日", radio: "ラジオ", station: "局", or_preset_slot: "またはプリセット枠", use_station: "局を使用", stop_action: "停止動作", stop_and_standby: "停止 + スタンバイ", stop_only: "停止のみ", multiroom_master: "Multiroom マスター", no_multiroom: "Multiroom なし", multiroom_members: "Multiroom メンバー", preview_only: "プレビューのみ / 実行しない", save_alarm_timer: "アラーム/タイマーを保存", saved_alarm_timers: "保存済みアラーム/タイマー", clear_test_plans: "テスト計画を整理"
+    },
+    zh: {
+      telemetry_analysis: "遥测分析", time_range: "时间范围", download_json: "下载 JSON", download_csv: "下载 CSV", download_html_report: "下载 HTML 报告", emulation_gaps: "仿真差异报告", storage_cleanup: "存储和清理", check_storage: "检查存储", cleanup_preview: "清理预览", run_cleanup: "执行清理", start: "开始", remote_control: "遥控器", stations: "电台", multiroom: "Multiroom", alarms: "闹钟和定时器", device_settings: "设备设置", more: "更多", about_basswiesn: "关于 BASSWIESN", new_alarm_timer: "新建闹钟/定时器", name: "名称", start_time: "开始", stop_time: "停止定时器 / 结束", days: "日期", daily: "每天", weekdays: "工作日", weekend: "周末", custom_weekdays: "选择的星期", once: "一次", monday: "星期一", tuesday: "星期二", wednesday: "星期三", thursday: "星期四", friday: "星期五", saturday: "星期六", sunday: "星期日", radio: "收音机", station: "电台", or_preset_slot: "或预设位置", use_station: "使用电台", stop_action: "停止动作", stop_and_standby: "停止 + 待机", stop_only: "仅停止", multiroom_master: "Multiroom 主设备", no_multiroom: "无 Multiroom", multiroom_members: "Multiroom 成员", preview_only: "仅预览 / 不执行", save_alarm_timer: "保存闹钟/定时器", saved_alarm_timers: "已保存的闹钟/定时器", clear_test_plans: "清理测试计划"
+    }
+  };
+  for (const [lang, values] of Object.entries(releasePolishNative)) {
+    for (const [key, value] of Object.entries(values)) catalogs[lang][key] = value;
+  }
+  keys.push(...Object.keys(releasePolish.en));
+  const uiPhraseKeys = [
+    "overview","soundtouch_system","system_health","health_release_check","health_check","devices_overview","recent_requests","playback_log","playback_statistics",
+    "webgui_defaults","enable_lab_mode","safe_startup_volume","show_startup_warning","protected_radio_ips","protected_radio_ips_help","default_timezone","default_device_language","save_settings","notes","default_ui_language_note","language_saved_note",
+    "setup_selected_radios","setup_cancel","radios_search","configured_radios","add_radio","add_radio_help","current_slots","update_from_radio","online_station_search","search","copy_presets","copy_all_slots",
+    "common_listening","master_radio","additional_rooms","start_multiroom","clear_groups","current_state","read_status","telnet_reboot","check_capability","standby_clock_restore","job_status","cleanup","clear_logs","remove_test_devices",
+    "battery_patch_title","patch_apply","rollback","show_plan","manual_only","music_library","backup_title","config_title","protocol_title","reload","target_radio","status_unknown"
+  ];
+  const uiPhraseRows = {
+    de:["Übersicht","Deine SoundTouch Anlage","Systemzustand","Release-Prüfung für API, Datenbank, Speicher, Emulator und Ports.","Zustand prüfen","Geräte","Letzte Anfragen","Wiedergabeprotokoll","Wiedergabestatistik","Weboberfläche","Lab-Modus aktivieren","Sichere Startlautstärke","Starthinweis anzeigen","Geschützte Radio-IPs","Diese Radios bleiben read-only. Schreibende Aktionen werden serverseitig blockiert.","Standard-Zeitzone","Standard-Gerätesprache","Einstellungen speichern","Hinweise","Die Standardsprache der Oberfläche ist Englisch, damit alle Benutzer die Spracheinstellung erreichen. Gerätesprachen sind die von Stockholm unterstützten Lautsprecher-Sprachen.","Sprache gespeichert; die Weboberfläche verwendet die gewählte Sprache.","SETUP AUSGEWÄHLTE RADIOS STARTEN","Setup abbrechen","Radios suchen","Konfigurierte Radios","Radio hinzufügen","Hinzufügen speichert ein Radio lokal; danach kann /info Modell, Firmware und Geräte-ID ergänzen.","Aktuelle Slots","Vom Radio aktualisieren","Online-Sendersuche","Suchen","Presets kopieren","Alle Slots kopieren","Gemeinsam hören","Hauptradio","Weitere Räume","Multiroom starten","Alle Gruppen auflösen","Aktueller Zustand","Status lesen","Gerät per Telnet neu starten","Fähigkeit prüfen","Standby-Uhr neu aktivieren","Jobstatus","Aufräumen","Protokolle leeren","Testgeräte entfernen","BatteryMonitor-Patch / Portable-Batterie","Patch anwenden","Rollback","Plan anzeigen","manuell","Musikbibliothek","Sicherung","Technik","Protokoll","Neu laden","Zielradio","Status unbekannt"],
+    en:["Overview","Your SoundTouch system","System Health","Release check for API, database, storage, emulator and ports.","Check health","Devices","Recent Requests","Playback Log","Playback Statistics","WebGUI defaults","Enable Lab Mode","Safe Startup Volume","Show startup warning","Protected radio IPs","These radios remain read-only. Write actions are blocked on the server.","Default timezone","Default device language","Save settings","Notes","Default UI language is English so every user can reach language setup. Device languages are the Stockholm-supported speaker languages.","Language saved; the web interface uses the selected language.","START SETUP FOR SELECTED RADIOS","Cancel setup","Search radios","Configured radios","Add radio","Add saves a radio locally, then /info can fill model, firmware and device id.","Current Slots","Refresh from radio","Online station search","Search","Copy presets","Copy all slots","Listen together","Main radio","Additional rooms","Start multiroom","Dissolve all groups","Current state","Read status","Restart device via Telnet","Check capability","Reactivate standby clock","Job status","Cleanup","Clear logs","Remove test devices","BatteryMonitor Patch / Portable Battery","Apply patch","Rollback","Show plan","manual","Music library","Backup","Technical","Log","Reload","Target radio","Status unknown"],
+    fr:["Vue d'ensemble","Votre système SoundTouch","État système","Vérification de version pour API, base de données, stockage, émulateur et ports.","Vérifier l'état","Appareils","Requêtes récentes","Journal de lecture","Statistiques de lecture","Valeurs par défaut WebGUI","Activer le mode LAB","Volume de démarrage sûr","Afficher l'avertissement de démarrage","IP radio protégées","Ces radios restent en lecture seule. Les actions d'écriture sont bloquées côté serveur.","Fuseau horaire par défaut","Langue appareil par défaut","Enregistrer les paramètres","Notes","La langue par défaut de l'interface est l'anglais afin que chacun puisse atteindre le réglage de langue. Les langues d'appareil sont celles prises en charge par Stockholm.","Langue enregistrée ; l'interface Web utilise la langue choisie.","DÉMARRER LA CONFIGURATION DES RADIOS SÉLECTIONNÉES","Annuler la configuration","Rechercher des radios","Radios configurées","Ajouter une radio","L'ajout enregistre une radio localement, puis /info peut compléter le modèle, le firmware et l'identifiant.","Emplacements actuels","Actualiser depuis la radio","Recherche de stations en ligne","Rechercher","Copier les presets","Copier tous les emplacements","Écouter ensemble","Radio principale","Pièces supplémentaires","Démarrer le multiroom","Dissoudre tous les groupes","État actuel","Lire l'état","Redémarrer l'appareil par Telnet","Vérifier la capacité","Réactiver l'horloge de veille","État du job","Nettoyage","Vider les journaux","Supprimer les appareils de test","Patch BatteryMonitor / batterie portable","Appliquer le patch","Rollback","Afficher le plan","manuel","Bibliothèque musicale","Sauvegarde","Technique","Journal","Recharger","Radio cible","État inconnu"],
+    es:["Vista general","Tu sistema SoundTouch","Estado del sistema","Comprobación de versión para API, base de datos, almacenamiento, emulador y puertos.","Comprobar estado","Dispositivos","Solicitudes recientes","Registro de reproducción","Estadísticas de reproducción","Valores predeterminados WebGUI","Activar modo LAB","Volumen seguro de inicio","Mostrar advertencia de inicio","IP de radios protegidas","Estas radios permanecen en solo lectura. Las acciones de escritura se bloquean en el servidor.","Zona horaria predeterminada","Idioma predeterminado del dispositivo","Guardar ajustes","Notas","El idioma predeterminado de la interfaz es inglés para que cualquier usuario pueda llegar a la configuración de idioma. Los idiomas del dispositivo son los admitidos por Stockholm.","Idioma guardado; la interfaz web usa el idioma seleccionado.","INICIAR CONFIGURACIÓN DE RADIOS SELECCIONADAS","Cancelar configuración","Buscar radios","Radios configuradas","Añadir radio","Añadir guarda una radio localmente; luego /info puede completar modelo, firmware e ID.","Ranuras actuales","Actualizar desde la radio","Búsqueda de emisoras en línea","Buscar","Copiar presets","Copiar todas las ranuras","Escuchar juntos","Radio principal","Habitaciones adicionales","Iniciar multiroom","Disolver todos los grupos","Estado actual","Leer estado","Reiniciar dispositivo por Telnet","Comprobar capacidad","Reactivar reloj de espera","Estado del trabajo","Limpieza","Vaciar registros","Eliminar dispositivos de prueba","Parche BatteryMonitor / batería portátil","Aplicar parche","Rollback","Mostrar plan","manual","Biblioteca musical","Copia de seguridad","Técnico","Registro","Recargar","Radio de destino","Estado desconocido"],
+    it:["Panoramica","Il tuo sistema SoundTouch","Stato sistema","Controllo release per API, database, storage, emulatore e porte.","Controlla stato","Dispositivi","Richieste recenti","Log riproduzione","Statistiche riproduzione","Predefiniti WebGUI","Attiva modalità LAB","Volume di avvio sicuro","Mostra avviso di avvio","IP radio protetti","Queste radio restano in sola lettura. Le azioni di scrittura sono bloccate dal server.","Fuso orario predefinito","Lingua dispositivo predefinita","Salva impostazioni","Note","La lingua predefinita dell'interfaccia è l'inglese, così ogni utente può raggiungere la scelta lingua. Le lingue dispositivo sono quelle supportate da Stockholm.","Lingua salvata; l'interfaccia web usa la lingua selezionata.","AVVIA SETUP DELLE RADIO SELEZIONATE","Annulla setup","Cerca radio","Radio configurate","Aggiungi radio","Aggiungi salva una radio localmente; poi /info può completare modello, firmware e ID.","Slot correnti","Aggiorna dalla radio","Ricerca stazioni online","Cerca","Copia preset","Copia tutti gli slot","Ascoltare insieme","Radio principale","Stanze aggiuntive","Avvia multiroom","Sciogli tutti i gruppi","Stato attuale","Leggi stato","Riavvia dispositivo via Telnet","Controlla capacità","Riattiva orologio standby","Stato job","Pulizia","Svuota log","Rimuovi dispositivi di test","Patch BatteryMonitor / batteria portatile","Applica patch","Rollback","Mostra piano","manuale","Libreria musicale","Backup","Tecnica","Log","Ricarica","Radio di destinazione","Stato sconosciuto"],
+    pt:["Visão geral","O seu sistema SoundTouch","Estado do sistema","Verificação da versão para API, base de dados, armazenamento, emulador e portas.","Verificar estado","Dispositivos","Pedidos recentes","Registo de reprodução","Estatísticas de reprodução","Predefinições WebGUI","Ativar modo LAB","Volume seguro de arranque","Mostrar aviso de arranque","IPs de rádios protegidos","Estes rádios ficam só de leitura. Ações de escrita são bloqueadas no servidor.","Fuso horário predefinido","Idioma predefinido do dispositivo","Guardar definições","Notas","O idioma predefinido da interface é inglês para que qualquer utilizador consiga chegar à configuração de idioma. Os idiomas do dispositivo são os suportados por Stockholm.","Idioma guardado; a interface web usa o idioma escolhido.","INICIAR CONFIGURAÇÃO DOS RÁDIOS SELECIONADOS","Cancelar configuração","Procurar rádios","Rádios configurados","Adicionar rádio","Adicionar guarda um rádio localmente; depois /info pode preencher modelo, firmware e ID.","Posições atuais","Atualizar a partir do rádio","Pesquisa de estações online","Procurar","Copiar presets","Copiar todas as posições","Ouvir em conjunto","Rádio principal","Divisões adicionais","Iniciar multiroom","Dissolver todos os grupos","Estado atual","Ler estado","Reiniciar dispositivo via Telnet","Verificar capacidade","Reativar relógio de standby","Estado da tarefa","Limpeza","Limpar registos","Remover dispositivos de teste","Patch BatteryMonitor / bateria portátil","Aplicar patch","Rollback","Mostrar plano","manual","Biblioteca de música","Backup","Técnico","Registo","Recarregar","Rádio de destino","Estado desconhecido"],
+    nl:["Overzicht","Je SoundTouch-systeem","Systeemstatus","Releasecontrole voor API, database, opslag, emulator en poorten.","Status controleren","Apparaten","Recente verzoeken","Afspeellog","Afspeelstatistieken","WebGUI-standaarden","LAB-modus inschakelen","Veilig startvolume","Startwaarschuwing tonen","Beschermde radio-IP's","Deze radio's blijven read-only. Schrijfacties worden server-side geblokkeerd.","Standaardtijdzone","Standaard apparaattaal","Instellingen opslaan","Notities","De standaardtaal van de interface is Engels zodat iedere gebruiker de taalinstelling kan bereiken. Apparaattalen zijn de door Stockholm ondersteunde speakertalen.","Taal opgeslagen; de webinterface gebruikt de gekozen taal.","SETUP VOOR GESELECTEERDE RADIO'S STARTEN","Setup annuleren","Radio's zoeken","Geconfigureerde radio's","Radio toevoegen","Toevoegen bewaart een radio lokaal; daarna kan /info model, firmware en ID invullen.","Huidige slots","Vernieuwen vanaf radio","Online zenderzoeker","Zoeken","Presets kopiëren","Alle slots kopiëren","Samen luisteren","Hoofdradio","Extra ruimtes","Multiroom starten","Alle groepen ontbinden","Huidige status","Status lezen","Apparaat via Telnet herstarten","Mogelijkheid controleren","Standbyklok opnieuw activeren","Taakstatus","Opruimen","Logboeken leegmaken","Testapparaten verwijderen","BatteryMonitor-patch / draagbare batterij","Patch toepassen","Rollback","Plan tonen","handmatig","Muziekbibliotheek","Back-up","Techniek","Logboek","Herladen","Doelradio","Status onbekend"],
+    da:["Oversigt","Dit SoundTouch-system","Systemtilstand","Release-tjek for API, database, lager, emulator og porte.","Tjek tilstand","Enheder","Seneste forespørgsler","Afspilningslog","Afspilningsstatistik","WebGUI-standarder","Aktivér LAB-tilstand","Sikker startlydstyrke","Vis startadvarsel","Beskyttede radio-IP'er","Disse radioer forbliver skrivebeskyttede. Skrivehandlinger blokeres på serveren.","Standardtidszone","Standard enhedssprog","Gem indstillinger","Noter","Standard UI-sprog er engelsk, så alle kan nå sprogopsætningen. Enhedssprog er de Stockholm-understøttede højttalersprog.","Sprog gemt; webgrænsefladen bruger det valgte sprog.","START OPSÆTNING FOR VALGTE RADIOER","Annuller opsætning","Søg efter radioer","Konfigurerede radioer","Tilføj radio","Tilføj gemmer en radio lokalt; derefter kan /info udfylde model, firmware og ID.","Aktuelle pladser","Opdater fra radio","Online stationssøgning","Søg","Kopiér presets","Kopiér alle pladser","Lyt sammen","Hovedradio","Flere rum","Start multiroom","Opløs alle grupper","Aktuel tilstand","Læs status","Genstart enhed via Telnet","Kontroller funktion","Genaktivér standby-ur","Jobstatus","Oprydning","Ryd logfiler","Fjern testenheder","BatteryMonitor-patch / bærbart batteri","Anvend patch","Rollback","Vis plan","manuelt","Musikbibliotek","Backup","Teknik","Protokol","Genindlæs","Målradio","Status ukendt"],
+    sv:["Översikt","Ditt SoundTouch-system","Systemhälsa","Releasekontroll för API, databas, lagring, emulator och portar.","Kontrollera hälsa","Enheter","Senaste förfrågningar","Uppspelningslogg","Uppspelningsstatistik","WebGUI-standarder","Aktivera LAB-läge","Säker startvolym","Visa startvarning","Skyddade radio-IP:n","Dessa radioapparater förblir skrivskyddade. Skrivåtgärder blockeras på servern.","Standardtidszon","Standard enhetsspråk","Spara inställningar","Anteckningar","Standardgränssnittets språk är engelska så att alla användare kan nå språkvalet. Enhetsspråken är de Stockholm-stödda högtalarspråken.","Språk sparat; webbgränssnittet använder valt språk.","STARTA SETUP FÖR VALDA RADIOAPPARATER","Avbryt setup","Sök radioapparater","Konfigurerade radioapparater","Lägg till radio","Lägg till sparar en radio lokalt; sedan kan /info fylla i modell, firmware och ID.","Aktuella platser","Uppdatera från radio","Online stationssökning","Sök","Kopiera presets","Kopiera alla platser","Lyssna tillsammans","Huvudradio","Ytterligare rum","Starta multiroom","Lös upp alla grupper","Aktuell status","Läs status","Starta om enhet via Telnet","Kontrollera funktion","Återaktivera standbyklocka","Jobbstatus","Rensning","Töm loggar","Ta bort testenheter","BatteryMonitor-patch / portabelt batteri","Använd patch","Rollback","Visa plan","manuellt","Musikbibliotek","Backup","Teknik","Protokoll","Ladda om","Målradio","Okänd status"],
+    no:["Oversikt","Ditt SoundTouch-system","Systemhelse","Release-sjekk for API, database, lagring, emulator og porter.","Sjekk helse","Enheter","Nylige forespørsler","Avspillingslogg","Avspillingsstatistikk","WebGUI-standarder","Aktiver LAB-modus","Sikkert startvolum","Vis startvarsel","Beskyttede radio-IP-er","Disse radioene forblir skrivebeskyttet. Skrivehandlinger blokkeres på serveren.","Standard tidssone","Standard enhetsspråk","Lagre innstillinger","Notater","Standard UI-språk er engelsk slik at alle brukere kan nå språkinnstillingene. Enhetsspråk er de Stockholm-støttede høyttalerspråkene.","Språk lagret; webgrensesnittet bruker valgt språk.","START OPPSETT FOR VALGTE RADIOER","Avbryt oppsett","Søk etter radioer","Konfigurerte radioer","Legg til radio","Legg til lagrer en radio lokalt; deretter kan /info fylle inn modell, fastvare og ID.","Gjeldende plasser","Oppdater fra radio","Online stasjonssøk","Søk","Kopier presets","Kopier alle plasser","Lytt sammen","Hovedradio","Flere rom","Start multiroom","Løs opp alle grupper","Gjeldende status","Les status","Start enhet på nytt via Telnet","Sjekk funksjon","Reaktiver standby-klokke","Jobbstatus","Opprydding","Tøm logger","Fjern testenheter","BatteryMonitor-patch / portabelt batteri","Bruk patch","Rollback","Vis plan","manuelt","Musikkbibliotek","Backup","Teknisk","Logg","Last på nytt","Målradio","Ukjent status"],
+    fi:["Yleiskuva","SoundTouch-järjestelmäsi","Järjestelmän tila","Julkaisun tarkistus API:lle, tietokannalle, tallennukselle, emulaattorille ja porteille.","Tarkista tila","Laitteet","Viimeisimmät pyynnöt","Toistoloki","Toistotilastot","WebGUI-oletukset","Ota LAB-tila käyttöön","Turvallinen käynnistysäänenvoimakkuus","Näytä käynnistysvaroitus","Suojatut radio-IP:t","Nämä radiot pysyvät vain luettavina. Kirjoitustoiminnot estetään palvelimella.","Oletusaikavyöhyke","Laitteen oletuskieli","Tallenna asetukset","Muistiinpanot","Käyttöliittymän oletuskieli on englanti, jotta jokainen käyttäjä löytää kieliasetukset. Laitteiden kielet ovat Stockholm-tuettuja kaiutinkieliä.","Kieli tallennettu; web-käyttöliittymä käyttää valittua kieltä.","ALOITA VALITTUJEN RADIOIDEN ASETUS","Peruuta asetus","Etsi radioita","Määritetyt radiot","Lisää radio","Lisäys tallentaa radion paikallisesti; sen jälkeen /info voi täydentää mallin, laiteohjelmiston ja ID:n.","Nykyiset paikat","Päivitä radiosta","Online-asemahaku","Hae","Kopioi presetit","Kopioi kaikki paikat","Kuuntele yhdessä","Pääradio","Lisähuoneet","Käynnistä multiroom","Pura kaikki ryhmät","Nykyinen tila","Lue tila","Käynnistä laite uudelleen Telnetillä","Tarkista ominaisuus","Aktivoi valmiuskello uudelleen","Työn tila","Siivous","Tyhjennä lokit","Poista testilaitteet","BatteryMonitor-korjaus / kannettava akku","Käytä korjausta","Rollback","Näytä suunnitelma","manuaalinen","Musiikkikirjasto","Varmuuskopio","Tekninen","Loki","Lataa uudelleen","Kohderadio","Tila tuntematon"]
+  };
+  const uiPhraseFallbackRows = {
+    pl:["Przegląd","Twój system SoundTouch","Stan systemu","Kontrola wydania dla API, bazy danych, pamięci, emulatora i portów.","Sprawdź stan","Urządzenia","Ostatnie żądania","Dziennik odtwarzania","Statystyki odtwarzania","Domyślne WebGUI","Włącz tryb LAB","Bezpieczna głośność startowa","Pokaż ostrzeżenie startowe","Chronione IP radia","Te radia pozostają tylko do odczytu. Operacje zapisu są blokowane na serwerze.","Domyślna strefa czasowa","Domyślny język urządzenia","Zapisz ustawienia","Notatki","Domyślnym językiem interfejsu jest angielski, aby każdy użytkownik mógł dotrzeć do ustawień języka. Języki urządzeń to języki głośników obsługiwane przez Stockholm.","Język zapisany; interfejs używa wybranego języka.","URUCHOM SETUP WYBRANYCH RADII","Anuluj setup","Szukaj radia","Skonfigurowane radia","Dodaj radio","Dodanie zapisuje radio lokalnie; potem /info może uzupełnić model, firmware i ID.","Aktualne sloty","Odśwież z radia","Wyszukiwanie stacji online","Szukaj","Kopiuj presety","Kopiuj wszystkie sloty","Słuchaj razem","Radio główne","Dodatkowe pokoje","Uruchom multiroom","Rozwiąż wszystkie grupy","Aktualny stan","Odczytaj stan","Uruchom urządzenie ponownie przez Telnet","Sprawdź możliwość","Ponownie aktywuj zegar standby","Stan zadania","Czyszczenie","Wyczyść logi","Usuń urządzenia testowe","Patch BatteryMonitor / bateria przenośna","Zastosuj patch","Rollback","Pokaż plan","ręcznie","Biblioteka muzyki","Kopia zapasowa","Techniczne","Protokół","Przeładuj","Radio docelowe","Stan nieznany"],
+    cs:["Přehled","Váš systém SoundTouch","Stav systému","Kontrola vydání pro API, databázi, úložiště, emulátor a porty.","Zkontrolovat stav","Zařízení","Poslední požadavky","Protokol přehrávání","Statistiky přehrávání","Výchozí hodnoty WebGUI","Zapnout režim LAB","Bezpečná hlasitost při startu","Zobrazit startovní varování","Chráněné IP rádií","Tato rádia zůstávají pouze pro čtení. Zápisové akce jsou blokovány serverem.","Výchozí časové pásmo","Výchozí jazyk zařízení","Uložit nastavení","Poznámky","Výchozí jazyk rozhraní je angličtina, aby každý uživatel dosáhl nastavení jazyka. Jazyky zařízení jsou jazyky reproduktorů podporované Stockholm.","Jazyk uložen; webové rozhraní používá vybraný jazyk.","SPUSTIT NASTAVENÍ VYBRANÝCH RÁDIÍ","Zrušit nastavení","Hledat rádia","Konfigurovaná rádia","Přidat rádio","Přidání uloží rádio lokálně; poté /info doplní model, firmware a ID.","Aktuální pozice","Obnovit z rádia","Online hledání stanic","Hledat","Kopírovat předvolby","Kopírovat všechny pozice","Poslouchat společně","Hlavní rádio","Další místnosti","Spustit multiroom","Rozpustit všechny skupiny","Aktuální stav","Načíst stav","Restartovat zařízení přes Telnet","Zkontrolovat schopnost","Znovu aktivovat pohotovostní hodiny","Stav úlohy","Úklid","Vymazat protokoly","Odebrat testovací zařízení","Patch BatteryMonitor / přenosná baterie","Použít patch","Rollback","Zobrazit plán","ručně","Hudební knihovna","Záloha","Technické","Protokol","Znovu načíst","Cílové rádio","Stav neznámý"],
+    sk:["Prehľad","Váš systém SoundTouch","Stav systému","Kontrola vydania pre API, databázu, úložisko, emulátor a porty.","Skontrolovať stav","Zariadenia","Posledné požiadavky","Protokol prehrávania","Štatistiky prehrávania","Predvolené WebGUI","Zapnúť režim LAB","Bezpečná hlasitosť pri štarte","Zobraziť štartovné upozornenie","Chránené IP rádií","Tieto rádiá zostávajú iba na čítanie. Zápisové akcie blokuje server.","Predvolené časové pásmo","Predvolený jazyk zariadenia","Uložiť nastavenia","Poznámky","Predvolený jazyk rozhrania je angličtina, aby každý používateľ dosiahol nastavenie jazyka. Jazyky zariadení sú jazyky reproduktorov podporované Stockholm.","Jazyk uložený; webové rozhranie používa zvolený jazyk.","SPUSTIŤ NASTAVENIE VYBRANÝCH RÁDIÍ","Zrušiť nastavenie","Hľadať rádiá","Konfigurované rádiá","Pridať rádio","Pridanie uloží rádio lokálne; potom /info doplní model, firmvér a ID.","Aktuálne pozície","Obnoviť z rádia","Online hľadanie staníc","Hľadať","Kopírovať predvoľby","Kopírovať všetky pozície","Počúvať spolu","Hlavné rádio","Ďalšie miestnosti","Spustiť multiroom","Rozpustiť všetky skupiny","Aktuálny stav","Načítať stav","Reštartovať zariadenie cez Telnet","Skontrolovať schopnosť","Znovu aktivovať pohotovostné hodiny","Stav úlohy","Čistenie","Vymazať protokoly","Odstrániť testovacie zariadenia","Patch BatteryMonitor / prenosná batéria","Použiť patch","Rollback","Zobraziť plán","manuálne","Hudobná knižnica","Záloha","Technické","Protokol","Znovu načítať","Cieľové rádio","Stav neznámy"],
+    hu:["Áttekintés","Az Ön SoundTouch rendszere","Rendszerállapot","Kiadásellenőrzés API-hoz, adatbázishoz, tárhelyhez, emulátorhoz és portokhoz.","Állapot ellenőrzése","Eszközök","Legutóbbi kérések","Lejátszási napló","Lejátszási statisztikák","WebGUI alapértékek","LAB mód bekapcsolása","Biztonságos indítási hangerő","Indítási figyelmeztetés megjelenítése","Védett rádió IP-k","Ezek a rádiók csak olvasható módban maradnak. Az írási műveleteket a szerver blokkolja.","Alapértelmezett időzóna","Alapértelmezett eszköznyelv","Beállítások mentése","Jegyzetek","A felület alapértelmezett nyelve angol, hogy minden felhasználó elérje a nyelvbeállítást. Az eszköznyelvek a Stockholm által támogatott hangszórónyelvek.","Nyelv mentve; a webes felület a kiválasztott nyelvet használja.","KIVÁLASZTOTT RÁDIÓK SETUP INDÍTÁSA","Setup megszakítása","Rádiók keresése","Beállított rádiók","Rádió hozzáadása","A hozzáadás helyben menti a rádiót; ezután a /info kitöltheti a modellt, firmware-t és azonosítót.","Aktuális slotok","Frissítés a rádióról","Online állomáskeresés","Keresés","Presetek másolása","Összes slot másolása","Közös hallgatás","Fő rádió","További szobák","Multiroom indítása","Összes csoport feloldása","Aktuális állapot","Állapot olvasása","Eszköz újraindítása Telneten","Képesség ellenőrzése","Készenléti óra újraaktiválása","Feladat állapota","Takarítás","Naplók törlése","Tesztkészülékek eltávolítása","BatteryMonitor patch / hordozható akkumulátor","Patch alkalmazása","Rollback","Terv megjelenítése","kézi","Zenei könyvtár","Biztonsági mentés","Technika","Napló","Újratöltés","Célrádió","Ismeretlen állapot"],
+    ro:["Prezentare generală","Sistemul dvs. SoundTouch","Stare sistem","Verificare versiune pentru API, bază de date, stocare, emulator și porturi.","Verifică starea","Dispozitive","Cereri recente","Jurnal redare","Statistici redare","Valori implicite WebGUI","Activează modul LAB","Volum sigur la pornire","Afișează avertismentul de pornire","IP-uri radio protejate","Aceste radiouri rămân doar pentru citire. Acțiunile de scriere sunt blocate pe server.","Fus orar implicit","Limba implicită a dispozitivului","Salvează setările","Note","Limba implicită a interfeței este engleza, astfel încât fiecare utilizator să poată ajunge la setarea limbii. Limbile dispozitivului sunt limbile difuzoarelor acceptate de Stockholm.","Limba a fost salvată; interfața web folosește limba selectată.","PORNEȘTE CONFIGURAREA RADIOURILOR SELECTATE","Anulează configurarea","Caută radiouri","Radiouri configurate","Adaugă radio","Adăugarea salvează radioul local; apoi /info poate completa modelul, firmware-ul și ID-ul.","Sloturi curente","Actualizează de pe radio","Căutare posturi online","Caută","Copiază presetările","Copiază toate sloturile","Ascultare împreună","Radio principal","Camere suplimentare","Pornește multiroom","Dizolvă toate grupurile","Stare curentă","Citește starea","Repornește dispozitivul prin Telnet","Verifică capabilitatea","Reactivează ceasul standby","Stare job","Curățare","Golește jurnalele","Elimină dispozitivele de test","Patch BatteryMonitor / baterie portabilă","Aplică patch-ul","Rollback","Arată planul","manual","Bibliotecă muzicală","Backup","Tehnic","Jurnal","Reîncarcă","Radio țintă","Stare necunoscută"],
+    bg:["Общ преглед","Вашата SoundTouch система","Състояние на системата","Проверка на версията за API, база данни, съхранение, емулатор и портове.","Проверка на състоянието","Устройства","Последни заявки","Журнал на възпроизвеждането","Статистика на възпроизвеждането","Стандартни настройки на WebGUI","Активиране на LAB режим","Безопасна начална сила на звука","Показване на начално предупреждение","Защитени IP адреси на радиа","Тези радиа остават само за четене. Действията за запис се блокират от сървъра.","Стандартна часова зона","Стандартен език на устройството","Запазване на настройките","Бележки","Стандартният език на интерфейса е английски, за да може всеки потребител да достигне настройката за език. Езиците на устройствата са поддържаните от Stockholm езици на говорителите.","Езикът е запазен; уеб интерфейсът използва избрания език.","СТАРТИРАНЕ НА SETUP ЗА ИЗБРАНИТЕ РАДИА","Отказ на setup","Търсене на радиа","Конфигурирани радиа","Добавяне на радио","Добавянето запазва радио локално; след това /info може да попълни модел, firmware и ID.","Текущи слотове","Обновяване от радиото","Онлайн търсене на станции","Търсене","Копиране на presets","Копиране на всички слотове","Слушане заедно","Главно радио","Допълнителни стаи","Стартиране на multiroom","Разпускане на всички групи","Текущо състояние","Четене на състояние","Рестартиране на устройство чрез Telnet","Проверка на способност","Повторно активиране на standby часовника","Състояние на job","Почистване","Изчистване на журналите","Премахване на тестови устройства","BatteryMonitor patch / портативна батерия","Прилагане на patch","Rollback","Показване на план","ръчно","Музикална библиотека","Backup","Техническо","Журнал","Презареждане","Целево радио","Неизвестно състояние"],
+    hr:["Pregled","Vaš SoundTouch sustav","Stanje sustava","Provjera izdanja za API, bazu podataka, pohranu, emulator i portove.","Provjeri stanje","Uređaji","Nedavni zahtjevi","Dnevnik reprodukcije","Statistika reprodukcije","Zadane WebGUI vrijednosti","Uključi LAB način","Sigurna početna glasnoća","Prikaži početno upozorenje","Zaštićene IP adrese radija","Ovi radiji ostaju samo za čitanje. Akcije pisanja blokiraju se na poslužitelju.","Zadana vremenska zona","Zadani jezik uređaja","Spremi postavke","Bilješke","Zadani jezik sučelja je engleski kako bi svaki korisnik mogao doći do postavke jezika. Jezici uređaja su jezici zvučnika koje podržava Stockholm.","Jezik spremljen; web sučelje koristi odabrani jezik.","POKRENI SETUP ZA ODABRANE RADIJE","Otkaži setup","Traži radije","Konfigurirani radiji","Dodaj radio","Dodavanje sprema radio lokalno; zatim /info može popuniti model, firmware i ID.","Trenutni slotovi","Osvježi s radija","Online pretraga stanica","Traži","Kopiraj presete","Kopiraj sve slotove","Slušanje zajedno","Glavni radio","Dodatne sobe","Pokreni multiroom","Raspusti sve grupe","Trenutno stanje","Pročitaj stanje","Ponovno pokreni uređaj putem Telnet-a","Provjeri mogućnost","Ponovno aktiviraj standby sat","Stanje posla","Čišćenje","Obriši zapise","Ukloni testne uređaje","BatteryMonitor patch / prijenosna baterija","Primijeni patch","Rollback","Prikaži plan","ručno","Glazbena biblioteka","Backup","Tehnički","Zapisnik","Ponovno učitaj","Ciljni radio","Nepoznato stanje"],
+    sl:["Pregled","Vaš sistem SoundTouch","Stanje sistema","Preverjanje izdaje za API, podatkovno bazo, shrambo, emulator in vrata.","Preveri stanje","Naprave","Nedavne zahteve","Dnevnik predvajanja","Statistika predvajanja","Privzete vrednosti WebGUI","Vklopi način LAB","Varna začetna glasnost","Prikaži začetno opozorilo","Zaščiteni IP-ji radiev","Ti radii ostanejo samo za branje. Pisalna dejanja blokira strežnik.","Privzeti časovni pas","Privzeti jezik naprave","Shrani nastavitve","Opombe","Privzeti jezik vmesnika je angleščina, da lahko vsak uporabnik doseže nastavitev jezika. Jeziki naprav so jeziki zvočnikov, ki jih podpira Stockholm.","Jezik shranjen; spletni vmesnik uporablja izbrani jezik.","ZAŽENI SETUP ZA IZBRANE RADIE","Prekliči setup","Poišči radie","Konfigurirani radii","Dodaj radio","Dodajanje shrani radio lokalno; nato /info lahko dopolni model, firmware in ID.","Trenutni sloti","Osveži z radia","Spletno iskanje postaj","Išči","Kopiraj presete","Kopiraj vse slote","Poslušanje skupaj","Glavni radio","Dodatne sobe","Zaženi multiroom","Razpusti vse skupine","Trenutno stanje","Preberi stanje","Znova zaženi napravo prek Telnet-a","Preveri zmožnost","Ponovno aktiviraj standby uro","Stanje opravila","Čiščenje","Počisti dnevnike","Odstrani testne naprave","BatteryMonitor patch / prenosna baterija","Uporabi patch","Rollback","Prikaži načrt","ročno","Glasbena knjižnica","Backup","Tehnično","Dnevnik","Ponovno naloži","Ciljni radio","Neznano stanje"],
+    el:["Επισκόπηση","Το σύστημά σας SoundTouch","Κατάσταση συστήματος","Έλεγχος έκδοσης για API, βάση δεδομένων, αποθήκευση, εξομοιωτή και θύρες.","Έλεγχος κατάστασης","Συσκευές","Πρόσφατα αιτήματα","Ημερολόγιο αναπαραγωγής","Στατιστικά αναπαραγωγής","Προεπιλογές WebGUI","Ενεργοποίηση λειτουργίας LAB","Ασφαλής ένταση εκκίνησης","Εμφάνιση προειδοποίησης εκκίνησης","Προστατευμένες IP ραδιοφώνων","Αυτά τα ραδιόφωνα παραμένουν μόνο για ανάγνωση. Οι ενέργειες εγγραφής μπλοκάρονται στον διακομιστή.","Προεπιλεγμένη ζώνη ώρας","Προεπιλεγμένη γλώσσα συσκευής","Αποθήκευση ρυθμίσεων","Σημειώσεις","Η προεπιλεγμένη γλώσσα της διεπαφής είναι τα Αγγλικά ώστε κάθε χρήστης να φτάνει στη ρύθμιση γλώσσας. Οι γλώσσες συσκευής είναι οι γλώσσες ηχείων που υποστηρίζονται από το Stockholm.","Η γλώσσα αποθηκεύτηκε· η web διεπαφή χρησιμοποιεί την επιλεγμένη γλώσσα.","ΕΝΑΡΞΗ SETUP ΓΙΑ ΤΑ ΕΠΙΛΕΓΜΕΝΑ ΡΑΔΙΟΦΩΝΑ","Ακύρωση setup","Αναζήτηση ραδιοφώνων","Ρυθμισμένα ραδιόφωνα","Προσθήκη ραδιοφώνου","Η προσθήκη αποθηκεύει ένα ραδιόφωνο τοπικά· μετά το /info μπορεί να συμπληρώσει μοντέλο, firmware και ID.","Τρέχουσες θέσεις","Ανανέωση από το ραδιόφωνο","Online αναζήτηση σταθμών","Αναζήτηση","Αντιγραφή presets","Αντιγραφή όλων των θέσεων","Κοινή ακρόαση","Κύριο ραδιόφωνο","Πρόσθετα δωμάτια","Εκκίνηση multiroom","Διάλυση όλων των ομάδων","Τρέχουσα κατάσταση","Ανάγνωση κατάστασης","Επανεκκίνηση συσκευής μέσω Telnet","Έλεγχος δυνατότητας","Επανενεργοποίηση ρολογιού standby","Κατάσταση εργασίας","Καθαρισμός","Εκκαθάριση ημερολογίων","Αφαίρεση δοκιμαστικών συσκευών","Patch BatteryMonitor / φορητή μπαταρία","Εφαρμογή patch","Rollback","Εμφάνιση σχεδίου","χειροκίνητα","Μουσική βιβλιοθήκη","Backup","Τεχνικά","Ημερολόγιο","Επαναφόρτωση","Ραδιόφωνο στόχος","Άγνωστη κατάσταση"],
+    tr:["Genel bakış","SoundTouch sisteminiz","Sistem durumu","API, veritabanı, depolama, emülatör ve portlar için sürüm denetimi.","Durumu denetle","Cihazlar","Son istekler","Oynatma günlüğü","Oynatma istatistikleri","WebGUI varsayılanları","LAB modunu etkinleştir","Güvenli başlangıç ses düzeyi","Başlangıç uyarısını göster","Korunan radyo IP'leri","Bu radyolar salt okunur kalır. Yazma işlemleri sunucuda engellenir.","Varsayılan saat dilimi","Varsayılan cihaz dili","Ayarları kaydet","Notlar","Arayüzün varsayılan dili İngilizcedir, böylece her kullanıcı dil ayarına ulaşabilir. Cihaz dilleri Stockholm destekli hoparlör dilleridir.","Dil kaydedildi; web arayüzü seçilen dili kullanır.","SEÇİLEN RADYOLAR İÇİN SETUP BAŞLAT","Setup iptal","Radyo ara","Yapılandırılmış radyolar","Radyo ekle","Ekleme radyoyu yerel olarak kaydeder; ardından /info model, firmware ve ID bilgisini doldurabilir.","Geçerli yuvalar","Radyodan yenile","Çevrimiçi istasyon arama","Ara","Presetleri kopyala","Tüm yuvaları kopyala","Birlikte dinle","Ana radyo","Ek odalar","Multiroom başlat","Tüm grupları dağıt","Geçerli durum","Durumu oku","Cihazı Telnet ile yeniden başlat","Yeteneği denetle","Standby saatini yeniden etkinleştir","İş durumu","Temizlik","Günlükleri temizle","Test cihazlarını kaldır","BatteryMonitor patch / taşınabilir pil","Patch uygula","Rollback","Planı göster","manuel","Müzik kitaplığı","Backup","Teknik","Günlük","Yeniden yükle","Hedef radyo","Durum bilinmiyor"],
+    ru:["Обзор","Ваша система SoundTouch","Состояние системы","Проверка релиза для API, базы данных, хранилища, эмулятора и портов.","Проверить состояние","Устройства","Последние запросы","Журнал воспроизведения","Статистика воспроизведения","Настройки WebGUI по умолчанию","Включить режим LAB","Безопасная стартовая громкость","Показывать предупреждение при запуске","Защищенные IP радио","Эти радио остаются только для чтения. Операции записи блокируются на сервере.","Часовой пояс по умолчанию","Язык устройства по умолчанию","Сохранить настройки","Заметки","Язык интерфейса по умолчанию — английский, чтобы каждый пользователь мог добраться до настройки языка. Языки устройств — это поддерживаемые Stockholm языки колонок.","Язык сохранен; веб-интерфейс использует выбранный язык.","ЗАПУСТИТЬ SETUP ДЛЯ ВЫБРАННЫХ РАДИО","Отменить setup","Искать радио","Настроенные радио","Добавить радио","Добавление сохраняет радио локально; затем /info может заполнить модель, прошивку и ID.","Текущие слоты","Обновить с радио","Поиск онлайн-станций","Поиск","Копировать пресеты","Копировать все слоты","Слушать вместе","Главное радио","Дополнительные комнаты","Запустить multiroom","Распустить все группы","Текущее состояние","Прочитать состояние","Перезапустить устройство через Telnet","Проверить возможность","Повторно активировать часы ожидания","Статус задания","Очистка","Очистить журналы","Удалить тестовые устройства","Патч BatteryMonitor / портативная батарея","Применить патч","Rollback","Показать план","вручную","Музыкальная библиотека","Backup","Техническое","Журнал","Перезагрузить","Целевое радио","Состояние неизвестно"],
+    uk:["Огляд","Ваша система SoundTouch","Стан системи","Перевірка релізу для API, бази даних, сховища, емулятора і портів.","Перевірити стан","Пристрої","Останні запити","Журнал відтворення","Статистика відтворення","Типові налаштування WebGUI","Увімкнути режим LAB","Безпечна початкова гучність","Показувати попередження запуску","Захищені IP радіо","Ці радіо залишаються лише для читання. Дії запису блокуються на сервері.","Типовий часовий пояс","Типова мова пристрою","Зберегти налаштування","Нотатки","Типова мова інтерфейсу — англійська, щоб кожен користувач міг дістатися до налаштування мови. Мови пристроїв — це підтримувані Stockholm мови динаміків.","Мову збережено; вебінтерфейс використовує вибрану мову.","ЗАПУСТИТИ SETUP ДЛЯ ВИБРАНИХ РАДІО","Скасувати setup","Шукати радіо","Налаштовані радіо","Додати радіо","Додавання зберігає радіо локально; потім /info може заповнити модель, firmware та ID.","Поточні слоти","Оновити з радіо","Пошук онлайн-станцій","Пошук","Копіювати пресети","Копіювати всі слоти","Слухати разом","Головне радіо","Додаткові кімнати","Запустити multiroom","Розпустити всі групи","Поточний стан","Прочитати стан","Перезапустити пристрій через Telnet","Перевірити можливість","Повторно активувати standby-годинник","Стан завдання","Очищення","Очистити журнали","Видалити тестові пристрої","Патч BatteryMonitor / портативна батарея","Застосувати патч","Rollback","Показати план","вручну","Музична бібліотека","Backup","Технічне","Журнал","Перезавантажити","Цільове радіо","Стан невідомий"],
+    ja:["概要","あなたの SoundTouch システム","システム状態","API、データベース、ストレージ、エミュレーター、ポートのリリース確認。","状態を確認","機器","最近のリクエスト","再生ログ","再生統計","WebGUI の既定値","LAB モードを有効化","安全な起動音量","起動時の警告を表示","保護されたラジオ IP","これらのラジオは読み取り専用のままです。書き込み操作はサーバー側でブロックされます。","既定のタイムゾーン","既定の機器言語","設定を保存","メモ","UI の既定言語は英語です。すべてのユーザーが言語設定へ到達できるようにするためです。機器言語は Stockholm が対応するスピーカー言語です。","言語を保存しました。Web インターフェイスは選択した言語を使用します。","選択したラジオのセットアップを開始","セットアップをキャンセル","ラジオを検索","設定済みラジオ","ラジオを追加","追加するとラジオをローカルに保存します。その後 /info でモデル、ファームウェア、ID を補完できます。","現在のスロット","ラジオから更新","オンライン局検索","検索","プリセットをコピー","すべてのスロットをコピー","一緒に聴く","メインラジオ","追加の部屋","Multiroom を開始","すべてのグループを解除","現在の状態","状態を読む","Telnet で機器を再起動","機能を確認","スタンバイクロックを再有効化","ジョブ状態","クリーンアップ","ログを消去","テスト機器を削除","BatteryMonitor パッチ / ポータブルバッテリー","パッチを適用","ロールバック","計画を表示","手動","音楽ライブラリ","バックアップ","技術","ログ","再読み込み","対象ラジオ","状態不明"],
+    zh:["概览","你的 SoundTouch 系统","系统状态","检查 API、数据库、存储、模拟器和端口的发布状态。","检查状态","设备","最近请求","播放日志","播放统计","WebGUI 默认值","启用 LAB 模式","安全启动音量","显示启动警告","受保护的收音机 IP","这些收音机保持只读。写入操作会在服务器端被阻止。","默认时区","默认设备语言","保存设置","备注","界面默认语言是英语，这样每位用户都能进入语言设置。设备语言是 Stockholm 支持的扬声器语言。","语言已保存；Web 界面使用所选语言。","开始设置所选收音机","取消设置","搜索收音机","已配置的收音机","添加收音机","添加会在本地保存收音机；之后 /info 可以补全型号、固件和 ID。","当前插槽","从收音机刷新","在线电台搜索","搜索","复制预设","复制所有插槽","一起收听","主收音机","其他房间","启动 Multiroom","解除所有组","当前状态","读取状态","通过 Telnet 重启设备","检查能力","重新激活待机时钟","任务状态","清理","清空日志","移除测试设备","BatteryMonitor 补丁 / 便携电池","应用补丁","Rollback","显示计划","手动","音乐库","备份","技术","日志","重新加载","目标收音机","状态未知"]
+  };
+  for (const [lang, values] of Object.entries(uiPhraseFallbackRows)) uiPhraseRows[lang] = values;
+  const uiPhraseFallbackLanguages = ["hu","ro","bg","hr","sl","el","tr","ru","uk","ja","zh"];
+  for (const lang of uiPhraseFallbackLanguages) uiPhraseRows[lang] = uiPhraseRows[lang] || catalogs[lang] && uiPhraseKeys.map((key) => releasePolishNative[lang]?.[key] || catalogs[lang][key] || uiPhraseRows.en[uiPhraseKeys.indexOf(key)]);
+  for (const [lang, values] of Object.entries(uiPhraseRows)) for (const [index, key] of uiPhraseKeys.entries()) catalogs[lang][key] = values[index] || uiPhraseRows.en[index];
+  // The normal Multiroom action deliberately targets only the selected
+  // master.  Keep the label honest in every language instead of describing
+  // the broad, diagnostic clear-all contract that is not exposed here.
+  const selectedGroupLabels = {
+    de: "Ausgewählte Gruppe auflösen",
+    en: "Dissolve selected group",
+    fr: "Dissoudre le groupe sélectionné",
+    es: "Disolver el grupo seleccionado",
+    it: "Sciogli il gruppo selezionato",
+    pt: "Dissolver o grupo selecionado",
+    nl: "Geselecteerde groep opheffen",
+    da: "Opløs valgt gruppe",
+    sv: "Lös upp vald grupp",
+    no: "Oppløs valgt gruppe",
+    fi: "Pura valittu ryhmä",
+    pl: "Rozwiąż wybraną grupę",
+    cs: "Rozpustit vybranou skupinu",
+    sk: "Rozpustiť vybranú skupinu"
+  };
+  for (const lang of Object.keys(catalogs)) catalogs[lang].clear_groups = selectedGroupLabels[lang] || selectedGroupLabels.en;
+  keys.push(...uiPhraseKeys);
+  const firstRunKeys = ["first_run_title","first_run_p1","first_run_p2","first_run_p3","first_run_p4","first_run_read","first_run_never","first_run_ack"];
+  const firstRunRows = {
+    de:["Nutzung auf eigenes Risiko","BASSWIESN kann SoundTouch-Geräte umkonfigurieren und unter ungünstigen Umständen beschädigen.","Radio-Setup, Presets, Telnet-Neustart und Recovery können Neustarts oder dauerhafte Änderungen auslösen. Echte Schreiboperationen erfolgen nur nach expliziter Benutzerfreigabe.","Diese Software ist privat entwickelt und nicht fertig. Nutzung auf eigenes Risiko.","Grüße aus Bayern","Ich habe den Hinweis gelesen","Nicht erneut anzeigen","Bestätigen"],
+    en:["Use at your own risk","BASSWIESN can reconfigure SoundTouch devices and may damage them under unfavorable circumstances.","Radio setup, presets, Telnet reboot and recovery can trigger restarts or permanent changes. Real write operations happen only after explicit user approval.","This software is privately developed and not finished. Use it at your own risk.","Greetings from Bavaria","I have read the warning","Do not show again","Confirm"],
+    fr:["Utilisation à vos risques","BASSWIESN peut reconfigurer des appareils SoundTouch et peut les endommager dans des circonstances défavorables.","La configuration radio, les presets, le redémarrage Telnet et la récupération peuvent déclencher des redémarrages ou des changements permanents. Les écritures réelles ne se font qu'après accord explicite.","Ce logiciel est développé à titre privé et n'est pas terminé. Utilisez-le à vos risques.","Salutations de Bavière","J'ai lu l'avertissement","Ne plus afficher","Confirmer"],
+    es:["Uso bajo tu propio riesgo","BASSWIESN puede reconfigurar dispositivos SoundTouch y dañarlos en circunstancias desfavorables.","La configuración de radios, los presets, el reinicio Telnet y la recuperación pueden provocar reinicios o cambios permanentes. Las escrituras reales solo se hacen tras aprobación explícita.","Este software está desarrollado de forma privada y no está terminado. Úsalo bajo tu propio riesgo.","Saludos desde Baviera","He leído la advertencia","No volver a mostrar","Confirmar"],
+    it:["Uso a proprio rischio","BASSWIESN può riconfigurare dispositivi SoundTouch e può danneggiarli in condizioni sfavorevoli.","Setup radio, preset, riavvio Telnet e recovery possono causare riavvii o modifiche permanenti. Le scritture reali avvengono solo dopo approvazione esplicita.","Questo software è sviluppato privatamente e non è finito. Usalo a tuo rischio.","Saluti dalla Baviera","Ho letto l'avviso","Non mostrare più","Conferma"],
+    pt:["Utilização por sua conta e risco","O BASSWIESN pode reconfigurar dispositivos SoundTouch e pode danificá-los em condições desfavoráveis.","Configuração de rádio, presets, reinício por Telnet e recuperação podem causar reinícios ou alterações permanentes. Escritas reais só ocorrem após aprovação explícita.","Este software é desenvolvido de forma privada e não está terminado. Use por sua conta e risco.","Saudações da Baviera","Li o aviso","Não mostrar novamente","Confirmar"],
+    nl:["Gebruik op eigen risico","BASSWIESN kan SoundTouch-apparaten opnieuw configureren en kan ze onder ongunstige omstandigheden beschadigen.","Radio-setup, presets, Telnet-herstart en herstel kunnen herstarts of permanente wijzigingen veroorzaken. Echte schrijfacties gebeuren alleen na expliciete toestemming.","Deze software is privé ontwikkeld en niet af. Gebruik op eigen risico.","Groeten uit Beieren","Ik heb de waarschuwing gelezen","Niet opnieuw tonen","Bevestigen"],
+    da:["Brug på eget ansvar","BASSWIESN kan omkonfigurere SoundTouch-enheder og kan beskadige dem under ugunstige forhold.","Radioopsætning, presets, Telnet-genstart og recovery kan udløse genstarter eller permanente ændringer. Rigtige skrivehandlinger sker kun efter udtrykkelig godkendelse.","Denne software er privat udviklet og ikke færdig. Brug den på eget ansvar.","Hilsen fra Bayern","Jeg har læst advarslen","Vis ikke igen","Bekræft"],
+    sv:["Använd på egen risk","BASSWIESN kan konfigurera om SoundTouch-enheter och kan skada dem under ogynnsamma omständigheter.","Radio-setup, presets, Telnet-omstart och återställning kan orsaka omstarter eller permanenta ändringar. Riktiga skrivningar sker bara efter uttryckligt godkännande.","Denna programvara är privat utvecklad och inte färdig. Använd på egen risk.","Hälsningar från Bayern","Jag har läst varningen","Visa inte igen","Bekräfta"],
+    no:["Bruk på egen risiko","BASSWIESN kan konfigurere SoundTouch-enheter på nytt og kan skade dem under ugunstige forhold.","Radiooppsett, presets, Telnet-omstart og gjenoppretting kan utløse omstarter eller permanente endringer. Ekte skrivehandlinger skjer bare etter eksplisitt godkjenning.","Denne programvaren er privat utviklet og ikke ferdig. Bruk den på egen risiko.","Hilsen fra Bayern","Jeg har lest advarselen","Ikke vis igjen","Bekreft"],
+    fi:["Käyttö omalla vastuulla","BASSWIESN voi määrittää SoundTouch-laitteita uudelleen ja voi vahingoittaa niitä epäedullisissa olosuhteissa.","Radion asetus, presetit, Telnet-uudelleenkäynnistys ja palautus voivat aiheuttaa uudelleenkäynnistyksiä tai pysyviä muutoksia. Todelliset kirjoitukset tehdään vain nimenomaisella hyväksynnällä.","Tämä ohjelmisto on yksityisesti kehitetty eikä valmis. Käytä omalla vastuulla.","Terveisiä Baijerista","Olen lukenut varoituksen","Älä näytä uudelleen","Vahvista"],
+    pl:["Używasz na własne ryzyko","BASSWIESN może rekonfigurować urządzenia SoundTouch i w niesprzyjających warunkach może je uszkodzić.","Konfiguracja radia, presety, restart Telnet i odzyskiwanie mogą wywołać restarty lub trwałe zmiany. Rzeczywisty zapis następuje tylko po wyraźnej zgodzie.","To oprogramowanie jest rozwijane prywatnie i nie jest ukończone. Używaj na własne ryzyko.","Pozdrowienia z Bawarii","Przeczytałem ostrzeżenie","Nie pokazuj ponownie","Potwierdź"],
+    cs:["Použití na vlastní riziko","BASSWIESN může přenastavit zařízení SoundTouch a za nepříznivých okolností je může poškodit.","Nastavení rádia, předvolby, restart přes Telnet a obnova mohou vyvolat restarty nebo trvalé změny. Skutečný zápis probíhá jen po výslovném souhlasu.","Tento software je vyvíjen soukromě a není hotový. Používejte na vlastní riziko.","Pozdravy z Bavorska","Přečetl/a jsem varování","Znovu nezobrazovat","Potvrdit"],
+    sk:["Použitie na vlastné riziko","BASSWIESN môže prekonfigurovať zariadenia SoundTouch a za nepriaznivých okolností ich môže poškodiť.","Nastavenie rádia, predvoľby, reštart cez Telnet a obnova môžu vyvolať reštarty alebo trvalé zmeny. Skutočný zápis prebieha iba po výslovnom súhlase.","Tento softvér je vyvíjaný súkromne a nie je hotový. Používajte na vlastné riziko.","Pozdravy z Bavorska","Prečítal/a som si upozornenie","Znovu nezobrazovať","Potvrdiť"],
+    hu:["Használat saját felelősségre","A BASSWIESN át tudja konfigurálni a SoundTouch eszközöket, és kedvezőtlen körülmények között kárt okozhat bennük.","A rádió beállítása, presetek, Telnet újraindítás és helyreállítás újraindításokat vagy tartós módosításokat okozhatnak. Valódi írás csak kifejezett jóváhagyás után történik.","Ez a szoftver magánfejlesztés és nem kész. Saját felelősségre használja.","Üdvözlet Bajorországból","Elolvastam a figyelmeztetést","Ne jelenjen meg újra","Megerősítés"],
+    ro:["Utilizare pe propriul risc","BASSWIESN poate reconfigura dispozitive SoundTouch și le poate deteriora în condiții nefavorabile.","Configurarea radio, presetările, repornirea Telnet și recuperarea pot declanșa reporniri sau modificări permanente. Scrierile reale au loc doar după aprobare explicită.","Acest software este dezvoltat privat și nu este finalizat. Folosiți-l pe propriul risc.","Salutări din Bavaria","Am citit avertismentul","Nu mai afișa","Confirmă"],
+    bg:["Използване на собствен риск","BASSWIESN може да преконфигурира SoundTouch устройства и при неблагоприятни условия може да ги повреди.","Настройка на радио, presets, Telnet рестарт и recovery могат да предизвикат рестарти или постоянни промени. Реален запис се извършва само след изрично одобрение.","Този софтуер е частно разработен и не е завършен. Използвайте на собствен риск.","Поздрави от Бавария","Прочетох предупреждението","Не показвай отново","Потвърди"],
+    hr:["Korištenje na vlastitu odgovornost","BASSWIESN može rekonfigurirati SoundTouch uređaje i u nepovoljnim okolnostima ih može oštetiti.","Postavljanje radija, preseti, Telnet restart i recovery mogu pokrenuti restarte ili trajne promjene. Stvarno pisanje događa se samo nakon izričitog odobrenja.","Ovaj softver razvijen je privatno i nije dovršen. Koristite ga na vlastitu odgovornost.","Pozdrav iz Bavarske","Pročitao/la sam upozorenje","Ne prikazuj ponovno","Potvrdi"],
+    sl:["Uporaba na lastno odgovornost","BASSWIESN lahko prekonfigurira naprave SoundTouch in jih lahko v neugodnih okoliščinah poškoduje.","Nastavitev radia, preseti, ponovni zagon Telnet in recovery lahko sprožijo ponovne zagone ali trajne spremembe. Pravo pisanje se zgodi le po izrecni odobritvi.","Ta programska oprema je zasebno razvita in ni dokončana. Uporabljajte na lastno odgovornost.","Pozdravi iz Bavarske","Prebral/a sem opozorilo","Ne prikaži več","Potrdi"],
+    el:["Χρήση με δική σας ευθύνη","Το BASSWIESN μπορεί να επαναρυθμίσει συσκευές SoundTouch και σε δυσμενείς συνθήκες μπορεί να τις βλάψει.","Ρύθμιση ραδιοφώνου, presets, επανεκκίνηση Telnet και recovery μπορούν να προκαλέσουν επανεκκινήσεις ή μόνιμες αλλαγές. Πραγματικές εγγραφές γίνονται μόνο μετά από ρητή έγκριση.","Αυτό το λογισμικό αναπτύσσεται ιδιωτικά και δεν έχει ολοκληρωθεί. Χρησιμοποιήστε το με δική σας ευθύνη.","Χαιρετισμούς από τη Βαυαρία","Διάβασα την προειδοποίηση","Να μην εμφανιστεί ξανά","Επιβεβαίωση"],
+    tr:["Kullanım riski size aittir","BASSWIESN SoundTouch cihazlarını yeniden yapılandırabilir ve olumsuz koşullarda zarar verebilir.","Radyo kurulumu, presetler, Telnet yeniden başlatma ve kurtarma yeniden başlatma veya kalıcı değişiklik tetikleyebilir. Gerçek yazma işlemleri yalnızca açık kullanıcı onayıyla yapılır.","Bu yazılım özel olarak geliştirilmiştir ve tamamlanmamıştır. Kendi riskinizle kullanın.","Bavyera'dan selamlar","Uyarıyı okudum","Bir daha gösterme","Onayla"],
+    ru:["Используйте на свой риск","BASSWIESN может перенастраивать устройства SoundTouch и при неблагоприятных условиях может их повредить.","Настройка радио, пресеты, перезапуск Telnet и восстановление могут вызвать перезапуски или постоянные изменения. Реальная запись выполняется только после явного подтверждения.","Это программное обеспечение разработано частным образом и не завершено. Используйте на свой риск.","Привет из Баварии","Я прочитал предупреждение","Больше не показывать","Подтвердить"],
+    uk:["Використовуйте на власний ризик","BASSWIESN може переналаштовувати пристрої SoundTouch і за несприятливих умов може їх пошкодити.","Налаштування радіо, пресети, перезапуск Telnet і recovery можуть спричинити перезапуски або постійні зміни. Реальний запис відбувається лише після явного підтвердження.","Це програмне забезпечення розроблене приватно і не завершене. Використовуйте на власний ризик.","Вітання з Баварії","Я прочитав попередження","Більше не показувати","Підтвердити"],
+    ja:["自己責任で使用してください","BASSWIESN は SoundTouch 機器を再設定でき、条件が悪い場合は機器を損傷する可能性があります。","ラジオ設定、プリセット、Telnet 再起動、リカバリーは再起動や恒久的な変更を引き起こす可能性があります。実際の書き込みは明示的な承認後にのみ行われます。","このソフトウェアは個人開発であり未完成です。自己責任で使用してください。","バイエルンより","警告を読みました","今後表示しない","確認"],
+    zh:["使用风险自负","BASSWIESN 可以重新配置 SoundTouch 设备，在不利情况下可能损坏设备。","收音机设置、预设、Telnet 重启和恢复可能触发重启或永久更改。真正的写入操作只会在明确批准后执行。","此软件为个人开发，尚未完成。请自行承担使用风险。","来自巴伐利亚的问候","我已阅读警告","不再显示","确认"]
+  };
+  for (const [lang, values] of Object.entries(firstRunRows)) for (const [index, key] of firstRunKeys.entries()) catalogs[lang][key] = values[index] || firstRunRows.en[index];
+  keys.push(...firstRunKeys);
+  // Exact end-user phrases that are rendered by legacy HTML or by dynamic
+  // cards. English and German are release-gated as complete UI languages;
+  // other catalogues retain English fallback until their native copy exists.
+  const bilingualPairs = [
+    ["Modus", "Mode"],
+    ["Lokale SoundTouch-Cloud", "SoundTouch Local Cloud"],
+    ["Musikbibliothek", "Media/NAS"],
+    ["Ordner eines freigegebenen Medienservers durchsuchen und MP3-/AAC-Titel zur Senderliste hinzufügen.", "Browse folders on an approved media server and add MP3/AAC tracks to Stations."],
+    ["Medienserver ausdrücklich verbinden", "Connect a media server explicitly"],
+    ["Ordner öffnen und Titel übernehmen", "Open a folder and import a track"],
+    ["In der Senderliste ein Radio auswählen und starten", "Choose a radio in Stations and start playback"],
+    ["Importieren startet kein Radio und verändert keine Presets. Keine automatische Netzwerksuche. Die technischen Radio-Proben sind im LAB-Bereich.", "Importing never starts a radio or changes presets. No automatic network scan. Native radio probes are in LAB."],
+    ["Geführte Einrichtung", "Guided setup"],
+    ["Geräteschutz ist serverseitig aktiv", "Device protection is enforced by the server"],
+    ["Erreichbare BASSWIESN-Adresse", "Reachable BASSWIESN address"],
+    ["Erreichbare Radios", "Reachable radios"],
+    ["LAN-Adressen werden ermittelt …", "Detecting LAN addresses…"],
+    ["Sicherer Ablauf", "Safe workflow"],
+    ["Setup sichert jedes Radio, richtet lokale Dienste ein und prüft den Zustand nach dem Neustart. Firmware-Patches sind optional.", "Setup backs up each radio, configures local services and verifies the state after reboot. Firmware patches are optional."],
+    ["Radio-Firmware und Display", "Radio firmware and display"],
+    ["Einrichtungsart", "Setup mode"],
+    ["Originaldisplay und Bootlogo wiederherstellen", "Restore original display and boot logo"],
+    ["Original wiederherstellen: Entfernt nur geprüfte Display- und Bootlogo-Patches, mit Sicherung, Neustart und Readback. Batteriepatches, Presets, Sprache und Servereinstellungen bleiben unverändert. Neue Patches anschließend separat einrichten.", "Restore original: removes only verified display and boot-logo patches, with backup, reboot and readback. Battery patches, presets, language and server settings stay unchanged. New patches require a separate setup afterwards."],
+    ["Normal — Firmware beibehalten (Standard)", "Normal — preserve firmware (default)"],
+    ["Mit Patches — BASSWIESN-Display und Bootlogo", "With patches — BASSWIESN display and boot logo"],
+    ["Normal: lokale Wiedergabe und Presets, Systemsprache und Standby-Uhr, sofern unterstützt. Keine Firmwaredateien werden geändert; vorhandene Patches und Anzeigeeinstellungen bleiben erhalten.", "Normal: local playback and presets, system language and standby clock where supported. No firmware files are modified; existing patches and display preferences are preserved."],
+    ["Mit Patches: zusätzlich Drei-Bereiche-Display, große Uhr bei fehlenden Songdaten und BASSWIESN-Bootschriftzug. Benötigt ein exakt unterstütztes Profil, SSH mit geprüftem Hostschlüssel, private Firmware-Sicherung und bestätigten Neustart. Batterieänderungen sind nicht enthalten.", "With patches: additionally installs the three-region display, large clock when song data is absent, and BASSWIESN boot lettering. Requires an exact supported profile, pinned SSH, private firmware backup and verified reboot. Battery changes are not included."],
+    ["SoundTouch 10 hat kein Display: Normal verwenden. Display- und Bootlogo-Patches sind nicht verfügbar. Nicht unterstützte Geräte separat ohne Patches einrichten.", "SoundTouch 10 has no display: use Normal. Display and boot-logo patches are unavailable. Unsupported devices must be set up separately without patches."],
+    ["Setup-Änderungen wiederherstellen", "Restore setup changes"],
+    ["Optionale Wiedergabeprüfung ausführen", "Run optional playback verification"],
+    ["Setup-Schritte", "Setup steps"],
+    ["Identität", "Identity"],
+    ["Serverziel", "Server target"],
+    ["Abschluss", "Complete"],
+    ["Über BASSWIESN", "About BASSWIESN"],
+    ["Radios aktualisieren", "Refresh radios"],
+    ["Jetzt verbundene Radios suchen", "Search connected radios now"],
+    ["Noch keine ausdrückliche LAN-Suche in dieser Sitzung ausgeführt.", "No explicit LAN search has been run in this session."],
+    ["Gespeicherte Liste neu laden", "Reload saved list"],
+    ["Änderungen prüfen", "Review changes"],
+    ["Setup starten", "Start setup"],
+    ["Abbrechen", "Cancel"],
+    ["Gesicherte Serverziele wiederherstellen", "Restore backed-up server targets"],
+    ["Noch kein Setup-Rebuild gestartet.", "No setup job has been started."],
+    ["Vorschau und Fehlerdetails", "Preview and error details"],
+    ["Radios werden gesucht…", "Searching for radios…"],
+    ["Keine SoundTouch-Radios gefunden.", "No SoundTouch radios found."],
+    ["Radio gespeichert.", "Radio saved."],
+    ["Radio konnte nicht hinzugefügt werden", "Radio could not be added"],
+    ["Radios suchen", "Search radios"],
+    ["Entfernen", "Remove"],
+    ["Fernbedienung öffnen", "Open remote control"],
+    ["erneut prüfen", "Check again"],
+    ["Setup reparieren", "Repair setup"],
+    ["Bereit", "Ready"],
+    ["prüfen", "check"],
+    ["Nicht ausgelesen", "Not read"],
+    ["Seriennummer", "Serial number"],
+    ["Aktion", "Action"],
+    ["Radio wurde lokal entfernt.", "Radio was removed locally."],
+    ["Radio konnte nicht entfernt werden", "Radio could not be removed"],
+    ["Kein Multiroom", "No multiroom"],
+    ["Keine Änderung nötig.", "No change required."],
+    ["Einstellungen werden geprüft …", "Checking settings…"],
+    ["Änderungen noch nicht gespeichert – bitte Anwenden klicken.", "Changes are not saved yet — select Apply."],
+    ["Alle angezeigten Werte entsprechen dem Radio.", "All displayed values match the radio."],
+    ["Anzeige am Radio", "Radio display"],
+    ["Bose-Standardsymbol über Sendernamen anzeigen", "Show the Bose default symbol above the station name"],
+    ["Senderlogo über Sendernamen anzeigen", "Show the station logo above the station name"],
+    ["Kein Senderlogo", "No station logo"],
+    ["Geräteeinstellungen konnten nicht sicher geschrieben werden", "Device settings could not be written safely"],
+    ["Vorschau erstellt. Erst die Bestätigung startet den geschützten Write.", "Preview created. Confirmation starts the protected write."],
+    ["Bitte zuerst den Backup-/Memory-Hinweis bestätigen.", "Confirm the backup/memory notice first."],
+    ["Presets synchronisiert und Readback bestätigt.", "Presets synchronized and readback verified."],
+    ["Online-Sendersuche", "Online station search"],
+    ["Keine Online-Suchergebnisse geladen.", "No online search results loaded."],
+    ["Hinzufügen und auswählen", "Add and select"],
+    ["Suche läuft…", "Searching…"],
+    ["Suche fehlgeschlagen.", "Search failed."],
+    ["Unbekannt", "Unknown"],
+    ["Wiedergabe", "Playback"],
+    ["Unbekanntes Format", "Unknown format"],
+    ["Lokales Quellen-Symbol", "Local source symbol"],
+    ["Mitglied aus laufender Gruppe entfernen", "Remove member from active group"],
+    ["Experimental: Mitglied aus laufender Gruppe entfernen", "Experimental: remove member from active group"],
+    ["Mitglied entfernen", "Remove member"],
+    ["Firmwareabhängige LAB-Funktion.", "Firmware-dependent LAB function."],
+    ["Ausgewählte Gruppe auflösen", "Dissolve selected group"],
+    ["Einfache Erklärung", "Simple explanation"],
+    ["Diese Seite erklären", "Explain this page"],
+    ["Hilfe", "Help"],
+    ["Hilfe schließen", "Close help"],
+    ["Was kommt wo hinein?", "What goes where?"],
+    ["Zurück", "Back"],
+    ["Weiter", "Continue"],
+    ["Factory Reset Radio", "Factory Reset Radio"],
+    ["LAB · zerstörerisch", "LAB · destructive"],
+    ["Nur LAB", "LAB only"],
+    ["Radio auswählen, um seine Identität zu prüfen.", "Select a radio to review its identity."],
+    ["Ich verstehe, dass dies das Radio zurücksetzt", "I understand that this resets the radio"],
+    ["FACTORY RESET RADIO zur Bestätigung eingeben", "Type FACTORY RESET RADIO to confirm"],
+    ["Backup- und Reset-Plan prüfen", "Review backup and reset plan"],
+    ["Noch kein Factory Reset gestartet.", "No factory reset started."],
+    ["Backup und technische Evidence", "Backup and technical evidence"],
+    ["Noch keine Vorschau geladen.", "No preview loaded."],
+    ["Wähle zuerst ein Radio.", "Select a radio first."],
+    ["Werkseinstellung wurde nicht gesendet", "Factory reset was not sent"],
+    ["Power / Standby", "Power / Standby"],
+    ["Nur Vorschau", "Preview only"],
+    ["Bestätigung", "Confirmation"],
+    ["Exakte Bestätigung", "Exact confirmation"],
+    ["Status lesen", "Read status"],
+    ["Aktualisieren", "Refresh"],
+    ["Einstellungen", "Settings"],
+    ["Fernbedienung", "Remote Control"],
+    ["Sender", "Stations"],
+    ["Wecker Timer", "Alarm & Timer"],
+    ["Mehr", "More"],
+    ["Sicherung", "Backup"],
+    ["Technik", "Technical"],
+    ["Diagnose", "Diagnostics"],
+    ["Labor", "Lab"],
+    ["Aktuelle Zeit und Server", "Current time and server"],
+    ["Hauptnavigation", "Main navigation"]
+    ,["Auf ausgewählte Radios anwenden", "Apply to selected radios"]
+    ,["Das Hauptradio liefert Musik und Synchronisation. Alle weiteren Radios folgen ihm.", "The main radio provides music and synchronization. All other radios follow it."]
+    ,["Die Auswahl wird lokal gespeichert. Bestehende Presets brauchen danach eine Synchronisierung mit Backup, Vorschau und Readback.", "The selection is saved locally. Existing presets must then be synchronized with backup, preview, and readback."]
+    ,["Hier startest du später Sender, Presets und Lautstärke.", "This is where you start stations, presets, and volume control."]
+    ,["Live-Werte werden beim Auswählen geladen. Geschrieben werden nur Änderungen.", "Live values are loaded when selected. Only changes are written."]
+    ,["Noch kein Radio geprüft.", "No radio has been checked yet."]
+    ,["Noch kein geeignetes Radio vorhanden.", "No eligible radio is available yet."]
+    ,["Sequenziell · Backup vor Write · optionale Audio-Prüfung ausschließlich bei Lautstärke 1 · SSH im normalen Setup nicht erforderlich", "Sequential · backup before write · optional audio check only at volume 1 · SSH is not required for normal setup"]
+    ,["SoundTouch kann beim Gruppieren die zuletzt verwendete Quelle fortsetzen sowie Mute und Lautstärke selbst ändern. Die Vorschau zeigt deshalb alle aktuellen Werte.", "When grouping, SoundTouch may continue the last source and change mute or volume itself. The preview therefore shows all current values."]
+    ,["Verbinde jedes Radio zuerst selbst mit dem Heimnetz und klicke anschließend oben auf „Jetzt verbundene Radios suchen“.", "Connect each radio to the home network yourself, then select “Search connected radios now” above."]
+    ,["Vorschau für Multiroom", "Multiroom preview"]
+    ,["Vorschau für Preset-Sync", "Preset sync preview"]
+    ,["Wähle ein Hauptradio und die gewünschten Räume.", "Select a main radio and the desired rooms."]
+    ,["Änderungen anwenden", "Apply changes"]
+    ,["Keine Geräte konfiguriert.", "No devices configured."]
+    ,["Keine nutzbaren Geräte", "No usable devices"]
+    ,["1 · Hauptradio wählen", "1 · Select main radio"]
+    ,["Geräte-Allowlist fehlt", "Device allowlist is missing"]
+    ,["Live-Metadaten aktualisieren", "Update live metadata"]
+    ,["Noch kein 6er Preset-Profil gespeichert.", "No six-slot preset profile has been saved."]
+    ,["Noch kein Radio angelegt.", "No radio has been added."]
+    ,["Noch kein Radio vorhanden", "No radio available"]
+    ,["Noch kein Reporting-Vertrag beobachtet.", "No reporting contract has been observed."]
+    ,["Noch kein autoritativer Radio-Readback", "No authoritative radio readback"]
+    ,["Noch kein lokaler Sender angelegt", "No local station has been added"]
+    ,["Noch keine Wiedergabe erfasst. Starte einen Stream oder ein Preset.", "No playback has been recorded. Start a stream or preset."]
+    ,["Persistiert Radios, Sender, Presets, Einstellungen, Jobs und Backups.", "Persists radios, stations, presets, settings, jobs, and backups."]
+    ,["Preview- und Jobinfrastruktur für begrenzte Ansagen; keine bestätigte Wiedergabe.", "Preview and job infrastructure for bounded announcements; playback is not confirmed."]
+    ,["Senderlogo", "Station logo"]
+    ,["Separater POST-Vertrag; ein Fehler stoppt weder Wiedergabe noch Quelle.", "Separate POST contract; an error stops neither playback nor source."]
+    ,["Sicherung und Diagnose", "Backup and diagnostics"]
+    ,["Status aktualisieren", "Refresh status"]
+    ,["Verwendet /searchStation und /addStation. Der ausgewählte Dienst muss auf dem Radio als READY registriert sein.", "Uses /searchStation and /addStation. The selected service must be registered as READY on the radio."]
+    ,["Radio wählen; danach erscheinen aktuelle Werte.", "Select a radio to load its current values."]
+    ,["Verbinde jedes zurückgesetzte Radio zuerst selbst mit deinem Heim-WLAN. BASSWIESN verändert weder das WLAN dieses Computers noch WLAN-Zugangsdaten eines Radios.", "First connect each reset radio to your home Wi-Fi yourself. BASSWIESN changes neither this computer's Wi-Fi nor a radio's Wi-Fi credentials."]
+    ,["Aktion erforderlich", "Action required"]
+    ,["Das ist keine Multiroom-Methode. Es verhindert lediglich, dass eine ungeeignete Quelle wie AirPlay mit multiroomallowed=false angeboten wird.", "This is not a multiroom method. It only prevents an unsuitable source such as AirPlay with multiroomallowed=false from being offered."]
+    ,["Keine flüchtige Runtime-Evidence gespeichert", "No transient runtime evidence stored"]
+    ,["Liest nur, was Modell und aktuelle Quelle erlauben.", "Reads only what the model and current source allow."]
+    ,["Mehrere Radios spielen dieselbe Quelle synchron.", "Multiple radios play the same source in sync."]
+    ,["Noch keine BASSWIESN-Szene gespeichert", "No BASSWIESN scene has been saved"]
+    ,["Noch keine Live-Captures gespeichert.", "No live captures have been stored."]
+    ,["Noch keine Provider-Beobachtung gespeichert.", "No provider observation has been stored."]
+    ,["Noch keine korrelierten Diagnoseereignisse gespeichert.", "No correlated diagnostic events have been stored."]
+    ,["Persistierte Beobachtungen anzeigen, ohne beim Öffnen das Radio zu kontaktieren.", "Show persisted observations without contacting the radio when opening the page."]
+    ,["Quelle gültig", "Source valid"]
+    ,["Radio wählen, um die gespeicherten Zustände zu laden.", "Select a radio to load its stored states."]
+    ,["Status, Requests und Diagnose-Endpunkte öffnen", "Open status, requests, and diagnostic endpoints"]
+    ,["Voraussetzungen und technische Details", "Requirements and technical details"]
+    ,["Zuständige Ansicht öffnen", "Open relevant view"]
+    ,["BASSWIESN zeigt aktive SSID und Anzahl gespeicherter Profile. Passwörter werden nicht lokal gespeichert.", "BASSWIESN shows the active SSID and number of stored profiles. Passwords are not stored locally."]
+    ,["Darstellung", "Display style"]
+    ,["Hardwarevalidierung offen.", "Hardware validation pending."]
+    ,["Begrenzte LAN-Suche; geschützte Ziele werden vor jedem direkten Transport ausgeschlossen.", "Bounded LAN scan; protected targets are excluded before every direct transport."]
+    ,["Dies löscht die Radiokonfiguration und setzt das Gerät auf Werkseinstellungen zurück. BASSWIESN prüft zuerst die aktuelle Identität, das exakte Firmwareprofil und eine vollständig lesbare Sicherung.", "This erases the radio configuration and returns the device to factory defaults. BASSWIESN first verifies the current identity, exact firmware profile, and a complete readable backup."]
+    ,["1. Radios manuell mit dem Heimnetz verbinden", "1. Connect radios to the home network manually"]
+    ,["BASSWIESN sendet dabei kein SetVolume. Falls die Bose-Firmware selbst einen Wert ändert, zeigt der Readback die Abweichung an und korrigiert sie nicht heimlich.", "BASSWIESN does not send SetVolume. If the Bose firmware changes a value itself, the readback shows the difference and does not silently correct it."]
+    ,["Bereits mit dem Heimnetz verbundene Radios einrichten", "Set up radios already connected to the home network"]
+    ,["Das Radio bestätigt jede Änderung per Readback.", "The radio confirms every change by readback."]
+    ,["Die Presets werden kopiert und anschließend auf dem Zielradio geprüft.", "Presets are copied and then verified on the target radio."]
+    ,["Diese LAN-Adresse wird dem Radio als BASSWIESN-Serverziel angezeigt.", "This LAN address is shown to the radio as the BASSWIESN server target."]
+    ,["Ein Radio gibt den Takt vor, die ausgewählten Räume spielen mit.", "One radio provides the clock and the selected rooms play along."]
+    ,["Empfehlung für Multiroom: Zone.", "Recommended for multiroom: Zone."]
+    ,["Mit der Multiroom-Zone synchronisieren", "Synchronize with the multiroom zone"]
+    ,["Noch keine Synchronisierung gestartet.", "No synchronization started yet."]
+    ,["Noch keine Wecker Timer.", "No alarms or timers yet."]
+    ,["Nur Radios verbinden", "Connect radios only"]
+    ,["Nur wenn aktiviert: vor Audio setzen und per Radio-Readback bestätigen.", "Only when enabled: set before audio and verify by radio readback."]
+    ,["Nutze dafür den vorgesehenen Bose-/Geräteablauf. Sobald alle Radios im selben LAN wie BASSWIESN sind, starte hier einmal die Suche.", "Use the intended Bose/device flow. Once all radios are on the same LAN as BASSWIESN, start the scan here once."]
+    ,["Radio auswählen", "Select radio"]
+    ,["Sender finden und direkt für den Preset Builder auswählen.", "Find stations and select them directly for the Preset Builder."]
+    ,["Technische Unterschiede: Capabilities, Zone, Group und Room", "Technical differences: capabilities, zone, group, and room"]
+    ,["Vollständig geschützte Radios werden bereits vor der Auswahl entfernt und vor jedem Netzwerktransport erneut blockiert.", "Fully protected radios are removed before selection and blocked again before every network transport."]
+    ,["Wird nach dem Start auf jedem Radio nochmals geprüft.", "Verified again on every radio after starting."]
+    ,["Wähle ein Radio und eine Taste.", "Select a radio and a button."]
+    ,["Zone ist für gemeinsames SoundTouch-Audio. Raum optimiert ein einzelnes Radio und erstellt keine Gruppe.", "Zone is for shared SoundTouch audio. Room optimizes one radio and does not create a group."]
+    ,["ist für gemeinsames SoundTouch-Audio.", "is for shared SoundTouch audio."]
+    ,["optimiert ein einzelnes Radio und erstellt keine Gruppe.", "optimizes one radio and does not create a group."]
+    ,["Füge zuerst mindestens zwei Radios hinzu.", "Add at least two devices first."]
+    ,["Füge zuerst Radios hinzu.", "Add devices first."]
+    ,["Stream-Sender hier erstellen", "Create stream station here"]
+    ,["2 · Räume hinzufügen", "2 · Add rooms"]
+    ,["Abhängigkeiten prüfen", "Check dependencies"]
+    ,["Aktiv und verfügbar", "Active and available"]
+    ,["Ausgewähltes Radio read-only prüfen", "Check selected radio read-only"]
+    ,["Liest Info, Sources, Capabilities und Unicast-mDNS nur am ausgewählten Radio. Kein Subnetz-/Multicast-Scan, SSH oder CLI.", "Reads info, sources, capabilities, and unicast mDNS only from the selected radio. No subnet/multicast scan, SSH, or CLI."]
+    ,["Backup-Preview und Restore-Vorbereitung sind vorhanden; vollständiger sicherer UI-Restore fehlt.", "Backup preview and restore preparation are available; a complete safe UI restore is missing."]
+    ,["Baut eine Zone mit preserve_volumes auf und prüft Lautstärkeabweichungen.", "Builds a zone with preserve_volumes and verifies volume differences."]
+    ,["Blockiert serverseitig automatische und manuelle Netzwerkzugriffe auf geschützten Radio-IPs.", "Blocks automatic and manual network access to protected radio IPs on the server."]
+    ,["Der auf allen vorhandenen Geräten live bestätigte, lokale Hauptweg. Funktioniert ohne Bose-Cloud und ist für normale Nutzer die beste Wahl.", "The primary local path verified live on all available devices. It works without the Bose cloud and is the best choice for regular users."]
+    ,["Diagnose-Port prüfen", "Check diagnostics port"]
+    ,["Die ID-Sperre bleibt auch bei einem DHCP-IP-Wechsel wirksam.", "ID protection remains effective after a DHCP IP change."]
+    ,["Diese Radios werden vor jedem Netzwerktransport blockiert.", "These radios are blocked before every network transport."]
+    ,["Ein lesender Überblick aus Laufzeitkonfiguration, lokaler Datenbank und dokumentiertem Hardwarestatus.", "A read-only overview of runtime configuration, local database, and documented hardware status."]
+    ,["Erstellt redigierte Systembackups mit Manifest, SHA256 und Journal.", "Creates redacted system backups with a manifest, SHA256, and journal."]
+    ,["Erstellt und liest Multiroom-Zonen über die vorhandenen Router und Safety-Gates.", "Creates and reads multiroom zones through the existing routers and safety gates."]
+    ,["Erzeugt ein redigiertes Diagnosepaket ohne bekannte Secrets.", "Creates a redacted diagnostics bundle without known secrets."]
+    ,["Health prüfen", "Check health"]
+    ,["Health, Discovery, Events, Webhooks, Medien, Diagnose und LAB-Status ohne blockierende Geräteabfragen.", "Health, discovery, events, webhooks, media, diagnostics, and LAB status without blocking device queries."]
+    ,["Interne Ereignisse, Zustellstatus und deaktivierte Webhook-Konfiguration.", "Internal events, delivery status, and disabled webhook configuration."]
+    ,["Kein lokaler 21600-Sekunden-Default. Fehlend oder 0 bedeutet deaktiviert.", "No local 21600-second default. Missing or 0 means disabled."]
+    ,["Keine Restriction empfangen; Inaktivitätstimer ist nicht aktiv.", "No restriction received; the inactivity timer is not active."]
+    ,["Keine aktuell gemeldete Blockade.", "No blocker is currently reported."]
+    ,["Keine entfernten Radios.", "No removed radios."]
+    ,["Keine lokalen Presets zum Synchronisieren", "No local presets to synchronize"]
+    ,["Keine verknüpften Radios.", "No linked radios."]
+    ,["Konfidenz 0% · noch nicht beobachtet", "Confidence 0% · not observed yet"]
+    ,["Lesender System-, Service- und Healthcheck-Überblick.", "Read-only system, service, and health-check overview."]
+    ,["Liest Radio-Presets zurück und vergleicht sie mit der lokalen Definition.", "Reads radio presets back and compares them with the local definition."]
+    ,["Lokale Benutzeroberfläche und HTTP-API für BASSWIESN.", "Local user interface and HTTP API for BASSWIESN."]
+    ,["Lokale Medienroots, Bibliothek und Playlist-Infrastruktur.", "Local media roots, library, and playlist infrastructure."]
+    ,["Lokaler Senderkatalog mit Streamanalyse und explizitem Playback.", "Local station catalog with stream analysis and explicit playback."]
+    ,["Manuelle Clock-Recovery mit Profil, Confirmation und Readback.", "Manual clock recovery with profile, confirmation, and readback."]
+    ,["Manuelle, experimentelle Renderer-Erkennung ohne Hintergrundscan.", "Manual experimental renderer detection without background scanning."]
+    ,["DLNA-Suche, Medienbrowser und Wiedergabesteuerung sind nicht implementiert.", "DLNA discovery, media browsing and playback control are not implemented."]
+    ,["Das Feature-Flag allein stellt keine DLNA-Funktion bereit.", "The feature flag alone does not provide DLNA functionality."]
+    ,["Expliziter Medienserver, Ordnerbrowser und MP3-/AAC-Weitergabe über BASSWIESN.", "Explicit media server, folder browsing and MP3/AAC relay through BASSWIESN."]
+    ,["Noch kein Medienserver verbunden.", "No media server connected yet."]
+    ,["Im LAB die Musikbibliothek aktivieren und einen Server ausdrücklich verbinden.", "In LAB, enable the media library and explicitly connect a server."]
+    ,["Modernere interne Gruppen-Zustandsmaschine der Bose-App.", "Newer internal group state machine used by the Bose app."]
+    ,["Multiroom ohne Lautstärkeänderung", "Multiroom without volume changes"]
+    ,["Noch keine Jahresdaten.", "No yearly data yet."]
+    ,["Noch keine Profile", "No profiles yet"]
+    ,["Nur Diagnose – keine Firmware-, MFi- oder Authentifizierungsumgehung.", "Diagnostics only—no firmware, MFi, or authentication bypass."]
+    ,["Nur Klassifizierung und optionale Serverprüfung. Keine Radioaktion und kein Hardwarebeweis.", "Classification and optional server check only. No radio action and no hardware evidence."]
+    ,["Nur aktiv, wenn IP Write Guard eingeschaltet ist.", "Active only when IP Write Guard is enabled."]
+    ,["Optionale TLS-WebGUI mit Self-Signed- oder eigener Zertifikatskonfiguration.", "Optional TLS Web UI with a self-signed or custom certificate configuration."]
+    ,["Preflight, Backup, Cloud-Route, Apply, Verify und Rollback für ein Radio.", "Preflight, backup, cloud route, apply, verify, and rollback for one radio."]
+    ,["Profilbasierter Reboot; kein freies Telnet-Kommando.", "Profile-based reboot; no arbitrary Telnet command."]
+    ,["Provider, Stream, Metadaten und Reporting bleiben davon unabhängige Signale.", "Provider, stream, metadata, and reporting remain independent signals."]
+    ,["Lokale Archivvorbereitung; getrennt vom experimentellen Installer für offizielle Releases im LAB.", "Local archive preparation; separate from the experimental official-release installer in LAB."]
+    ,["Radio Info ohne SSH", "Radio information without SSH"]
+    ,["Radio und Preset wählen, danach den Preflight starten.", "Select a radio and preset, then start the preflight."]
+    ,["Radio-Slots und BASSWIESN-Daten read-only vergleichen.", "Compare radio slots and BASSWIESN data read-only."]
+    ,["Real in der Firmware vorhanden, aber komplexer und von Account-/Versionszustand abhängig. BASSWIESN nutzt für Endnutzer die stabilere Zone und hält Group als Kompatibilitäts-/Diagnoseweg bereit.", "Present in the firmware, but more complex and dependent on account/version state. BASSWIESN uses the more stable zone for end users and retains Group as a compatibility/diagnostics path."]
+    ,["Recovery-Stufe 7 als ausschliesslich manuelle LAB-Aktion; kein Scheduler und keine automatische Ausfuehrung.", "Recovery stage 7 is an exclusively manual LAB action; no scheduler and no automatic execution."]
+    ,["Registry, Quellen und Radio-Anfragen ansehen", "View registry, sources, and radio requests"]
+    ,["Release-Check für API, Datenbank, Storage, Emulator und Ports.", "Release check for API, database, storage, emulator, and ports."]
+    ,["SSDP und begrenzter IP-Fallback finden Radios im lokalen Netz.", "SSDP and a bounded IP fallback find radios on the local network."]
+    ,["SYNC_TO_ZONE ist für eine SoundTouch-Zone optimiert. SYNC_TO_ROOM richtet die Ausgabe auf den einzelnen Raum aus. Dieser Schalter bildet selbst keine Gruppe.", "SYNC_TO_ZONE is optimized for a SoundTouch zone. SYNC_TO_ROOM aligns output for one room. This switch does not create a group."]
+    ,["Schreibt ein einzelnes lokales Preset mit Backup, Guards und Readback.", "Writes one local preset with backup, guards, and readback."]
+    ,["Sender und Presets", "Stations and presets"]
+    ,["Serverseitige Szenen mit Master, Mitgliedern, Sender und Lautstärkeoptionen; kein natives Bose-Preset.", "Server-side scenes with master, members, station, and volume options; not a native Bose preset."]
+    ,["Setup und Redirect", "Setup and redirect"]
+    ,["Steuert BASSWIESN-eigene optionale externe Requests; nicht die Internetverbindung des Radios.", "Controls BASSWIESN's optional external requests, not the radio's internet connection."]
+    ,["Synchronisiert lokale Presets und bestätigt die Slots durch Radio-Readback.", "Synchronizes local presets and verifies the slots through radio readback."]
+    ,["Telemetry, Request-Logs, Emulation Gaps und technische Exporte ohne Radioaktion.", "Telemetry, request logs, emulation gaps, and technical exports without radio action."]
+    ,["Verbunden", "Connected"]
+    ,["Vollständiger UI-Ablauf mit Neustart und Rollback fehlt", "Complete UI flow with restart and rollback is missing"]
+    ,["Vollständiger staged UI-Restore mit Rollback fehlt", "Complete staged UI restore with rollback is missing"]
+    ,["WebGUI und API", "Web UI and API"]
+    ,["Zeigt vorbereitete, nicht produktionsreife Diagnose- und Schreibpläne.", "Shows prepared diagnostics and write plans that are not production-ready."]
+    ,["nur sekundär / unbekannt", "secondary only / unknown"]
+    ,["strict blockiert optionale externe BASSWIESN-Dienste. Das Radio und lokale Streams bleiben davon getrennt.", "Strict mode blocks optional external BASSWIESN services. The radio and local streams remain separate."]
+    ,["Ausgewähltes Radio nur lesend prüfen", "Check selected radio read-only"]
+    ,["Backup-Vorschau und Restore-Vorbereitung sind vorhanden; vollständiger sicherer UI-Restore fehlt.", "Backup preview and restore preparation are available; a complete safe UI restore is missing."]
+    ,["Lokaler Senderkatalog mit Streamanalyse und expliziter Wiedergabe.", "Local station catalog with stream analysis and explicit playback."]
+    ,["Vorschau- und Jobinfrastruktur für begrenzte Ansagen; keine bestätigte Wiedergabe.", "Preview and job infrastructure for bounded announcements; playback is not confirmed."]
+    ,["Radio-Slots und BASSWIESN-Daten nur lesend vergleichen.", "Compare radio slots and BASSWIESN data read-only."]
+    ,["Wiedergabe stammt vom Radio-Readback", "Playback comes from radio readback"]
+    ,["Wiedergabezustand", "Playback Health"]
+    ,["Wiedergabefehler", "playback errors"]
+    ,["Wähle ein Radio und einen Sender, um die Wiedergabe zu testen.", "Choose a radio and station to test playback."]
+    ,["Kandidat, bis die modellspezifische Wiedergabe live getestet wurde.", "Candidate only until model-specific playback is live-tested."]
+    ,["Durch Mathias-Captures bestätigt: LOCAL_INTERNET_RADIO stationurl mit direkten .mp3-URLs.", "Confirmed by Mathias captures: LOCAL_INTERNET_RADIO stationurl with direct .mp3 URLs."]
+    ,["Easy Mode ändert nur die Oberfläche; alle stabilen Backendfunktionen bleiben verfügbar.", "Easy Mode changes only the interface; all stable backend functions remain available."]
+    ,["Zuerst MP3 verwenden. Alte SoundTouch-Firmware arbeitet am sichersten mit einfachem HTTP-MP3 statt modernen Codecs.", "Use MP3 first. Old SoundTouch firmware is safest with simple HTTP MP3, not modern codecs."]
+    ,["Archivprüfung vor Prepare; kein automatischer Neustart", "Archive check before prepare; no automatic restart"]
+    ,["BASSWIESN-Server erforderlich", "BASSWIESN server required"]
+    ,["Backup und Reboot-Readback", "Backup and reboot readback"]
+    ,["Backup und Write-Guard vor Live-Write", "Backup and write guard before live write"]
+    ,["Backup, Confirmation und serverseitige Write-Gates", "Backup, confirmation, and server-side write gates"]
+    ,["Eine Szene merkt sich Radios, Sender und Lautstärke und kann direkt gestartet werden.", "A scene remembers radios, station, and volume and can be started directly."]
+    ,["IP Write Guard und Schutz-IP beachten", "Observe IP Write Guard and protected IP"]
+    ,["Keine Hardwaretaste-Automatik: Dieses BASSWIESN-Preset wird ausschließlich über die WebUI gestartet.", "No automatic hardware button: this BASSWIESN preset is started exclusively through the Web UI."]
+    ,["Keine sensiblen Werte erforderlich", "No sensitive values required"]
+    ,["Keine zusätzlichen Angaben.", "No additional information."]
+    ,["Küche und Wohnzimmer", "Kitchen and living room"]
+    ,["LAB; Preview und Confirmation vor Live-Action", "LAB; preview and confirmation before live action"]
+    ,["Logoabruf nur nach URL- und Größenprüfung; Readback erforderlich", "Fetch logos only after URL and size checks; readback required"]
+    ,["Manuelle Confirmation und Write-Guard", "Manual confirmation and write guard"]
+    ,["Master und Teilnehmer", "Master and members"]
+    ,["Nur erlaubte Hosts; Secretwerte redigiert", "Allowed hosts only; secret values redacted"]
+    ,["Nur gespeicherte Zuordnung – Radio", "Stored mapping only—radio"]
+    ,["Nur gespeicherte Zuordnung – Taste", "Stored mapping only—button"]
+    ,["PROTECTED_DEVICE_IPS oder geschützte IP in Einstellungen", "PROTECTED_DEVICE_IPS or protected IP in settings"]
+    ,["Preview read-only; Live-Write nur mit bestehenden Guards", "Read-only preview; live write only with existing guards"]
+    ,["Preview und Schutz-IP vor Live-Write", "Preview and protected IP before live write"]
+    ,["Read-only; kein Radio-Write im Statuszentrum", "Read-only; no radio write in the status center"]
+    ,["Restore bleibt Preview/Prepare; kein stiller Web-Restore", "Restore remains preview/prepare; no silent Web restore"]
+    ,["Schreibaktion nur mit Bestätigung und serverseitigen Guards", "Write action only with confirmation and server-side guards"]
+    ,["Schutz-IP und Volume-Readback", "Protected IP and volume readback"]
+    ,["Secret bleibt außerhalb der Anzeige", "Secret remains outside the display"]
+    ,["Serverseitig wirksam; Liste wird nicht als Geheimnis behandelt", "Effective server-side; the list is not treated as a secret"]
+    ,["Serverseitige Szene; Teilnehmer- und Schutzprüfung vor Aktivierung", "Server-side scene; member and protection checks before activation"]
+    ,["Serverseitige Szenen, keine nativen Bose-Presets. Der BASSWIESN-Server muss laufen; Aktivierung prüft Teilnehmer, Schutzstatus, Lautstärke und Readback.", "Server-side scenes, not native Bose presets. The BASSWIESN server must be running; activation verifies members, protection status, volume, and readback."]
+    ,["Settings werden im Backup redigiert", "Settings are redacted in the backup"]
+    ,["Strict Offline kann externe Prüfung blockieren", "Strict Offline can block external checks"]
+    ,["Offizielle Release-Prüfung", "Official release check"]
+    ,["Prüft auf Wunsch die neueste stabile GitHub-Version. Installiert kein Update.", "Checks the latest stable GitHub version on request. Does not install an update."]
+    ,["Strict Offline blockiert die GitHub-Prüfung", "Strict Offline blocks the GitHub check"]
+    ,["Manueller Start in den Einstellungen", "Start manually in Settings"]
+    ,["Internetzugang zu GitHub", "Internet access to GitHub"]
+    ,["Feste offizielle Quelle; kein Herunterladen, keine Installation", "Fixed official source; no download or installation"]
+    ,["Eigene Manifest-Prüfung (LAB)", "Custom manifest check (LAB)"]
+    ,["Prüft manuell ein konfiguriertes externes Release-Manifest.", "Manually checks a configured external release manifest."]
+    ,["Updateprüfung deaktiviert", "Update check disabled"]
+    ,["Manifest-URL fehlt", "Manifest URL missing"]
+    ,["Update-Flag oder UI-Einstellung", "Update flag or UI setting"]
+    ,["Abhängigkeiten", "Dependencies"]
+    ,["Administrativer Neustart", "Administrator-managed restart"]
+    ,["Aktiv, Konfiguration unvollständig", "Enabled, configuration incomplete"]
+    ,["Backend vorhanden, UI unvollständig", "Backend available, UI incomplete"]
+    ,["Secretquelle fehlt", "Secret source missing"]
+    ,["Aktuelle Lautstärken vorab lesen", "Read current volumes first"]
+    ,["Ansagen / TTS", "Announcements / TTS"]
+    ,["Audio-/Radio-Readback", "Audio/radio readback"]
+    ,["BASSWIESN LAN-IP fehlt", "BASSWIESN LAN IP missing"]
+    ,["BASSWIESN-Multiroom-Szenen", "BASSWIESN multiroom scenes"]
+    ,["Backup vor Write", "Back up before writing"]
+    ,["Datenverzeichnis ist nicht verfügbar", "Data directory is unavailable"]
+    ,["Deaktiviert", "Disabled"]
+    ,["Experimentell", "Experimental"]
+    ,["Expertenworkflow", "Expert workflow"]
+    ,["Explizite Confirmation", "Explicit confirmation"]
+    ,["Explizite REBOOT RADIO-Bestaetigung", "Explicit REBOOT RADIO confirmation"]
+    ,["Explizite existierende Medien-Root", "Explicit existing media root"]
+    ,["Hardwaretest", "Hardware test"]
+    ,["Hardwaretest offen", "Hardware test pending"]
+    ,["Infrastruktur", "Infrastructure"]
+    ,["Je Funktion zusätzliche Guards", "Additional guards for each function"]
+    ,["Keine Schutz-IP konfiguriert", "No protected IP configured"]
+    ,["Keine gültige Medien-Root konfiguriert", "No valid media root configured"]
+    ,["Kern", "Core"]
+    ,["Kompatibles Modellprofil", "Compatible model profile"]
+    ,["Kompatibles Profil", "Compatible profile"]
+    ,["Konfigurierbare Ereigniszustellung an explizit erlaubte Zielhosts.", "Configurable event delivery to explicitly allowed target hosts."]
+    ,["LAB-Modus", "LAB Mode"]
+    ,["LAB Mode ist deaktiviert", "LAB Mode is disabled"]
+    ,["LAN-IP des BASSWIESN-Servers", "BASSWIESN server LAN IP"]
+    ,["Lautstärken nachher zurücklesen", "Read volumes back afterward"]
+    ,["Lokale Updatevorbereitung", "Local Update"]
+    ,["Logo-URL oder lokaler BASSWIESN-Pfad", "Logo URL or local BASSWIESN path"]
+    ,["Lokale Datenbank", "Local database"]
+    ,["Lokale Medien", "Local media"]
+    ,["Lokale Sender", "Local stations"]
+    ,["Lokales Archiv", "Local archive"]
+    ,["Manifest-URL", "Manifest URL"]
+    ,["Manueller LAB-Start", "Manual LAB start"]
+    ,["Manueller Radio-Reboot", "Manual radio reboot"]
+    ,["Speicherprüfung", "Memory-Check"]
+    ,["Mindestens ein Radio lokal konfigurieren", "Configure at least one radio locally"]
+    ,["Mindestens ein Sender benötigt ein validiertes Logo", "At least one station needs a validated logo"]
+    ,["Mindestens zwei Radios konfigurieren", "Configure at least two radios"]
+    ,["Neustart des Webdienstes", "Web service restart"]
+    ,["Nicht unterstützt", "Not supported"]
+    ,["Nie automatisch; geschuetzte Radios bleiben serverseitig blockiert", "Never automatic; protected radios remain blocked on the server"]
+    ,["Offline-Modus", "Offline Mode"]
+    ,["Preset-Readback", "Preset Readback"]
+    ,["Preset schreiben", "Preset Write"]
+    ,["Preset-Synchronisierung", "Preset synchronization"]
+    ,["Preset-Synchronisierung nach Änderung", "Preset synchronization after changes"]
+    ,["Privates LAN", "Private LAN"]
+    ,["Prozess-/Containerneustart", "Process/container restart"]
+    ,["Radio erreichbar", "Radio reachable"]
+    ,["Radio-Readback", "Radio readback"]
+    ,["Readback nach Aktivierung", "Readback after activation"]
+    ,["Redaction vor Export", "Redaction before export"]
+    ,["Rollbackplan", "Rollback plan"]
+    ,["SSDP und IP-Fallback sind deaktiviert", "SSDP and IP fallback are disabled"]
+    ,["Schreibbares Datenverzeichnis", "Writable data directory"]
+    ,["Schutz-IP-Liste", "Protected IP list"]
+    ,["Schutz-IP-Liste beachten", "Observe the protected IP list"]
+    ,["Secretquelle per Environment/Datei", "Secret source via environment/file"]
+    ,["Sicherheit", "Security"]
+    ,["Sicht-/Readbackprüfung", "Visual/readback check"]
+    ,["Slotweiser Readback", "Per-slot readback"]
+    ,["Standby-Uhr wiederherstellen", "Standby Clock Recovery"]
+    ,["Strict erlaubt keine konfigurierten Stream-Hosts", "Strict mode allows no configured stream hosts"]
+    ,["Telnet-Neustart", "Telnet-Reboot"]
+    ,["Unterstütztes Audioformat", "Supported audio format"]
+    ,["Verwendet gespeicherte Senderlogos als containerArt in neuen oder synchronisierten Presets.", "Uses stored station logos as containerArt in new or synchronized presets."]
+    ,["Wartung", "Maintenance"]
+    ,["Zertifikatsmodus", "Certificate mode"]
+    ,["Ziel-Allowlist fehlt", "Target allowlist missing"]
+    ,["Zielhost-Allowlist", "Target host allowlist"]
+    ,["nicht verfügbar", "not available"]
+    ,["off, auto oder strict", "off, auto or strict"]
+    ,["offen", "pending"]
+    ,["Aktivierungsmatrix", "Activation matrix"]
+    ,["Aktivierungslücken", "Activation gaps"]
+    ,["Releasepipeline", "Release pipeline"]
+    ,["aktiviert", "enabled"]
+    ,["nutzbar", "usable"]
+    ,["nicht nutzbar", "not usable"]
+    ,["unvollständig oder nicht gesetzt", "incomplete or not set"]
+    ,["Strict kontrolliert BASSWIESN-Requests, nicht das Radio", "Strict controls BASSWIESN requests, not the radio"]
+    ,["Unverschlüsseltes Protokoll; Secretwerte werden nie angezeigt", "Unencrypted protocol; secret values are never displayed"]
+    ,["Voraussetzungen", "Requirements"]
+    ,["Write-Guard, Schutz-IP und explizite Nutzerbestätigung", "Write guard, protected IP, and explicit user confirmation"]
+    ,["Zertifikatspfade und private Schlüssel werden nicht ausgegeben", "Certificate paths and private keys are not exposed"]
+    ,["Zuerst einen BASSWIESN-Sender starten.", "Start a BASSWIESN station first."]
+    ,["erforderlich", "required"]
+    ,["erkennt nur Funktionen – es gruppiert nichts.", "detects capabilities only—it does not create a group."]
+    ,["ist der bestätigte lokale Hauptweg und wird von BASSWIESN verwendet.", "is the confirmed primary local path used by BASSWIESN."]
+    ,["ist die modernere interne Bose-Zustandsmaschine, aber account- und versionsabhängiger.", "is the newer internal Bose state machine, but is more account- and version-dependent."]
+    ,["ist für gemeinsames Audio gedacht.", "is intended for shared audio."]
+    ,["ist nur ein Latenzmodus;", "is only a latency mode;"]
+    ,["keine", "none"]
+    ,["nicht erforderlich", "not required"]
+    ,["vollständig erkannt", "fully detected"]
+    ,["Ändert nur Track, Interpret, Album und imageUrl des laufenden BASSWIESN-Senders. Kein Sourcewechsel, SetURL, Stop oder Rebuffer.", "Changes only track, artist, album, and imageUrl of the running BASSWIESN station. No source change, SetURL, stop, or rebuffer."]
+    ,["Erstellen und auswählen", "Create and select"]
+    ,["Geräte-ID, weitere Geräte-ID", "Device ID, another device ID"]
+    ,["Geräte-Allowlist", "Device allowlist"]
+    ,["LAB; Vorschau und Bestätigung vor Live-Aktion", "LAB; preview and confirmation before live action"]
+    ,["Nur-lesend-Vorschau; Live-Write nur mit bestehenden Guards", "Read-only preview; live write only with existing guards"]
+    ,["Vorschau und Schutz-IP vor Live-Write", "Preview and protected IP before live write"]
+    ,["Nur-lesend-/presets-Readback", "Read-only /presets readback"]
+    ,["Nur lesend; kein Radio-Write im Statuszentrum", "Read-only; no radio write in the status center"]
+    ,["Restore bleibt Vorschau/Prepare; kein stiller Web-Restore", "Restore remains preview/prepare; no silent Web restore"]
+    ,["Sender suchen", "Search stations"]
+    ,["Einstellungen werden im Backup redigiert", "Settings are redacted in the backup"]
+    ,["Sendername", "Station Name"]
+    ,["Direkt verifiziert sind nur SoundTouch 10, 20, 30 und Portable.", "Only SoundTouch 10, 20, 30, and Portable are directly verified."]
+    ,["Experimentell, pro Radio und standardmäßig aus. Keine Display-Binary-Patches.", "Experimental, per radio, and off by default. No display binary patches."]
+    ,["Firmwareabhängige LAB-Funktion. Entfernt nur dieses Radio aus der aktuellen Zone. Das Radio bleibt in BASSWIESN gespeichert.", "Firmware-dependent LAB function. Removes only this radio from the current zone. The radio remains stored in BASSWIESN."]
+    ,["Ich verstehe, dass das Radio danach vorübergehend aus diesem Netz verschwinden kann.", "I understand that the radio may temporarily disappear from this network afterward."]
+    ,["SoundTouch kann mehrere persistente WLAN-Profile speichern. Beim Hinzufügen kann das Radio sofort das Netz wechseln.", "SoundTouch can store multiple persistent Wi-Fi profiles. Adding one may make the radio switch networks immediately."]
+    ,["Uhrzeit in Live-Metadaten anzeigen", "Show clock in live metadata"]
+    ,["WLAN-Profil hinzufügen", "Add Wi-Fi profile"]
+    ,["⚠ Firmware update und unterstützte Modelle", "⚠ Firmware update and supported models"]
+    ,["Nativen Sender hinzufügen", "Add native station"]
+    ,["Nativer Sender hinzufügen", "Native add station"]
+    ,["Native Radiosendersuche", "Native radio station search"]
+    ,["Natives Senderergebnis", "Native station result"]
+    ,["Über das Radio suchen", "Search via radio"]
+    ,["Sender-Token", "station token"]
+    ,["Von Radio", "From radio"]
+    ,["Auf Radio", "To radio"]
+    ,["Set speichern", "Save preset set"]
+    ,["Jetzt übertragen", "Transfer now"]
+    ,["Preset auf Radio speichern", "Save preset to radio"]
+    ,["Referenzeinrichtung", "Reference setup"]
+    ,["Quellradio", "Source radio"]
+    ,["Vom Radio sichern", "Save from radio"]
+    ,["Der Setup-Assistent sichert die bisherigen Serverziele vor dem Schreiben. Seine Statusansicht bietet anschließend den passenden Rollback an.", "The setup wizard backs up the previous server targets before writing. Its status view then offers the matching rollback."]
+    ,["Migrationsplan anzeigen", "Show migration plan"]
+    ,["Setup und Rollback öffnen", "Open setup and rollback"]
+    ,["Vollständige Sicherung", "Complete backup"]
+    ,["Batterieabfragen werden von BASSWIESN 1.5.0 nicht mehr aktiv ausgeführt.", "BASSWIESN no longer actively queries battery status as of version 1.5.0."]
+    ,["Testgeräte und Laufzeitprotokolle können getrennt entfernt werden. Sicherungen echter Radios bleiben erhalten.", "Test devices and runtime logs can be removed separately. Backups of real radios are retained."]
+    ,["Batterie-Metadaten werden im regulären Lauf nicht aktiv abgefragt. Anzeigepläne nutzen Sender, Uhr und WLAN nur über explizite Read-back-Pfade.", "Battery metadata is not actively queried during normal operation. Display plans use station, clock and Wi-Fi data only through explicit readback paths."]
+    ,["Datum bei der Uhr berücksichtigen", "Include the date with the clock"]
+    ,["Display-Vorschau", "Display preview"]
+    ,["Radiowerte zuerst lesen", "Read radio values first"]
+    ,["Vorschau aktualisieren", "Refresh preview"]
+    ,[". Die bekannte Originalsequenz gehoert zur SANYO-Profilpruefung. Die Patchsequenz deaktiviert diese enge Herstellerpruefung, damit kompatible Ersatzpacks akzeptiert werden koennen.", ". The known original sequence belongs to the SANYO profile check. The patch sequence disables this narrow manufacturer check so compatible replacement packs can be accepted."]
+    ,["Bestätigung für echte Aktion", "Confirmation for live action"]
+    ,["Manuelle Reparatur fuer SoundTouch Portable, wenn eine kompatible Ersatzbatterie vom Bose BatteryMonitor wegen strenger Profilpruefung nicht akzeptiert wird. BASSWIESN fragt Batteriewerte nicht im Hintergrund ab; dieser Bereich nutzt nur explizite SSH-Pruefung und Patch-Befehle.", "Manual repair for SoundTouch Portable when the Bose BatteryMonitor rejects a compatible replacement battery because of its strict profile check. BASSWIESN does not query battery values in the background; this area uses only explicit SSH checks and patch commands."]
+    ,["Nur für ein bereits eindeutig erkanntes, bestätigtes Geräteprofil. Der normale Setup-Assistent benötigt diese Funktion nicht.", "Only for an already identified and verified device profile. The normal setup wizard does not need this function."]
+    ,["SSH-Persistenz prüfen / anwenden", "Check / apply SSH persistence"]
+    ,["Was der Patch macht:", "What the patch does:"]
+    ,["Nur konfigurierte Wurzelordner; Symlink-Ausbruch und Path Traversal werden blockiert.", "Only configured root folders; symlink escapes and path traversal are blocked."]
+    ,["Cloud, Radio-Aktivität, Fehlergruppen und Empfehlungen verständlich zusammengefasst.", "A clear summary of cloud activity, radio activity, error groups and recommendations."]
+    ,["Maximal die letzten 1000 Einträge. HTTP zeigt Radiozustände, CLI interne Werte und SSH Betriebssystemlogs.", "Up to the last 1000 entries. HTTP shows radio states, CLI shows internal values and SSH shows operating system logs."]
+    ,["Sources, Availability und Runtime-State gemeinsam prüfen.", "Check sources, availability and runtime state together."]
+    ,["Status wird nur auf Klick vom ausgewählten Radio gelesen.", "Status is read from the selected radio only when you click."]
+    ,["Status prüfen", "Check status"]
+    ,["Aktionsaufruf per GET; kann die Netzwerkverbindung trennen und manuelles Aufwecken am Gerät erfordern. Ausdrückliche Bestätigung erforderlich.", "Action-style GET; can drop network and require hardware wake, explicit confirmation required"]
+    ,["Nur Inventar: BASSWIESN 1.6.0 stellt über diesen alten Pfad keinen ausführbaren Werksreset bereit; stillgelegte Wiederherstellungsaktionen antworten mit HTTP 410.", "Inventory only: BASSWIESN 1.6.0 exposes no executable Factory Reset path; retired recovery actions return HTTP 410."]
+    ,["Aktueller Wiedergabezustand", "Live playback state"]
+    ,["Sender nativ über /api/devices/{id}/station/add-native hinzufügen oder starten; kann die Wiedergabe starten", "Native add/play station via /api/devices/{id}/station/add-native; may start playback"]
+    ,["Native Sendersuche über /api/devices/{id}/station/search-native; standardmäßig nur Vorschau", "Native radio search via /api/devices/{id}/station/search-native; Preview only by default"]
+    ,["XML-Planung in den Geräteeinstellungen; Schreiben erst nach modellsicherem Nachweis", "Plan-only XML builder in Device Settings until model-safe write is captured"]
+    ,["Nur lesende Prüfung in den Geräteeinstellungen verfügbar", "Read-only probe available in Device Settings"]
+    ,["Umbenennen mit Stockholm-kompatibler Prüfung", "Rename with Stockholm-safe validation"]
+    ,["Stockholm-HTTP/XWeb-Einstellungskatalog", "Stockholm HTTP/XWeb Settings Catalog"]
+    ,["Geprüftes Erstellen, Rücklesen und Auflösen lokaler Zonen", "Verified local zone creation, readback and clear"]
+    ,["Gerät ·", "device ·"]
+    ,["Wiedergabe ·", "playback ·"]
+    ,["Sender ·", "station ·"]
+    ,["implementiert, nur lesend", "implemented-read-only"]
+    ,["Zeitlimit- und Energiespar-Nutzdaten", "timeout and powersaving payloads"]
+    ,["nur zur Laufzeit", "runtime only"]
+    ,["Sender + Interpret + Titel", "station + artist + track"]
+    ,["Sender + Interpret + Titel + Uhr", "station + artist + track + clock"]
+    ,["Sender + Interpret + Titel + Uhr + WLAN", "station + artist + track + clock + wifi"]
+    ,["Wiederherstellungs- und Diagnosebefehle", "Recovery and diagnostics commands"]
+    ,["LAB-Eintrag wählen", "Select lab item"]
+    ,["/listMediaServers und Laufzeitquellen local_music/stored_music · Nach Prüfung der XML-Aufzeichnungen für NAS-Wiedergabelisten, Hörspiele und lokale Sammlungen geeignet.", "/listMediaServers and local_music/stored_music source runtime · Good fit for NAS playlists, kids stories and local collections after XML captures are validated."]
+    ,["AirPlay/Bluetooth/externer Zuspieler · DRM- oder native kontogebundene Wiedergabe lässt sich nicht als einfacher SoundTouch-Preset nachbilden.", "AirPlay/Bluetooth/external streamer · DRM/native account playback cannot be emulated as a plain SoundTouch preset."]
+    ,["LOCAL_INTERNET_RADIO + lokale BMX/TuneIn-Schnittstelle · Geeigneter Kandidat für das frühere Verhalten. Benötigt Sender-/Provider-Metadaten und modellspezifische Preset-Tests.", "LOCAL_INTERNET_RADIO + local BMX/TuneIn facade · Best candidate for old behavior. Needs station/provider metadata and model tests for presets."]
+    ,["Sammlung speichern", "Save collection"]
+    ,["nur über eine Bridge", "bridge only"]
+    ,["nur über eine Bridge, solange keine Firmware-/Dienst-API nachgewiesen ist", "bridge only unless firmware/service API found"]
+    ,["Natives Spotify-Connect-Modul oder externe Bridge · Firmware-Hinweise sind vorhanden, der native Anmelde-/Dienstablauf ist aber wahrscheinlich cloud- oder lizenzabhängig. Praktische Alternative: eine Bridge zu einer unterstützten lokalen Quelle.", "native Spotify Connect module or external bridge · Firmware references exist, but native auth/service flow is likely cloud/licence dependent. Practical fallback is bridge to a supported local source."]
+    ,["SSH-Protokolle nur lesen", "SSH read-only logs"]
+    ,["Manuelle Ausführung erfordert ein geprüftes Firmwareprofil und die Bestätigung BASSWIESN TELNET REBOOT.", "Manual execution requires a validated firmware profile and the BASSWIESN TELNET REBOOT confirmation phrase."]
+    ,["Zeigt Cloud-/Marge-/BMX-Routing, sofern verfügbar.", "Shows cloud/marge/BMX routing when available."]
+    ,["nur lesend", "read-only"]
+  ];
+  const releasePhraseIndex = {};
+  for (const [index, pair] of bilingualPairs.entries()) {
+    const key = `release_251_phrase_${index}`;
+    catalogs.de[key] = pair[0];
+    catalogs.en[key] = pair[1];
+    for (const lang of Object.keys(catalogs)) catalogs[lang][key] = catalogs[lang][key] || pair[1];
+    releasePhraseIndex[normalizePhrase(pair[0])] = key;
+    releasePhraseIndex[normalizePhrase(pair[1])] = key;
+    keys.push(key);
+  }
+  const phraseIndex = {};
+  function normalizePhrase(value) { return String(value || "").replace(/\s+/g, " ").trim().toLowerCase(); }
+  const sourceAliases = {
+    "Refresh": "refresh", "Reload": "reload", "Aktualisieren": "refresh", "Neu laden": "reload",
+    "basswiesn Settings": "settings", "WebGUI defaults": "webgui_defaults", "Enable Lab Mode": "enable_lab_mode",
+    "Guided hints": "guided_hints", "Safe Startup Volume": "safe_startup_volume", "Show startup warning": "show_startup_warning",
+    "IP Write Guard": "ip_write_guard", "Default timezone": "default_timezone", "Default device language": "default_device_language",
+    "Einstellungen speichern": "save_settings", "Notes": "notes", "Device Settings": "device_settings", "Telemetry": "diagnostics",
+    "Config": "config_title", "Protokoll": "protocol_title", "Backup": "backup_title", "Musikbibliothek": "music_library",
+    "manuell": "manual_only", "manual only": "manual_only", "Configured radios": "configured_radios", "Add radio": "add_radio",
+    "Current Slots": "current_slots", "Last Result": "last_result", "No preset written in this session.": "no_preset_written",
+    "Online-Sendersuche": "online_station_search", "Suchen": "search", "Presets kopieren": "copy_presets", "Alle Slots kopieren": "copy_all_slots",
+    "Gemeinsam hören": "common_listening", "Hauptradio": "master_radio", "Weitere Räume": "additional_rooms", "Multiroom starten": "start_multiroom",
+    "Alle Gruppen auflösen": "clear_groups", "Ausgewählte Gruppe auflösen": "clear_groups", "Aktueller Zustand": "current_state", "Status lesen": "read_status",
+    "Gerät per Telnet neu starten": "telnet_reboot", "Fähigkeit prüfen": "check_capability", "Standby-Uhr neu aktivieren": "standby_clock_restore",
+    "Jobstatus": "job_status", "Aufräumen": "cleanup", "Protokolle leeren": "clear_logs", "Testgeräte entfernen": "remove_test_devices",
+    "Patch anwenden": "patch_apply", "Rollback": "rollback", "Plan anzeigen": "show_plan"
+  };
+  for (const [source, key] of Object.entries(sourceAliases)) phraseIndex[normalizePhrase(source)] = key;
+  for (const [lang, catalog] of Object.entries(catalogs)) {
+    for (const [key, value] of Object.entries(catalog)) {
+      if (typeof value === "string" && value.trim()) phraseIndex[normalizePhrase(value)] = key;
+    }
+  }
+  // Runtime cards combine persisted/API evidence with labels, so exact
+  // phrase lookup alone cannot localize them. Keep the replacements narrow:
+  // protocol tokens (PLAYBACK_FAILED, LOCAL_INTERNET_RADIO, endpoint names)
+  // and user-controlled station/device names are deliberately untouched.
+  const dynamicPairs = [
+    ["Ausführung nur über das Telnet-Reboot-Formular.", "Execution only through the Telnet reboot form."],
+    ["Manuelle Ausführung erfordert ein geprüftes Firmwareprofil und die Bestätigung BASSWIESN TELNET REBOOT.", "Manual execution requires a validated firmware profile and the BASSWIESN TELNET REBOOT confirmation phrase."],
+    ["Identität", "Identity"],
+    ["Serverziel", "Server target"],
+    ["Abschluss", "Complete"],
+    ["Bereit", "Ready"],
+    ["Wiedergabe gesperrt", "playback blocked"],
+    ["Wiedergabe gesperrt. Bitte zuerst die Audio-Sicherheitsprüfung im Setup ausführen.", "Playback is locked. Run the audio safety check in Setup before trying again."],
+    ["Lautstärkegrenze", "volume limit"],
+    ["letzte Quelle:", "last source:"],
+    ["Backend vorhanden, UI unvollständig", "Backend available, UI incomplete"],
+    ["Secretquelle fehlt", "secret source missing"],
+    ["Host Redirect unbekannt / noch nicht geprüft", "Host Redirect unknown / not checked yet"],
+    ["Persistent SSH unbekannt / noch nicht geprüft", "Persistent SSH unknown / not checked yet"],
+    ["SSH noch nicht geprüft", "SSH not checked yet"],
+    ["remote_services unbekannt / noch nicht geprüft", "remote_services unknown / not checked yet"],
+    ["Readback vorhanden", "Readback available"],
+    ["Readback fehlt", "Readback missing"],
+    ["Letzter Sync:", "Last sync:"],
+    ["Quelle:", "Source:"],
+    ["Vorschau und Details", "Preview and details"],
+    ["Zuerst Vorschau öffnen", "Open the preview first"],
+    ["Nicht im Radio gespeichert", "Not stored on the radio"],
+    ["BASSWIESN-Server erforderlich", "BASSWIESN server required"],
+    ["manuelle WebUI-Aktivierung", "manual Web UI activation"],
+    ["Eine gespeicherte Tasten-Zuordnung löst derzeit nichts automatisch aus.", "A saved button assignment does not currently trigger anything automatically."],
+    ["Hauptradio", "main radio"],
+    ["Räume", "rooms"],
+    ["mit Lautstärkelogik", "with volume handling"],
+    ["Das Radio meldet laufende Wiedergabe.", "The radio reports active playback."],
+    ["Der Wiedergabestatus ist noch nicht durch das Radio belegt.", "The playback state has not yet been confirmed by the radio."],
+    ["Statusberichte sind gestört; die Wiedergabe wird nicht unterbrochen.", "Reporting is degraded; playback is not interrupted."],
+    ["Unbekannt / noch nicht geprüft", "Unknown / not checked yet"],
+    ["unbekannt", "unknown"],
+    ["Radio ließ Mute während der Quellenauswahl aktiviert", "radio left mute state during source select"],
+    ["BASSWIESN-Senderzuordnung ist vorhanden", "BASSWIESN station mapping exists"],
+    ["Wiedergabe über die physische Presettaste erfordert einen manuellen Schritt", "physical preset-button playback requires a manual step"],
+    ["gespeicherter Radio-Snapshot wird verwendet", "using persisted radio snapshot"],
+    ["gespeicherte Erreichbarkeitsmeldungen; keine aktuelle Geräteprüfung", "cached reachable flags; no fresh device verification"],
+    ["Verzeichnisrechte geprüft; kein Schreibtest ausgeführt", "Directory permissions inspected; no write probe performed"],
+    ["Zertifikat- und Schlüsseldateien vorhanden; TLS nicht geprüft", "Certificate/key files present; TLS not probed"],
+    ["Konfigurierte Zertifikat- oder Schlüsseldatei fehlt", "Configured certificate/key missing"],
+    ["optionales HTTPS deaktiviert", "optional HTTPS disabled"],
+    ["Prüfer ausdrücklich aktualisieren, um den Stream zu testen", "run an explicit checker refresh to test the stream"],
+    ["Provider-Verfügbarkeit wurde nicht beobachtet", "provider availability was not observed"],
+    ["Live-Metadatenfelder wurden aktualisiert, ohne die Wiedergabe zu ändern.", "Live metadata fields updated without changing playback."],
+    ["Provider-Bericht angenommen; der Wiedergabezustand wurde nicht geändert.", "Provider report accepted; playback state was not changed."],
+    ["Senderzuordnung ist vorhanden", "station mapping exists"],
+    ["Radio auswählen", "Select a radio"],
+    ["Kein Radio", "No radio"],
+  ];
+  let current = "en";
+  function setLanguage(language) { current = catalogs[language] ? language : "en"; if (!catalogs[language]) console.warn(`[i18n] Unsupported language ${language}; using English`); }
+  function t(key) { const value = catalogs[current]?.[key]; if (value) return value; console.warn(`[i18n] Missing ${current}.${key}; using English`); return catalogs.en[key] || key; }
+  function phrase(value) {
+    const trimmed = String(value || "").trim();
+    const normalized = normalizePhrase(trimmed);
+    const key = releasePhraseIndex[normalized] || phraseIndex[normalized];
+    return key ? t(key) : value;
+  }
+  function dynamic(value) {
+    const original = String(value ?? "");
+    const exact = phrase(original);
+    if (exact !== original) return exact;
+    const targetGerman = current === "de";
+    let result = original;
+    for (const [german, english] of dynamicPairs) {
+      const source = targetGerman ? english : german;
+      const target = targetGerman ? german : english;
+      if (source && result.includes(source)) result = result.split(source).join(target);
+    }
+    return result;
+  }
+  window.BasswiesnI18n = { catalogs, keys, setLanguage, t, phrase, dynamic, languages: Object.keys(catalogs) };
+}());

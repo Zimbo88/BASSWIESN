@@ -1,0 +1,27 @@
+{
+  "fixture_schema": "basswiesn-phase12-synthetic-fixture-v1",
+  "synthetic": true,
+  "contains_proprietary_dump": false,
+  "purpose": "Station response with explicit disabled inactivity timer",
+  "input": {
+    "streamType": "live",
+    "name": "Synthetic Station",
+    "audio": {
+      "streams": [
+        {
+          "streamUrl": "https://example.invalid/live",
+          "connectingTimeout": 20,
+          "bufferingTimeout": 30
+        }
+      ]
+    },
+    "restrictions": {
+      "inactivityTimeout": 0
+    }
+  },
+  "expected": {
+    "timer_enabled": false,
+    "inactivity_timeout_s": 0,
+    "playback_rejected": false
+  }
+}

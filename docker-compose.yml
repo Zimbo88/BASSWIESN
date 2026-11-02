@@ -1,0 +1,76 @@
+services:
+  basswiesn:
+    build: .
+    env_file:
+      - .env
+    # Production defaults to the image's non-root 10001:10001.  A local
+    # developer can override these two values when the host cannot chgrp the
+    # bind-mounted data directory (for example in rootless Docker).
+    user: "${BASSWIESN_RUNTIME_USER:-basswiesn}"
+    ports:
+      - "1328:1328"
+      - "1329:1329"
+      - "1516:1516"
+      - "1860:1860"
+    volumes:
+      - ./data:/app/data
+      - ./data/secrets/setup-rebuild:/app/secrets/setup-rebuild:ro
+      # Disabled by default. Administrator onboarding sets the fixed host socket
+      # directory; never mount docker.sock or the helper's private credentials.
+      - type: bind
+        source: ${BASSWIESN_UPDATE_CONTROL_DIR:-./data/update-disabled}
+        target: /run/basswiesn-update
+        read_only: true
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "tools/run_dev.py", "--healthcheck"]
+      interval: 30s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+  # Preview only. Existing data volumes must be owned by the image UID/GID
+  # (10001:10001) before enabling this profile. Local administrator bootstrap
+  # explicit HTTPS origins and explicit device peers are required (docs/ADMIN_AUTH.md).
+  # Device-body identity binding and real deployment acceptance are still pending:
+  # NOT a production certification. Scoped tokens are a limited reviewed subset.
+  basswiesn-hardened-preview:
+    profiles: ["hardened-lan-preview"]
+    build: .
+    env_file:
+      - .env
+    environment:
+      BASSWIESN_ADMIN_AUTH_MODE: required
+      BASSWIESN_ENABLE_HTTPS: "true"
+      BASSWIESN_ADMIN_ALLOW_HTTP: "false"
+    user: "${BASSWIESN_RUNTIME_USER:-basswiesn}"
+    ports:
+      - "1328:1328"
+      - "1329:1329"
+      - "1516:1516"
+    volumes:
+      - ./data:/app/data
+      - ./data/secrets/setup-rebuild:/app/secrets/setup-rebuild:ro
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "python", "tools/run_dev.py", "--healthcheck"]
+      interval: 30s
+      timeout: 8s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped

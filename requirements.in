@@ -1,0 +1,11 @@
+# Direct runtime dependencies. Release installs use requirements.lock, not this file.
+fastapi>=0.111
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+httpx>=0.27
+pydantic>=2.7
+jinja2>=3.1
+defusedxml>=0.7
+python-multipart>=0.0.20
+qrcode==8.2
+argon2-cffi>=25.1.0

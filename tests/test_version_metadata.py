@@ -1,0 +1,101 @@
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from basswiesn import __version__
+from basswiesn.app.config import get_settings
+from basswiesn.app.main import create_web_app
+from basswiesn.app.core.frontend_assets import asset_digest, static_revision
+
+
+def test_app_version_is_exposed_consistently():
+    assert __version__ == "5.0.0"
+    assert get_settings().version == __version__
+
+    with TestClient(create_web_app()) as client:
+        dashboard = client.get("/").text
+        remote = client.get("/remote/abc123").text
+        health = client.get("/api/health").json()
+        settings = client.get("/api/system/settings").json()
+
+    assert 'data-version=' not in dashboard
+    assert "Version wird geladen · Host nicht gesetzt" in dashboard
+    # The rewritten standalone remote is served no-cache and receives the
+    # same package version as its cache-busted script, not an old fallback.
+    assert f'data-version="{__version__}"' in remote
+    assert '<span id="remote-version">BASSWIESN Remote</span>' in remote
+    assert f"/static/app.css?v={__version__}" in dashboard
+    assert f"/static/app.js?v={__version__}" in dashboard
+    assert f"/static/remote.js?v={__version__}" in remote
+    assert health["version"] == __version__
+    assert health["ok"] is True
+    assert settings["version"] == __version__
+
+
+def test_preserved_env_cannot_override_the_running_release_version(monkeypatch):
+    monkeypatch.setenv("BASSWIESN_VERSION", "1.6.0")
+    get_settings.cache_clear()
+    try:
+        assert get_settings().version == __version__
+    finally:
+        get_settings.cache_clear()
+
+
+def test_version_and_html_cache_policies_are_upgrade_safe():
+    with TestClient(create_web_app()) as client:
+        dashboard = client.get("/")
+        health = client.get("/api/health")
+        static = client.get(f"/static/app.js?v={__version__}")
+        bound = client.get(f"/static/app.js?v={__version__}&asset={static_revision()}")
+        module = client.get("/static/js/device-settings.js")
+
+    assert dashboard.headers["cache-control"] == "no-cache"
+    assert health.headers["cache-control"] == "no-store"
+    assert static.headers["cache-control"] == "no-cache"
+    assert module.headers["cache-control"] == "no-cache"
+    assert bound.headers["cache-control"] == "public, max-age=31536000, immutable"
+    assert f"&amp;asset={static_revision()}" in dashboard.text
+    assert 'viewport-fit=cover' in dashboard.text
+
+
+def test_private_frontend_change_changes_cache_identity_without_version_bump(tmp_path):
+    script = tmp_path / "app.js"
+    script.write_text("const version = 1;")
+    first = asset_digest(tmp_path)
+    assert first == asset_digest(tmp_path)
+    script.write_text("const version = 2;")
+    assert first != asset_digest(tmp_path)
+    script.rename(tmp_path / "settings.js")
+    assert first != asset_digest(tmp_path)
+
+
+def test_release_manifest_includes_single_source_version():
+    script = Path("tools/package_release.sh").read_text(encoding="utf-8")
+    assert "from basswiesn import __version__" in script
+    assert '"version": __version__' in script
+    assert 'f"# release-context {__version__}' in script
+
+
+def test_source_installers_cannot_reuse_a_stale_application_layer():
+    script = Path("install.sh").read_text(encoding="utf-8")
+    assert "DOCKER_BUILDKIT=0 docker compose build --pull --no-cache" in script
+    assert "docker compose up -d --force-recreate" in script
+    compatibility = Path("tools/install_release.sh").read_text(encoding="utf-8")
+    assert 'exec /bin/bash "$ROOT_DIR/install.sh" "$@"' in compatibility
+    assert "docker compose" not in compatibility
+
+
+def test_no_stale_v101_fallback_in_active_user_facing_sources():
+    stale_release = ".".join(["1", "0", "1"])
+    paths = [
+        Path("basswiesn/app/main.py"),
+        Path("basswiesn/app/config.py"),
+        Path("basswiesn/app/static/app.js"),
+        Path("basswiesn/app/static/remote.js"),
+        Path("basswiesn/app/routers/cloud.py"),
+        Path("basswiesn/app/routers/debug.py"),
+    ]
+    stale = {str(path): path.read_text(encoding="utf-8").count(stale_release) for path in paths}
+    assert stale == {str(path): 0 for path in paths}
+import pytest as _pytest_marker
+pytestmark = [_pytest_marker.mark.integration, _pytest_marker.mark.release]

@@ -1,0 +1,22 @@
+{
+  "fixture_schema": "basswiesn-phase12-synthetic-fixture-v1",
+  "synthetic": true,
+  "contains_proprietary_dump": false,
+  "purpose": "Successful POST and server-driven next schedule",
+  "input": {
+    "request": {
+      "timeStamp": "2030-01-01T00:00:00",
+      "eventType": "timed",
+      "timeIntoTrack": 120
+    },
+    "http_status": 200,
+    "response": {
+      "nextReportIn": 300
+    }
+  },
+  "expected": {
+    "state": "SUCCESS",
+    "queue_delta": -1,
+    "next_due_in_s": 300
+  }
+}

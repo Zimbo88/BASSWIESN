@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BASSWIESN · Automation access</title>
+<link rel="stylesheet" href="/static/admin-tokens.css">
+<script src="/static/js/admin-client.js" defer></script>
+<script src="/static/js/admin-tokens.js" defer></script>
+</head><body><main>
+<a href="/" data-text="back">Back to BASSWIESN</a>
+<h1 data-text="title">Automation access</h1>
+<p data-text="intro">Engineering preview. Access applies only to reviewed routes; device safety checks still apply. No token grants updater or token-management access.</p>
+<p id="token-status" role="status" aria-live="polite"></p>
+<section id="new-secret" hidden aria-labelledby="secret-heading">
+<h2 id="secret-heading" data-text="newSecret">Save this credential now</h2>
+<p data-text="secretHelp">Shown once. Store it in your automation client's private credential store. Do not put it in logs, screenshots or URLs. It will be cleared when you leave this page.</p>
+<label for="token-secret" data-text="credential">Credential</label>
+<textarea id="token-secret" readonly spellcheck="false" autocomplete="off" rows="3"></textarea>
+<button type="button" id="clear-secret" data-text="clear">I saved it — clear</button>
+</section>
+<form id="token-create" autocomplete="off">
+<h2 data-text="createTitle">Create a bounded token</h2>
+<label for="token-name" data-text="name">Name (letters A–Z, digits, spaces, . _ -)</label>
+<input id="token-name" maxlength="64" pattern="[A-Za-z0-9][A-Za-z0-9 ._\-]{0,63}" required>
+<label for="token-days" data-text="days">Lifetime in days (1–90)</label>
+<input id="token-days" type="number" min="1" max="90" value="1" required>
+<fieldset><legend data-text="scopes">Explicit permissions — no scope implies another</legend>
+<label><input type="checkbox" name="scope" value="read" checked><span data-text="scopeRead">Read: cached device and local health information</span></label>
+<label><input type="checkbox" name="scope" value="presets"><span data-text="scopePresets">Presets: read stored slots only, no writes</span></label>
+<label><input type="checkbox" name="scope" value="multiroom"><span data-text="scopeMultiroom">Multiroom: read stored scenarios only, no group changes</span></label>
+<label><input type="checkbox" name="scope" value="diagnostics"><span data-text="scopeDiagnostics">Diagnostics: read aggregate observations</span></label>
+<label><input type="checkbox" name="scope" value="playback"><span data-text="scopePlayback">Playback: verified volume changes only</span></label>
+<label><input type="checkbox" name="scope" value="admin"><span data-text="scopeAdmin">Admin: verified rename and settings changes only</span></label>
+</fieldset>
+<button id="token-submit" type="submit" data-text="create">Create token</button>
+</form>
+<section aria-labelledby="existing-heading"><h2 id="existing-heading" data-text="existing">Existing grants</h2>
+<p data-text="lastUseHelp">Last use means an authorized request, not a successful device change. Rotation keeps the same permissions and expiry; revocation cannot be undone.</p>
+<button id="token-refresh" type="button" data-text="refresh">Refresh grants</button>
+<div id="token-list"></div></section>
+</main></body></html>

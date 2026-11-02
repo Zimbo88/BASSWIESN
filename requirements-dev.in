@@ -1,0 +1,14 @@
+# Tool/test environment must use exactly the runtime versions from the release.
+-r requirements.in
+-c requirements.lock
+pytest>=8.2
+# Match the verified local runner; these packages never enter runtime images.
+pytest-xdist==3.8.0
+execnet==2.1.1
+playwright>=1.60
+pytest-cov>=6
+ruff>=0.12
+mypy>=1.16
+hypothesis>=6
+pip-audit>=2.9
+uv==0.13.4

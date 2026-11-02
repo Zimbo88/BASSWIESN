@@ -1,0 +1,192 @@
+name: Software quality (no hardware)
+on:
+  pull_request:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: software-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: '1'
+
+
+jobs:
+  fast:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12', '3.14']
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: ${{ matrix.python }}
+      - run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
+      - run: python -m compileall -q basswiesn tests tools
+      - name: Offline receiver-observer C harness prerequisites
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential libssl-dev
+      - run: git diff --check
+      - run: ruff check .
+      - run: mypy
+      - run: python tools/check_version.py
+      - run: python tools/check_dependency_lock.py
+      - name: Lock regeneration must be unchanged
+        run: |
+          bash tools/lock_dependencies.sh
+          git diff --exit-code -- requirements.lock requirements-dev.lock dependency-lock.json
+      - run: bash tools/ci_offline.sh make test-fast PYTEST_ADDOPTS="-n 4 --dist=loadfile"
+
+  integration:
+    runs-on: ubuntu-24.04
+    # Includes integration, mutation controls and the complete branch-coverage
+    # suite. The October acceptance run alone exceeded the old 25-minute cap.
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.14'
+      - run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
+      - run: bash tools/ci_offline.sh make test-integration PYTEST_ADDOPTS="-n 4 --dist=loadfile"
+      - name: Offline receiver-observer C harness prerequisites
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential libssl-dev
+      - run: bash tools/ci_offline.sh make test-mutations
+      - name: Measured non-browser coverage
+        run: bash tools/ci_offline.sh python -m pytest -n 4 --dist=loadfile -m 'not hardware and not browser' --cov=basswiesn --cov-branch --cov-report=json:coverage.json --cov-report=xml:coverage.xml -q
+      - run: python tools/check_coverage.py coverage.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: coverage
+          path: |
+            coverage.json
+            coverage.xml
+          retention-days: 7
+
+  browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
+      - run: python -m playwright install --with-deps chromium webkit
+      - run: make check-js
+      - run: node tools/audit_languages.js --check
+      - run: bash tools/ci_offline.sh make test-ui PYTEST_ADDOPTS="-n 4 --dist=loadfile"
+
+  arm64-runtime:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Native ARM64 runtime (not a physical Raspberry Pi)
+        run: |
+          test "$(uname -m)" = aarch64
+          docker build --tag basswiesn:ci-arm64 .
+          test "$(docker image inspect --format '{{.Architecture}}' basswiesn:ci-arm64)" = arm64
+          bash tools/test_container_offline.sh basswiesn:ci-arm64 legacy
+          bash tools/test_container_offline.sh basswiesn:ci-arm64 required
+          bash tools/test_container_offline.sh basswiesn:ci-arm64 required validation
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --tmpfs /tmp:rw,noexec,nosuid,size=128m \
+            --entrypoint python basswiesn:ci-arm64 tools/probe_migrations.py
+
+  release-tests:
+    runs-on: ubuntu-24.04
+    # Keep test-release and the mandatory packaging gate. Paired staging proves
+    # reproducibility without a third identical execution of the whole suite.
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.lock
+      - run: python -m playwright install --with-deps chromium webkit
+      - name: Offline receiver-observer C harness prerequisites
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential libssl-dev
+      - run: bash tools/ci_offline.sh make test-release PYTEST_ADDOPTS="-n 4 --dist=loadfile"
+      - name: Two independently staged release archives (no publication)
+        env:
+          SOURCE_DATE_EPOCH: '0'
+        run: |
+          bash tools/ci_offline.sh env SOURCE_DATE_EPOCH=0 PYTEST_ADDOPTS="-n 4 --dist=loadfile" bash tools/package_release.sh --output-dir "$RUNNER_TEMP/build-one" --repro-output-dir "$RUNNER_TEMP/build-two"
+          cmp "$RUNNER_TEMP/build-one/basswiesn-docker-release.tar.gz" "$RUNNER_TEMP/build-two/basswiesn-docker-release.tar.gz"
+      - name: Clean runtime-only install
+        run: |
+          python -m venv "$RUNNER_TEMP/runtime"
+          "$RUNNER_TEMP/runtime/bin/python" -m pip install --require-hashes --only-binary=:all: -r requirements.txt
+          "$RUNNER_TEMP/runtime/bin/python" -m pip check
+          "$RUNNER_TEMP/runtime/bin/python" -c 'from basswiesn.app.main import create_web_app; assert create_web_app(background_tasks=False)'
+      - run: docker build --tag basswiesn:ci .
+      - name: Container hardening and isolated startup
+        run: |
+          bash tools/test_container_offline.sh basswiesn:ci legacy
+          bash tools/test_container_offline.sh basswiesn:ci required
+          bash tools/test_container_offline.sh basswiesn:ci required validation
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges:true --tmpfs /tmp:rw,noexec,nosuid,size=128m \
+            --entrypoint python basswiesn:ci tools/probe_migrations.py
+      - name: Runtime dependency SBOM
+        run: pip-audit -r requirements.lock --require-hashes --disable-pip --format cyclonedx-json --output "$RUNNER_TEMP/runtime-sbom.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: software-verification-not-hardware-approval
+          path: |
+            ${{ runner.temp }}/runtime-sbom.json
+            ${{ runner.temp }}/build-one/SHA256SUMS
+          retention-days: 7
+
+  release-verification:
+    # Independent jobs run concurrently. This final gate still requires every
+    # result, including skipped/cancelled failures, before release acceptance.
+    needs: [fast, integration, browser, arm64-runtime, release-tests]
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every software and native-runtime gate
+        env:
+          GATE_RESULTS: ${{ toJSON(needs) }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          results = json.loads(os.environ['GATE_RESULTS'])
+          required = {'fast', 'integration', 'browser', 'arm64-runtime', 'release-tests'}
+          assert set(results) == required, 'Missing required release gate'
+          failed = {name: value['result'] for name, value in results.items() if value['result'] != 'success'}
+          assert not failed, f'Release verification failed: {failed}'
+          print('PASS: all software and native-runtime gates; hardware approval remains separate')
+          PY

@@ -1,0 +1,33 @@
+# Opt-in LAB build. Not the production image or the already accepted pilot.
+# Complete source archive pinned independently of the existing runtime image.
+ARG PILOT_IMAGE=basswiesn-ap2:private-20261013
+FROM mikebrady/shairport-sync@sha256:bed60f067bd328034ee772a597f2d2ff9f1d4d2fe95c84b8e10ff86208fa9046 AS builder
+RUN apk add --no-cache build-base autoconf automake libtool pkgconf \
+    openssl-dev libconfig-dev popt-dev avahi-dev libsodium-dev libplist-dev \
+    libgcrypt-dev ffmpeg-dev soxr-dev python3 libplist-util xxd
+ADD --checksum=sha256:eab1fa095e34676d05f68e38d86501d5afa3fc46f83f044859d4d125d526daec \
+    https://codeload.github.com/mikebrady/shairport-sync/tar.gz/7bad231c18368dbd26f298577f6210e36e4b0797 /source.tar.gz
+RUN mkdir /source && tar -xzf /source.tar.gz -C /source --strip-components=1
+COPY modules/airplay-bridge/native/ /observer/
+WORKDIR /source
+RUN echo 'c89fbc553e283dc8777d94785170732342f919284309f7ff46df721178cfced6  rtsp.c' | sha256sum -c - && \
+    patch --fuzz=0 -p1 < /observer/shairport-group-observer.patch && \
+    cp /observer/group_observer.h basswiesn_group_observer.h && \
+    autoreconf -fi && mkdir build
+WORKDIR /source/build
+# Link and run against the same Alpine FFmpeg set, never the upstream lite set.
+RUN PKG_CONFIG_LIBDIR=/usr/lib/pkgconfig LD_LIBRARY_PATH=/usr/lib ../configure \
+    --sysconfdir=/etc --with-avahi --with-ssl=openssl --with-airplay-2 \
+    --with-metadata --with-pipe --with-dummy --with-soxr && make -j4
+RUN LD_LIBRARY_PATH=/usr/lib ./shairport-sync -V && \
+    python3 -c 'import hashlib,json,pathlib; p=pathlib.Path("shairport-sync"); pathlib.Path("observer-build.json").write_text(json.dumps({"version":1,"contract":"basswiesn-group-v1","source_commit":"7bad231c18368dbd26f298577f6210e36e4b0797","source_tag":"5.5.2","binary_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"header_sha256":hashlib.sha256(pathlib.Path("/observer/group_observer.h").read_bytes()).hexdigest(),"patch_sha256":hashlib.sha256(pathlib.Path("/observer/shairport-group-observer.patch").read_bytes()).hexdigest()}))'
+# Keep the full source and individual notices available in the build stage for
+# redistribution/source-review. No source or build tool is added to the runtime.
+FROM ${PILOT_IMAGE}
+COPY --from=builder /source/build/shairport-sync /opt/basswiesn-ap2/shairport-sync-observed
+COPY --from=builder /source/build/observer-build.json /opt/basswiesn-ap2/observer-build.json
+COPY --from=builder /observer/SHAIRPORT-NOTICE /usr/local/share/doc/basswiesn-ap2/SHAIRPORT-NOTICE
+COPY modules/airplay-bridge/receiver_probe.py modules/airplay-bridge/network_contract.py modules/airplay-bridge/radio_output.py modules/airplay-bridge/receiver_ipc.py /opt/basswiesn-ap2/
+COPY basswiesn/app/services/airplay_bridge/native_group.py basswiesn/app/services/airplay_bridge/control_lease.py basswiesn/app/services/airplay_bridge/http_relay.py basswiesn/app/services/airplay_bridge/private_ipc.py /opt/basswiesn-ap2/airplay_core/
+COPY basswiesn/app/services/airplay_bridge/relay_runtime.py basswiesn/app/services/airplay_bridge/control_owner.py /opt/basswiesn-ap2/airplay_core/
+USER avahi

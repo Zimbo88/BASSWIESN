@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BASSWIESN · Bootscreen offline</title>
+  <link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/review.css">
+  <script type="module" src="/boot.mjs"></script>
+</head>
+<body>
+<header>
+  <div class="eyebrow">BASSWIESN / DISPLAY LAB / OFFLINE</div>
+  <h1>Ein klarer Start.</h1>
+  <p>BASSWIESN oberhalb des bestehenden Statusfelds — die Fortschrittsanzeige bleibt erhalten.</p>
+  <div class="boundary"><strong>Lokaler Entwurf, kein installierter Radiopatch.</strong>
+    Der Balken beschreibt den Radio-Start, nicht die Erreichbarkeit des BASSWIESN-Servers.
+    Kein automatischer Fortschritt, kein Timer, keine Geräteverbindung.</div>
+  <p><a href="/review">Wiedergabe und Standby-Uhr</a> · <a href="/">Freies Displaymodell</a></p>
+</header>
+<main class="review-main">
+  <section class="panel">
+    <h2>Bootstatus vergleichen</h2>
+    <label for="progress">Simulierter Init-Fortschrittswert</label>
+    <input id="progress" type="range" min="0" max="100" value="50">
+    <output id="progress-value" for="progress">50</output>
+    <label for="progress-kind">Statuspfad</label>
+    <select id="progress-kind"><option value="normal">PROGRESS · Init-Skript</option>
+      <option value="full">PROGRESS_100 · zusätzlicher Firmwarepfad</option></select>
+    <p id="boot-status" role="status" aria-live="polite"></p>
+    <p class="hint">Die Firmware skaliert diese Werte intern. Ein Eingabewert von 50 bedeutet daher nicht
+      50 % Balkenfüllung. Der zusätzliche Pfad ist statisch belegt; sein Aufrufer bleibt offen.</p>
+  </section>
+  <div class="review-cards boot-cards">
+    <section class="panel">
+      <h2>Bestehendes Statusfeld</h2>
+      <div class="bezel"><canvas id="boot-original" width="128" height="100" role="img" aria-label="Modell des nativen Boot-Statusfelds"></canvas></div>
+      <p>Der originale Schreibpfad zeichnet ein vollständiges 128 × 100-Graustufenbild.
+        Die dargestellte Geometrie ist aus diesem Pfad abgeleitet, kein Live-Screenshot.</p>
+    </section>
+    <section class="panel recommended">
+      <h2>BASSWIESN + Statusfeld</h2>
+      <div class="bezel"><canvas id="boot-proposed" width="128" height="100" role="img" aria-label="BASSWIESN-Schriftzug oberhalb des unveränderten Statusfelds"></canvas></div>
+      <p>Eigener geometrischer, leicht geneigter Schriftzug; keine kopierte Hersteller-Grafik.
+        Alle Pixel außerhalb des Schriftzugs bleiben unverändert.</p>
+    </section>
+  </div>
+  <section class="panel">
+    <h2>Was dieser Entwurf noch nicht beweist</h2>
+    <p>Die Linux-Startanzeige ist nicht automatisch identisch mit einem früheren Bootloader-Bild.
+      Displaytreiber, frühe Startreihenfolge und Übergabe an BoseApp sind noch separat abzusichern.
+      Eine Installation oder ein Neustart wird hier nicht angeboten.</p>
+  </section>
+</main>
+<footer>Nur Bildschirmdaten im Browser · keine Änderung an Firmware oder Geräten.</footer>
+</body>
+</html>

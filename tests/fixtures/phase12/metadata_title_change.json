@@ -1,0 +1,25 @@
+{
+  "fixture_schema": "basswiesn-phase12-synthetic-fixture-v1",
+  "synthetic": true,
+  "contains_proprietary_dump": false,
+  "purpose": "Pure metadata change without source reselection",
+  "input": {
+    "before": {
+      "track": "Synthetic Track A",
+      "artist": "Synthetic Artist"
+    },
+    "after": {
+      "track": "Synthetic Track B",
+      "artist": "Synthetic Artist",
+      "askAgainAfter": 60
+    }
+  },
+  "expected": {
+    "changed": [
+      "track"
+    ],
+    "set_url_calls": 0,
+    "source_select_calls": 0,
+    "next_due_in_s": 60
+  }
+}

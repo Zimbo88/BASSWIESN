@@ -1,0 +1,25 @@
+{
+  "fixture_schema": "basswiesn-phase12-synthetic-fixture-v1",
+  "synthetic": true,
+  "contains_proprietary_dump": false,
+  "purpose": "Server-supplied six-hour restriction; never a local default",
+  "input": {
+    "streamType": "live",
+    "name": "Synthetic Timed Station",
+    "audio": {
+      "streams": [
+        {
+          "streamUrl": "https://example.invalid/timed"
+        }
+      ]
+    },
+    "restrictions": {
+      "inactivityTimeout": 21600
+    }
+  },
+  "expected": {
+    "timer_enabled": true,
+    "inactivity_timeout_s": 21600,
+    "origin": "SERVER_RESPONSE"
+  }
+}

@@ -1,0 +1,69 @@
+diff --git a/rtsp.c b/rtsp.c
+index 60a9929c..a8dc54cd 100644
+--- a/rtsp.c
++++ b/rtsp.c
+@@ -75,6 +75,7 @@
+ #include "player.h"
+ #include "rtp.h"
+ #include "rtsp.h"
++#include "basswiesn_group_observer.h"
+ 
+ #ifdef CONFIG_METADATA
+ #include "metadata/core.h"
+@@ -283,6 +284,7 @@ void stop_play() {
+   pthread_rwlock_wrlock(&principal_conn_lock);
+   if (principal_conn != NULL) {
+     debug(1, "Connection %d: stop and close this connection.", principal_conn->connection_number);
++    bw_group_clear(principal_conn->connection_number);
+     terminate_conn(principal_conn->connection_number);
+ #ifdef CONFIG_AIRPLAY_2
+     config.airplay_statusflags &= (0xffffffff - (1 << 11)); // DeviceSupportsRelay
+@@ -306,6 +308,7 @@ void release_play_lock(rtsp_conn_info *conn) {
+   pthread_rwlock_wrlock(&principal_conn_lock);
+   if ((principal_conn == conn) || (conn == NULL)) { // if we have the player
+     if (principal_conn != NULL) {
++      bw_group_clear(principal_conn->connection_number);
+ #ifdef CONFIG_AIRPLAY_2
+       config.airplay_statusflags &= (0xffffffff - (1 << 11)); // DeviceSupportsRelay
+       if (principal_conn->airplay_gid) {
+@@ -368,6 +371,7 @@ play_lock_r get_play_lock(rtsp_conn_info *conn, int allow_session_interruption)
+     } else if (principal_conn == NULL) {
+       // already unlocked, and principal conn not NULL
+       principal_conn = conn;
++      bw_group_acquire(conn->connection_number);
+ #ifdef CONFIG_AIRPLAY_2
+       config.airplay_statusflags |= (1 << 11); // DeviceSupportsRelay
+ #endif
+@@ -394,6 +398,7 @@ play_lock_r get_play_lock(rtsp_conn_info *conn, int allow_session_interruption)
+       debug(4, "Connection %d: about to be terminated.", principal_conn->connection_number);
+       rtsp_conn_info *previous_principal_conn = principal_conn;
+       principal_conn = conn; // make the conn the new principal_conn
++      bw_group_acquire(conn->connection_number);
+       terminate_conn(previous_principal_conn->connection_number);
+       debug(4, "Connection successfully terminated.");
+       if (principal_conn == NULL) {
+@@ -2660,6 +2665,16 @@ void handle_setup_2(rtsp_conn_info *conn, rtsp_message *req, rtsp_message *resp)
+             }
+ 
+             // since the GID from the client has been acquired, update the airplay bonjour strings.
++            // Export only the accepted principal connection, never a Bonjour fallback ID.
++            // Missing/malformed UUID must not reuse an earlier SETUP's value.
++            char *observed_gid = NULL;
++            if (groupUUID && plist_get_node_type(groupUUID) == PLIST_STRING)
++              plist_get_string_val(groupUUID, &observed_gid);
++            pthread_rwlock_rdlock(&principal_conn_lock);
++            if (principal_conn == conn)
++              bw_group_set(conn->connection_number, resp->respcode == 200 ? observed_gid : NULL);
++            pthread_rwlock_unlock(&principal_conn_lock);
++            free(observed_gid);
+             build_bonjour_strings(conn);
+             debug(2, "Connection %d: SETUP mdns_update on %s.", conn->connection_number,
+                   get_category_string(conn->airplay_stream_category));
+@@ -4371,6 +4386,7 @@ void *rtsp_listen_loop(__attribute((unused)) void *arg) {
+   int i, ret;
+ 
+   principal_conn = NULL; // the data structure representing the connection that has the player.
++  bw_group_acquire(0);
+ 
+   memset(&hints, 0, sizeof(hints));
+   hints.ai_family = AF_UNSPEC;

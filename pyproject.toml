@@ -1,0 +1,119 @@
+# Tool configuration only. Deployment remains source-based; no packaging rewrite.
+[tool.uv]
+required-version = "==0.13.4"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 110
+extend-exclude = ["data", "dist", "test-artifacts", "docs/generated"]
+
+[tool.ruff.lint]
+# Start with actual correctness failures, not a mass style rewrite.
+select = ["E9", "F63", "F7", "F82"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+explicit_package_bases = true
+files = [
+  "basswiesn/app/core/xml_safety.py",
+  "tools/display_emulator.py", "basswiesn/app/services/display_composition.py",
+  "tools/build_ssh_client.py",
+  "tools/check_ssh_provenance.py",
+  "tools/probe_migrations.py",
+  "tools/check_package_links.py",
+  "tools/check_version.py", "tools/check_dependency_lock.py", "tools/check_coverage.py", "tools/check_safety_mutations.py",
+  "basswiesn/app/services/backup_manifest.py", "basswiesn/app/services/backup_restore.py",
+  "basswiesn/app/db/migration_safety.py",
+  "basswiesn/app/services/airplay_bridge/startup.py",
+  "basswiesn/app/services/airplay_bridge/heartbeat.py",
+  "basswiesn/app/services/airplay_bridge/native_group.py",
+  "basswiesn/app/services/airplay_bridge/group_session.py",
+  "basswiesn/app/services/airplay_bridge/group_zone.py",
+  "basswiesn/app/services/airplay_bridge/control_lease.py",
+  "basswiesn/app/services/airplay_bridge/control_owner.py",
+  "basswiesn/app/services/airplay_bridge/private_ipc.py",
+  "basswiesn/app/services/airplay_bridge/receiver_port.py",
+  "basswiesn/app/services/airplay_bridge/unix_ipc.py",
+  "basswiesn/app/services/airplay_bridge/group_controller.py",
+  "basswiesn/app/services/airplay_bridge/pilot_source.py",
+  "basswiesn/app/services/airplay_bridge/pilot_provider.py",
+  "basswiesn/app/services/airplay_bridge/pilot_runner.py",
+  "basswiesn/app/services/airplay_bridge/session_service.py",
+  "basswiesn/app/services/airplay_bridge/service_control.py",
+  "basswiesn/app/routers/airplay_bridge.py",
+  "basswiesn/app/services/release_scope.py",
+  "tools/run_airplay_service.py",
+  "tools/run_airplay_pilot.py",
+  "basswiesn/app/services/airplay_bridge/display_session.py",
+  "basswiesn/app/services/dlna_discovery.py",
+  "basswiesn/acceptance.py",
+  "tools/benchmark_offline.py",
+  "basswiesn/app/services/history_projection.py",
+  "basswiesn/app/services/history_reports.py",
+  "basswiesn/app/services/network_security.py",
+  "basswiesn/app/services/playback_identity.py",
+  "basswiesn/app/services/settings_contract.py", "basswiesn/app/services/device_settings_writer.py",
+  "basswiesn/app/services/ssh_persistence.py",
+  "basswiesn/app/services/direct_selection.py",
+  "basswiesn/app/services/station_playback.py",
+  "basswiesn/app/services/factory_reset.py",
+  "basswiesn/app/services/maintenance_reboot.py",
+  "basswiesn/app/services/key_actions.py",
+  "basswiesn/app/services/device_power.py",
+  "basswiesn/app/services/manual_radio_commands.py",
+  "basswiesn/app/services/native_station_search.py",
+  "basswiesn/app/services/wireless_diagnostics.py",
+  "basswiesn/app/services/maintenance.py",
+  "basswiesn/app/services/setup_rebuild/lease.py",
+  "basswiesn/app/services/setup_rebuild/backup.py",
+  "basswiesn/app/services/setup_rebuild/presentation.py",
+  "basswiesn/app/services/setup_rebuild/presentation_model.py",
+  "basswiesn/app/services/setup_rebuild/presentation_transport.py",
+  "basswiesn/app/services/setup_rebuild/presentation_restore.py",
+  "basswiesn/app/services/setup_rebuild/presentation_cleanup.py",
+  "basswiesn/app/services/setup_rebuild/presentation_preferences.py",
+  "basswiesn/app/services/cloud_groups.py",
+  "basswiesn/app/core/redaction.py", "basswiesn/app/core/admin_store.py", "basswiesn/app/core/admin_boundary.py",
+  "basswiesn/app/core/admin_protocols.py", "basswiesn/app/routers/admin_auth.py", "basswiesn/admin.py",
+  "basswiesn/app/core/admin_requests.py",
+  "basswiesn/app/core/runtime_probe.py", "basswiesn/update_helper/auth_state.py", "basswiesn/app/core/api_tokens.py",
+  "basswiesn/app/core/auth_schema.py", "basswiesn/app/core/token_policy.py", "basswiesn/app/routers/api_tokens.py",
+  "basswiesn/app/core/browser_headers.py", "basswiesn/app/core/request_context.py",
+  "basswiesn/app/core/route_policy.py",
+  "basswiesn/app/core/device_ingress.py",
+  "basswiesn/app/core/ingress_budget.py",
+  "basswiesn/app/core/protocol_identity.py",
+  "basswiesn/app/core/private_secret.py",
+  "basswiesn/app/services/support_export.py", "basswiesn/app/services/research_state_retention.py",
+  "basswiesn/app/services/artwork_cache_lock.py", "basswiesn/app/services/artwork.py",
+  "basswiesn/app/services/playback_observations.py",
+  "basswiesn/app/services/listener_health.py",
+  "basswiesn/app/services/device_ownership.py",
+  "basswiesn/app/services/device_transactions.py",
+  "basswiesn/app/services/zone_changes.py",
+  "basswiesn/app/services/zone_creation.py",
+  "basswiesn/app/services/preset_contract.py",
+  "basswiesn/app/services/preset_writer.py",
+  "basswiesn/app/services/preset_observation.py", "basswiesn/app/services/preset_recovery.py",
+  "basswiesn/app/services/provider_health_observation.py",
+  "basswiesn/app/services/runtime_health.py", "basswiesn/app/routers/system_api.py",
+  "basswiesn/app/services/providers", "basswiesn/app/routers/providers.py",
+  "basswiesn/cli.py", "basswiesn/cli_checks.py", "basswiesn/cli_contract.py", "basswiesn/cli_schema.py",
+  "basswiesn/cli_storage.py", "basswiesn/cli_views.py", "tools/basswiesnctl",
+]
+follow_imports = "silent"
+
+[tool.coverage.run]
+branch = true
+source = ["basswiesn"]
+relative_files = true
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+precision = 2
+# No invented minimum. A measured baseline is enforced separately.
+
+[tool.coverage.json]
+show_contexts = false

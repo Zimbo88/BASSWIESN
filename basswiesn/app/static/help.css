@@ -1,0 +1,21 @@
+/* Native dialog keeps focus, Escape and modal semantics across mobile browsers. */
+.guide-dialog { color: var(--text, #edf2f7); background: var(--surface, #202933); border: 1px solid #79818d; border-radius: 18px; padding: 0; width: min(850px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); overflow: auto; box-sizing: border-box; box-shadow: 0 20px 80px #0006; }
+.guide-dialog::backdrop { background: #0009; }
+.guide-dialog header { display: flex; align-items: start; justify-content: space-between; gap: 16px; padding: 20px; border-bottom: 1px solid #79818d66; position: sticky; top: 0; background: inherit; z-index: 1; }
+.guide-dialog h2 { margin: 0; font-size: 1.35rem; overflow-wrap: anywhere; }
+.guide-dialog button, .guide-launch { min-height: 44px; white-space: normal; overflow-wrap: anywhere; }
+.guide-dialog button { color: inherit; background: transparent; border: 1px solid #79818d; border-radius: 9px; padding: 10px 16px; cursor: pointer; font: inherit; }
+.guide-dialog button:focus-visible, .guide-step:focus-visible { outline: 3px solid #389ff8; outline-offset: 3px; }
+.guide-body { padding: 20px; line-height: 1.6; overflow-wrap: anywhere; }
+.guide-badge { display: inline-block; margin: 0; padding: 3px 10px; border: 1px solid #79818d; border-radius: 20px; font-weight: 600; }
+.guide-illustration { margin: 20px 0; }
+.guide-flow { list-style: none; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 0; }
+.guide-flow li { padding: 14px; border: 1px solid #79818d88; border-radius: 12px; min-width: 0; }
+.guide-flow li.current { border: 2px solid #389ff8; }
+.guide-number { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 1px solid currentColor; border-radius: 50%; margin-bottom: 10px; font-weight: bold; }
+.guide-dialog figcaption { font-size: .85rem; }
+.guide-controls, .guide-choices { display: flex; gap: 12px; flex-wrap: wrap; margin: 16px 0; }
+.guide-tip { padding-top: 12px; border-top: 1px solid #79818d66; }
+.guide-launch { margin: 8px 0; }
+html[data-theme="light"] .guide-dialog { color: #202933; background: #fff; }
+@media (max-width: 620px) { .guide-flow { grid-template-columns: 1fr; } .guide-flow li { display: flex; gap: 12px; } .guide-number { flex-shrink: 0; } .guide-dialog header, .guide-body { padding: 16px; } }

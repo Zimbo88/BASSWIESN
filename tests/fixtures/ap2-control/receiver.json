@@ -1,0 +1,13 @@
+{
+  "interface": "lo",
+  "name": "AP2 Offline Control Test",
+  "network": "127.0.0.0/8",
+  "dhcp_server": "127.0.0.2",
+  "host_ip": "127.0.0.3",
+  "deny_ips": ["127.0.0.25"],
+  "relay_target": "127.0.0.1",
+  "relay_token": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "controller_nonce": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+  "lifetime_seconds": 60,
+  "max_pause_seconds": 30
+}

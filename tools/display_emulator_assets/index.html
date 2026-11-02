@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BASSWIESN · Radio-Display-Emulator</title>
+  <link rel="stylesheet" href="/style.css"><script type="module" src="/emulator.mjs"></script>
+</head>
+<body>
+<header><div class="eyebrow">BASSWIESN / DISPLAY LAB / OFFLINE</div>
+  <h1>Das Radiodisplay. Zum Ausprobieren.</h1>
+  <p><a href="/review">Neu: 128 × 100 Displayvergleich mit eigener Screenshot-Referenz</a></p>
+  <p>Texte, Laufschrift und Zustände am virtuellen SoundTouch-Display untersuchen — ohne ein Radio zu verändern.</p>
+  <div class="boundary"><strong>Verhaltens-Emulator, keine Original-Firmware.</strong>
+    Die Textaufbereitung ist dieselbe wie in BASSWIESN. Pixelraster, Schrift, Scrolltempo und Seitenprioritäten sind
+    ein anpassbares, noch nicht am Radio kalibriertes Modell. Die angezeigten Musikdaten sind fiktiv.</div>
+</header>
+<main>
+<aside class="panel controls" aria-label="Eingaben für das virtuelle Display">
+  <h2>Inhalt</h2>
+  <label for="scenario">Beispielsituation</label><select id="scenario"></select>
+  <label for="source">Simulierte Quelle</label><select id="source">
+    <option>INTERNET_RADIO</option><option>AIRPLAY</option><option>BLUETOOTH</option><option>AUX</option>
+  </select>
+  <label for="station">Sender / Auswahlkontext</label><input id="station" maxlength="1024">
+  <button id="select-source" type="button">Neue Quelle simulieren</button>
+  <p class="hint">Beginnt eine neue Sitzung und verwirft alte Songdaten. Kein echter Quellenwechsel.</p>
+  <label for="artist">Interpret</label><input id="artist" maxlength="1024">
+  <label for="track">Titel</label><textarea id="track" maxlength="1024" rows="2"></textarea>
+  <label for="other_info">Zusatzinfo</label><input id="other_info" maxlength="1024">
+  <button id="metadata" type="button" class="primary">Metadaten einspeisen</button>
+  <p class="hint">Vollständiger Snapshot: leere Felder löschen den bisherigen Wert. Im Modell wird standardmäßig 2 s gebündelt.</p>
+  <h2>Felder und Reihenfolge</h2>
+  <label for="mode">Textvertrag</label><select id="mode">
+    <option value="CUSTOM">Individuell · gemeinsame Titelzeile</option>
+    <option value="TRACK_ARTIST">Älterer Modus · Titel und Interpret</option>
+    <option value="STATION">Älterer Modus · nur Sender</option>
+  </select>
+  <div id="fields"></div>
+  <p class="hint">Feldwahl und Uhr gelten hier für „Individuell“. Der ältere Modus benötigt sowohl Titel als auch Interpret.</p>
+</aside>
+<div class="workspace">
+  <section class="panel">
+    <div class="section-head"><h2>Virtuelles Display</h2><span class="pill">Keine Geräteverbindung</span></div>
+    <div class="display-grid" id="display-grid">
+      <div><h3>Bestehender Textvertrag</h3><p class="hint">Ausgabe exakt · physische Darstellung modelliert</p>
+        <div class="bezel"><canvas id="display" role="img" aria-label="Simuliertes Radiodisplay"></canvas></div>
+        <p id="accessible-display" class="screen-reader"></p>
+      </div>
+      <div id="concept-wrap" hidden><h3>Layout-Experiment</h3><p class="hint">Getrennte Bereiche · nicht für Radios freigegeben</p>
+        <div class="bezel"><canvas id="concept-display" role="img" aria-label="Nicht implementierter Layoutentwurf"></canvas></div>
+      </div>
+    </div>
+    <label class="check"><input id="concept" type="checkbox"> Entwurf mit festem Uhrbereich daneben zeigen</label>
+    <p class="hint">Der Entwurf belegt keine Firmware-Fähigkeit. Auch AirPlay-Metadaten sind hier nur Testeingaben, keine fertige Bridge.</p>
+    <div class="transport" aria-label="Lokale Zeitsteuerung">
+      <button id="run" type="button">Simulation starten</button><button id="step" type="button">+1 Sekunde</button>
+      <button id="minute" type="button">+1 Minute</button><button id="demo" type="button">Demo abspielen</button>
+      <button id="reset" type="button">Zurücksetzen</button>
+    </div>
+    <label for="position">Ereignisverlauf <output id="time-label">0,0 s</output></label>
+    <input id="position" type="range" min="0" max="120000" value="0" step="100">
+    <div class="status-grid"><div>Seite <strong id="page-kind">—</strong></div><div>Sitzung <strong id="generation">—</strong></div>
+      <div>Update <strong id="pending">—</strong></div><div>Modelluhr <strong id="clock">—</strong></div></div>
+    <p id="status" role="status" aria-live="polite">Emulator wird geladen.</p>
+    <details><summary>Vollständige an den Renderer übergebene Texte</summary>
+      <pre id="payload"></pre><p class="hint">256 Zeichen sind das BASSWIESN-Budget, keine gemessene Displaygrenze.</p>
+    </details>
+  </section>
+  <section class="panel">
+    <h2>Zustände und Einblendungen</h2><p class="hint">Alle Tasten wirken ausschließlich auf das Bildschirmmodell.</p>
+    <div class="transport" id="states">
+      <button type="button" data-state="PLAYING">Wiedergabe</button><button type="button" data-state="PAUSED">Pause</button>
+      <button type="button" data-state="BUFFERING">Laden</button><button type="button" data-state="STOPPED">Stopp</button>
+      <button type="button" data-state="STANDBY">Standby</button><button type="button" data-state="ERROR">Fehler</button>
+    </div>
+    <label for="volume">Virtuelle Lautstärke <output id="volume-label">5</output></label>
+    <input type="range" id="volume" min="0" max="100" value="5">
+    <p class="hint">Fehler vor Lautstärke vor Wiedergabe ist eine Modellannahme. Die genaue native Priorität ist offen.</p>
+  </section>
+  <section class="panel">
+    <details><summary>Modell kalibrieren</summary>
+      <p>Diese Werte sind frei gewählte Arbeitswerte, keine bekannten Daten von Sound Big oder Sideboard.
+        Eine Foto-/Videoaufnahme ist später nötig, um Raster, Textfenster und Bewegung abzugleichen.</p>
+      <div class="calibration">
+        <label>Breite (Modellpixel)<input id="width" type="number" min="128" max="640" value="320"></label>
+        <label>Höhe (Modellpixel)<input id="height" type="number" min="64" max="256" value="112"></label>
+        <label>Schrift (Modellpixel)<input id="font" type="number" min="8" max="36" value="20"></label>
+        <label>Scrollen (Pixel/s)<input id="speed" type="number" min="0" max="120" value="24"></label>
+        <label>Scrollpause (ms)<input id="hold" type="number" min="0" max="5000" value="1800"></label>
+        <label>Lautstärke sichtbar (ms)<input id="overlay" type="number" min="0" max="10000" value="2000"></label>
+        <label>Metadaten bündeln (ms)<input id="coalesce" type="number" min="0" max="5000" value="2000"></label>
+        <label>Startuhrzeit<input id="baseTime" type="time" value="20:15"></label>
+      </div>
+      <label class="check"><input id="oled" type="checkbox" checked> Displayfähige Geräteklasse (sonst kein Display)</label>
+      <button id="calibrate" type="button">Modellparameter übernehmen</button>
+      <p class="hint">Spielt den vorhandenen Verlauf mit diesen Parametern neu aus. 2 s Bündelung stammt aus statischer Analyse;
+        Schrift, Scrollen und Einblendedauer sind unbestätigte Annahmen. Browser-Glyphen beweisen keinen Radio-Zeichensatz.</p>
+    </details>
+  </section>
+  <section class="panel">
+    <details><summary>Verlauf und lokale Dateien</summary>
+      <p>Maximal 500 Ereignisse / 1 Stunde Modellzeit. Export enthält deine eingegebenen Texte sowie die aktuellen
+        Darstellungsparameter — keine Gerätezugänge. Nichts wird automatisch gespeichert oder übertragen.</p>
+      <div class="transport"><button id="export" type="button">Verlauf als JSON speichern</button>
+        <button id="screenshot" type="button">Display als PNG speichern</button></div>
+      <label for="import">Eigenen Emulator-Verlauf laden (JSON, maximal 1 MB)</label><input id="import" type="file" accept=".json,application/json">
+      <ol id="timeline"></ol>
+    </details>
+  </section>
+</div>
+</main>
+<footer>Nur auf diesem Rechner · keine Radio-HTTP-, SSH-, mDNS- oder SSDP-Verbindung · keine Firmwaredateien ·
+  keine BASSWIESN-Datenbank · kein Speichern von Displayeinstellungen auf Geräten. Beenden: Strg+C im Terminal.</footer>
+</body></html>

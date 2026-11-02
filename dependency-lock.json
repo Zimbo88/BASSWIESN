@@ -1,0 +1,11 @@
+{
+  "generator": "uv 0.13.4",
+  "resolution": "universal, Python >=3.11; wheels required at installation",
+  "schema_version": 1,
+  "sha256": {
+    "requirements-dev.in": "2f85076c8494b70ee0cbd034133f809d583056b49be4fa9fd665b51ba0946580",
+    "requirements-dev.lock": "97b004b85e4c3722710b64193216ce11c33f1711208dacb548ed436adbba8565",
+    "requirements.in": "ed3374aac013f2aac753d3f59ba1475f351f5be04812f84678d2140eab562350",
+    "requirements.lock": "3eca7064e92fdadf13dc27307055d64d0456a247990c60af56b3930105fbc06c"
+  }
+}

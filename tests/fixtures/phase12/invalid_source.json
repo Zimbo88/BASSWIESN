@@ -1,0 +1,18 @@
+{
+  "fixture_schema": "basswiesn-phase12-synthetic-fixture-v1",
+  "synthetic": true,
+  "contains_proprietary_dump": false,
+  "purpose": "Authoritative INVALID_SOURCE diagnostic classification",
+  "input": {
+    "source_readback": "INVALID_SOURCE",
+    "provider_available": false,
+    "restriction_expired": false,
+    "stream_error": null
+  },
+  "expected": {
+    "playback_health": "FAILED",
+    "provider_health": "SOURCE_INVALID",
+    "cause": "PROVIDER_OR_SOURCE_REMOVAL_CANDIDATE",
+    "automatic_reboot": false
+  }
+}

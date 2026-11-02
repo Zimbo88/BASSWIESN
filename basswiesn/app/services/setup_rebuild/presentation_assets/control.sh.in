@@ -1,0 +1,205 @@
+#!/bin/sh
+# Standard presentation controller; exact-image cold activation only.
+# Authored implementation. Never overwrites or unmounts a running BoseApp.
+set -eu
+umask 077
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+BASE=/mnt/nv/basswiesn-standard-presentation
+RC=/mnt/nv/rc.local
+APP=@APP@
+PATCH=@PATCH@
+BATTERY=@BATTERY@
+RC_BEFORE=@RC_BEFORE@
+SPLASH=49d4432df819c91ac06a7180b4d814cffaa6380450b2206316040401719ee54b
+LOGO=47a142fa24a0d6cb4b13a138e03140a68bd01bd6ec323fbdb4c469fd063caf1c
+root_dirty=no; locked=no
+die() { printf 'REFUSED: %s\n' "$*" >&2; exit 1; }
+hash() { sha256sum "$1" | cut -d' ' -f1; }
+regular() { [ -f "$1" ] && [ ! -L "$1" ]; }
+finish() {
+ code=$?
+ if [ "$root_dirty" = yes ]; then sync; mount -o remount,ro / || code=81; fi
+ [ "$locked" = no ] || rmdir "$BASE/lock" || code=82
+ exit "$code"
+}
+trap finish 0
+identity() {
+ [ "$(id -u)" = 0 ] || die ROOT_REQUIRED
+ match=no
+ for p in /sys/class/net/*/address; do
+  [ -f "$p" ] || continue
+  value=$(tr -d ':\n' < "$p" | tr a-f A-F)
+  case " @PROTECTED@ " in *" $value "*) die PROTECTED_DEVICE;; esac
+  [ "$value" != @IDENTITY@ ] || match=yes
+ done
+ [ "$match" = yes ] || die WRONG_DEVICE
+ [ "$(cat /proc/variant)" = @VARIANT@ ] || die WRONG_VARIANT
+ [ "$(cat /sys/class/graphics/fb0/virtual_size)" = 128,100 ] || die WRONG_FRAMEBUFFER
+ [ "$(cat /sys/class/graphics/fb0/bits_per_pixel)" = 8 ] || die WRONG_FRAMEBUFFER
+ [ "$(cat /sys/class/graphics/fb0/stride)" = 128 ] || die WRONG_FRAMEBUFFER
+ grep -q ' 27.0.6.46330.5043500$' /etc/FS_VERSION || die WRONG_FIRMWARE
+ [ "$(hash /etc/init.d/shelby_local)" = 40c83d45cdc678442922bddc4a3553ab2292607d8e1854aa1fa4f08676baf169 ] || die INIT_CHANGED
+ [ "$(hash /etc/init.d/SoundTouch)" = 81ad531b237629c40e9129257b024a50898ada6c56a5cb17ae70b4019c840f39 ] || die INIT_CHANGED
+ [ "$(hash /etc/init.d/rc)" = 3989bca468123b737c853329e47766bb33e826e0641e71bc18a9a180107a13a8 ] || die INIT_CHANGED
+ [ "$(readlink /etc/rc5.d/S97shelby_local)" = ../init.d/shelby_local ] || die ORDER_CHANGED
+ [ "$(readlink /etc/rc5.d/S99SoundTouch)" = ../init.d/SoundTouch ] || die ORDER_CHANGED
+ [ ! -e /mnt/nv/shepherd ] || die SUPERVISOR_OVERRIDE
+ [ -d "$BASE" ] && [ ! -L "$BASE" ] || die PACKAGE_PATH
+ [ "$(stat -c %u "$BASE")" = 0 ] && [ "$(stat -c %a "$BASE")" = 700 ] || die PACKAGE_PERMISSIONS
+}
+integrity() {
+ for p in control.sh rc.installed BoseApp.candidate splash.candidate SHA256SUMS; do regular "$BASE/$p" || die PACKAGE_SYMLINK; done
+ (cd "$BASE" && sha256sum -c SHA256SUMS >/dev/null) || die PACKAGE_INTEGRITY
+ [ "$(hash "$BASE/BoseApp.candidate")" = "$PATCH" ] || die APP_CANDIDATE_CHANGED
+ [ "$(hash "$BASE/splash.candidate")" = "$LOGO" ] || die LOGO_CANDIDATE_CHANGED
+}
+backup() {
+ regular "$BASE/backup/splash.original" || die BACKUP_MISSING
+ [ "$(hash "$BASE/backup/splash.original")" = "$SPLASH" ] || die BACKUP_CORRUPT
+ (cd "$BASE/backup" && sha256sum -c SHA256SUMS >/dev/null) || die BACKUP_CORRUPT
+ regular "$BASE/backup.receipt" || die OFFDEVICE_BACKUP_REQUIRED
+ [ "$(cat "$BASE/backup.receipt")" = "$(hash "$BASE/backup/SHA256SUMS")" ] || die RECEIPT_MISMATCH
+}
+lock() { mkdir "$BASE/lock" || die BUSY; locked=yes; }
+root_ro() {
+ awk '$1=="ubi0:rootfs" && $2=="/" && $3=="ubifs" && $4 ~ /^ro(,|$)/ {ok=1} END {exit !ok}' /proc/mounts || die ROOT_NOT_EXPECTED_READONLY_UBIFS
+}
+writers_known() {
+ for p in /usr/bin/splash-write /opt/Bose/splash-write; do
+  regular "$p" || die WRITER_SYMLINK
+  [ "$(stat -c %u:%g:%a:%h "$p")" = 0:0:755:1 ] || die WRITER_ATTRIBUTES
+  case "$(hash "$p")" in "$SPLASH"|"$LOGO") :;; *) die WRITER_DIVERGED;; esac
+  [ ! -e "$p.basswiesn-new" ] && [ ! -L "$p.basswiesn-new" ] || die INTERRUPTED_COPY
+ done
+ awk '$2=="/usr/bin/splash-write" || $2=="/opt/Bose/splash-write" {bad=1} END {exit bad}' /proc/mounts || die WRITER_MOUNTED
+}
+writers() {
+ source=$1; expected=$2
+ root_ro; writers_known
+ [ "$(df -Pk / | awk 'NR==2 {print $4}')" -ge 1024 ] || die ROOT_SPACE
+ # Intent is durable before changing even one filesystem entry. Recovery
+ # accepts only known stock/candidate states, including an interrupted pair.
+ printf 'WRITER_TRANSACTION %s\n' "$expected" >> "$BASE/journal"; sync
+ root_dirty=yes; mount -o remount,rw /
+ for p in /usr/bin/splash-write /opt/Bose/splash-write; do
+  cp "$source" "$p.basswiesn-new"; chmod 755 "$p.basswiesn-new"
+  [ "$(hash "$p.basswiesn-new")" = "$expected" ] || die TEMP_HASH
+  sync; mv "$p.basswiesn-new" "$p"; sync
+  [ "$(hash "$p")" = "$expected" ] || die INSTALLED_HASH
+ done
+ mount -o remount,ro /; root_dirty=no; root_ro
+}
+disable() {
+ [ ! -f "$BASE/enabled" ] || mv "$BASE/enabled" "$BASE/disabled"
+ sync
+}
+reset() { sync; /opt/Bose/PlatformReset; }
+
+battery_known() {
+ case "$(hash /opt/Bose/BatteryMonitor)" in
+  93b23730a3ac66f3331f63711d4a1d1d60704ccb03635b7ab8210c1f084f4fa0|4abbb803a20323bf2938e686aa43fe969495e508f4fefe9c6099702f1e7e4e71|25ed53ef0bb3a8647d6f858ccc4be20dc6292f988acb29059416d5c0591229c5) :;;
+  *) die UNKNOWN_BATTERYMONITOR;;
+ esac
+}
+startup_known() {
+ if [ -e "$RC" ] || [ -L "$RC" ]; then
+  regular "$RC" || die STARTUP_NOT_REGULAR
+  if cmp -s "$RC" "$BASE/rc.installed"; then return; fi
+  [ "$RC_BEFORE" != absent ] && [ "$(hash "$RC")" = "$RC_BEFORE" ] || die STARTUP_DIVERGED
+ else
+  [ "$RC_BEFORE" = absent ] || die STARTUP_MISSING
+ fi
+}
+restore_startup() {
+ startup_known
+ if [ "$RC_BEFORE" = absent ]; then
+  if [ -e "$RC" ]; then mv "$RC" "$BASE/rc.removed"; fi
+ else
+  [ "$(hash "$BASE/backup/rc.original")" = "$RC_BEFORE" ] || die STARTUP_BACKUP_CORRUPT
+  cp -p "$BASE/backup/rc.original" "$BASE/rc.restore"
+  mv "$BASE/rc.restore" "$RC"
+  [ "$(hash "$RC")" = "$RC_BEFORE" ] || die STARTUP_RESTORE_MISMATCH
+ fi
+}
+identity
+case "${1:-}" in
+configure)
+ [ "${4:-}" = --ack-private-radio-patches ] || die EXPLICIT_ACK_REQUIRED
+ case "${2:-}:${3:-}" in 0:0|0:1|1:0|1:1) :;; *) die INVALID_SELECTION;; esac
+ display=$2; logo=$3
+ # 0/0 can recover even when the candidate is corrupt.
+ if [ "$display" = 1 ] || [ "$logo" = 1 ]; then integrity; fi
+ backup; lock; root_ro; writers_known; startup_known; battery_known
+ [ ! -f /mnt/nv/basswiesn-display-installed/enabled ] || die OTHER_DISPLAY_INSTALLER_ACTIVE
+ [ ! -f /mnt/nv/basswiesn-radio-patches/enabled ] || die OTHER_DISPLAY_INSTALLER_ACTIVE
+ battery_before=$(hash /opt/Bose/BatteryMonitor)
+ if [ ! -e "$BASE/selection" ]; then
+  [ "$battery_before" = "$BATTERY" ] || die BASELINE_BATTERY_CHANGED
+ fi
+ case "$(hash /opt/Bose/BoseApp)" in "$APP"|"$PATCH") :;; *) die APP_DIVERGED;; esac
+ [ ! -e "$BASE/pending" ] || die UNRECONCILED_BOOT
+ [ ! -e "$RC.basswiesn-new" ] && [ ! -L "$RC.basswiesn-new" ] || die INTERRUPTED_STARTUP
+ curl -fsS --max-time 5 http://127.0.0.1:8090/now_playing | grep -q 'source="STANDBY"' || die STANDBY_REQUIRED
+ printf 'CONFIGURE display=%s logo=%s battery=%s\n' "$display" "$logo" "$battery_before" >> "$BASE/journal"; sync
+ if [ "$logo" = 1 ]; then writers "$BASE/splash.candidate" "$LOGO"
+ else writers "$BASE/backup/splash.original" "$SPLASH"; fi
+ if [ "$display" = 1 ]; then
+  cp -p "$BASE/rc.installed" "$RC.basswiesn-new"; cmp "$RC.basswiesn-new" "$BASE/rc.installed" || die STARTUP_COPY
+  mv "$RC.basswiesn-new" "$RC"; cmp "$RC" "$BASE/rc.installed" || die STARTUP_READBACK
+  printf 'PERSISTENT_USER_OPT_IN\n' > "$BASE/enabled"
+ else
+  disable; restore_startup
+ fi
+ [ "$(hash /opt/Bose/BatteryMonitor)" = "$battery_before" ] || die BATTERY_DIVERGED
+ printf '%s %s\n' "$display" "$logo" > "$BASE/selection.next"; mv "$BASE/selection.next" "$BASE/selection"
+ sync; root_ro
+ printf 'CONFIGURED; REBOOT_REQUIRED; NOT_RUNTIME_ACCEPTANCE\n';;
+cold)
+ [ -f "$BASE/enabled" ] || exit 0
+ [ -z "$(pidof BoseApp shepherdd || true)" ] || die COLD_ONLY
+ if [ -e "$BASE/pending" ]; then disable; printf 'PREVIOUS_BOOT_UNCONFIRMED_PREVIOUS_APP\n'; exit 0; fi
+ integrity; backup; battery_known
+ [ "$(hash /opt/Bose/BoseApp)" = "$APP" ] || die PREVIOUS_APP_REQUIRED
+ cmp "$RC" "$BASE/rc.installed" || die STARTUP_DIVERGED
+ cat /proc/sys/kernel/random/boot_id > "$BASE/pending"; sync
+ if mount -o bind "$BASE/BoseApp.candidate" /opt/Bose/BoseApp && mount -o remount,bind,ro /opt/Bose/BoseApp && [ "$(hash /opt/Bose/BoseApp)" = "$PATCH" ]; then
+  nohup /bin/sh "$BASE/control.sh" guard </dev/null > "$BASE/guard.log" 2>&1 &
+  count=0
+  while [ "$count" -lt 5 ]; do
+   if cmp -s "$BASE/guard-ready" /proc/sys/kernel/random/boot_id; then printf 'COLD_DISPLAY_BOUND; BOOT_GUARD_READY\n'; exit 0; fi
+   sleep 1; count=$((count+1))
+  done
+ fi
+ disable
+ if [ "$(hash /opt/Bose/BoseApp)" != "$APP" ]; then umount /opt/Bose/BoseApp || { reset; while :; do sleep 30; done; }; fi
+ die COLD_BIND_FAILED_PREVIOUS_APP_RESTORED;;
+guard)
+ cmp -s "$BASE/pending" /proc/sys/kernel/random/boot_id || die WRONG_GUARD_BOOT
+ cat /proc/sys/kernel/random/boot_id > "$BASE/guard-ready"
+ count=0; stable=0; previous=''
+ while [ "$count" -lt 30 ]; do
+  sleep 5; count=$((count+1))
+  [ -f "$BASE/enabled" ] || exit 0
+  pid=$(pidof BoseApp || true)
+  case "$pid" in ''|*' '*) stable=0;; *)
+   if curl -fsS --max-time 2 http://127.0.0.1:8090/info | grep -q 'deviceID="@IDENTITY@"'; then
+    if [ "$pid" = "$previous" ]; then stable=$((stable+1)); else stable=0; fi
+   else stable=0; fi;; esac
+  previous=$pid
+  if [ "$stable" -ge 12 ]; then
+   mv "$BASE/pending" "$BASE/last-healthy-boot"; sync
+   printf 'APP_API_STABLE_NOT_AUDIO_OR_VISUAL_ACCEPTANCE\n'; exit 0
+  fi
+ done
+ disable; printf 'APP_BOOT_FAILED_FALLBACK_PREVIOUS_APP_ON_RESET\n'; reset;;
+reboot)
+ [ "${2:-}" = --ack-reboot ] || die EXPLICIT_ACK_REQUIRED
+ backup; battery_known; reset;;
+status)
+ root_ro
+ sha256sum /opt/Bose/BoseApp /opt/Bose/BatteryMonitor /usr/bin/splash-write /opt/Bose/splash-write
+ for p in enabled pending last-healthy-boot disabled selection; do [ ! -f "$BASE/$p" ] || printf '%s\n' "$p"; done
+ ;;
+*) die 'Use configure <display0|1> <logo0|1> --ack-private-radio-patches | cold | guard | reboot --ack-reboot | status';;
+esac

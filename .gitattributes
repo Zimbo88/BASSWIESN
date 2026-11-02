@@ -1,0 +1,3 @@
+# Unified-diff context lines deliberately contain one leading space, including
+# empty source lines. Preserve those patch bytes; ordinary source stays checked.
+modules/airplay-bridge/native/*.patch whitespace=-blank-at-eol
