@@ -10,11 +10,11 @@ on while your radios use it; you do not need to keep the browser open.
 **New here?** Start with [Quick Install](#quick-install), then follow the
 [setup guide](SETUP_READ_HERE.md). [What's new in 5.0.0](docs/releases/5.0.0/RELEASE_NOTES_5.0.0.md)
 
-**Deutsch:** BASSWIESN steuert deine SoundTouch-Radios lokal im Heimnetz.
-Sender, Presets, Fernbedienung und Multiroom erreichst du im Browser – auch
-auf dem Handy. Die Oberfläche bietet Deutsch und 27 weitere Sprachen.
-Die [Installation unten](#quick-install) ist zum Kopieren; die
-[Änderungen für 5.0.0](docs/releases/5.0.0/RELEASE_NOTES_5.0.0.md) sind auch auf Deutsch erklärt.
+BASSWIESN controls your SoundTouch radios locally on your home network.
+Access stations, presets, remote controls and multiroom in your browser, including
+on your phone. **BASSWIESN supports English and 27 additional interface languages.**
+The [installation instructions below](#quick-install) are ready to copy and paste;
+the [5.0.0 release notes](docs/releases/5.0.0/RELEASE_NOTES_5.0.0.md) are also available in German.
 
 BASSWIESN is not affiliated with, endorsed by or supported by Bose.
 
